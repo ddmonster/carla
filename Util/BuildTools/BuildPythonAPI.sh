@@ -55,6 +55,9 @@ export PATH="$UE4_ROOT/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/Linux_x64/v1
 
 source $(dirname "$0")/Environment.sh
 
+export CC=clang
+export CXX=clang++
+
 if ! { ${REMOVE_INTERMEDIATE} || ${BUILD_PYTHONAPI} ; }; then
   fatal_error "Nothing selected to be done."
 fi
