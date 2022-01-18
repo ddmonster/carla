@@ -110,7 +110,11 @@ if ${HARD_CLEAN} ; then
 
   log "Doing a \"hard\" clean of the Unreal Engine project."
 
-  make CarlaUE4Editor ARGS=-clean
+  if ${MAC_OS}; then
+    xcodebuild -scheme CarlaUe4 clean
+  else
+    make CarlaUE4Editor ARGS=-clean
+  fi
 
 fi
 
@@ -130,6 +134,9 @@ if ${REMOVE_INTERMEDIATE} ; then
 
   popd >/dev/null
 
+  if ${MAC_OS}; then
+    rm -rf CarlaUE4.xcworkspace
+  fi
 fi
 
 # ==============================================================================
@@ -174,13 +181,23 @@ if ${BUILD_CARLAUE4} ; then
     # This command fails sometimes but normally we can continue anyway.
     set +e
     log "Generate Unreal project files."
-    ${UE4_ROOT}/GenerateProjectFiles.sh -project="${PWD}/CarlaUE4.uproject" -game -engine -makefiles
+    BUILD_TYPE=
+    if ${MAC_OS}; then
+      BUILD_TYPE=" -xcode"
+    else
+      BUILD_TYPE=" -makefiles"  
+    fi
+    ${UE4_ROOT}/GenerateProjectFiles.sh -project="${PWD}/CarlaUE4.uproject" -game -engine ${BUILD_TYPE}
     set -e
 
   fi
 
   log "Build CarlaUE4 project."
-  make CarlaUE4Editor
+  if ${MAC_OS}; then
+    xcodebuild -scheme CarlaUE4 -target CarlaUE4Editor -UseModernBuildSystem=YES
+  else
+    make CarlaUE4Editor
+  fi
 
   #Providing the user with the ExportedMaps folder
   EXPORTED_MAPS="${CARLAUE4_ROOT_FOLDER}/Content/Carla/ExportedMaps"
@@ -196,8 +213,11 @@ fi
 if ${LAUNCH_UE4_EDITOR} ; then
 
   log "Launching UE4Editor..."
-  ${GDB} ${UE4_ROOT}/Engine/Binaries/Linux/UE4Editor "${PWD}/CarlaUE4.uproject" ${RHI} ${EDITOR_FLAGS}
-
+  if ${MAC_OS}; then
+    /usr/bin/open -a "${UE4_ROOT}/Engine/Binaries/Mac/UE4Editor.app" "${PWD}/CarlaUE4.uproject"
+  else
+    ${GDB} ${UE4_ROOT}/Engine/Binaries/Linux/UE4Editor "${PWD}/CarlaUE4.uproject" ${RHI}
+  fi
 else
 
   log "Success!"
