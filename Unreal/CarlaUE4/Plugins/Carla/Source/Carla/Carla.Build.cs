@@ -14,6 +14,10 @@ public class Carla : ModuleRules
   {
     return (Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32);
   }
+  private bool IsMac(ReadOnlyTargetRules Target)
+  {
+    return (Target.Platform == UnrealTargetPlatform.Mac);
+  }
 
   public Carla(ReadOnlyTargetRules Target) : base(Target)
   {
@@ -40,10 +44,17 @@ public class Carla : ModuleRules
       }
       if (line.Contains("Chrono ON"))
       {
-        Console.WriteLine("Enabling chrono");
-        UsingChrono = true;
-        PublicDefinitions.Add("WITH_CHRONO");
-        PrivateDefinitions.Add("WITH_CHRONO");
+        if (IsMac(Target))
+        {
+          Console.WriteLine("Unable to enable Chrono, UE4 RTTI unsupported on Mac");
+        }
+        else
+        {
+          Console.WriteLine("Enabling chrono");
+          UsingChrono = true;
+          PublicDefinitions.Add("WITH_CHRONO");
+          PrivateDefinitions.Add("WITH_CHRONO");
+        }
       }
       if (line.Contains("Pytorch ON"))
       {
@@ -134,11 +145,6 @@ public class Carla : ModuleRules
       );
 
     AddCarlaServerDependency(Target);
-  }
-
-  private bool IsMac(ReadOnlyTargetRules Target)
-  {
-    return (Target.Platform == UnrealTargetPlatform.Mac);
   }
 
 
