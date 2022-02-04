@@ -16,6 +16,9 @@
 #include "CarlaRecorder.h"
 #include "CarlaReplayerHelper.h"
 
+// DReyeVR include
+#include "Carla/Sensor/DReyeVRSensor.h"
+
 #include <ctime>
 #include <sstream>
 
@@ -88,6 +91,9 @@ void ACarlaRecorder::Ticking(float DeltaSeconds)
     {
       FCarlaActor* View = It.Value().Get();
 
+      if (View->GetActorId() == 0)
+        continue; // don't record the spectator
+
       switch (View->GetActorType())
       {
         // save the transform for props
@@ -122,6 +128,8 @@ void ACarlaRecorder::Ticking(float DeltaSeconds)
           break;
       }
     }
+    // Add the DReyeVR data
+    AddDReyeVRData();
 
     // write all data for this frame
     Write(DeltaSeconds);
@@ -262,6 +270,12 @@ void ACarlaRecorder::AddActorBoundingBox(FCarlaActor *CarlaActor)
   AddBoundingBox(BoundingBox);
 }
 
+void ACarlaRecorder::AddDReyeVRData()
+{
+  // Add the latest instance of the DReyeVR snapshot to our data
+  DReyeVRData.Add(DReyeVRDataRecorder(ADReyeVRSensor::Data));
+}
+
 void ACarlaRecorder::AddTriggerVolume(const ATrafficSignBase &TrafficSign)
 {
   if (bAdditionalData)
@@ -382,6 +396,7 @@ void ACarlaRecorder::Clear(void)
   TriggerVolumes.Clear();
   PhysicsControls.Clear();
   TrafficLightTimes.Clear();
+  DReyeVRData.Clear();
 }
 
 void ACarlaRecorder::Write(double DeltaSeconds)
@@ -418,6 +433,8 @@ void ACarlaRecorder::Write(double DeltaSeconds)
     PhysicsControls.Write(File);
     TrafficLightTimes.Write(File);
   }
+  // custom DReyeVR data
+  DReyeVRData.Write(File);
 
   // end
   Frames.WriteEnd(File);
@@ -661,4 +678,30 @@ void ACarlaRecorder::CreateRecorderEventAdd(
     // Bounding box in local coordinates
     AddActorBoundingBox(CarlaActor);
   }
+}
+
+// DReyeVR replayer functions
+void ACarlaRecorder::RecPlayPause()
+{
+  Replayer.PlayPause();
+}
+
+void ACarlaRecorder::RecFastForward()
+{
+  Replayer.Advance(1.f);
+}
+
+void ACarlaRecorder::RecRewind()
+{
+  Replayer.Advance(-1.f);
+}
+
+void ACarlaRecorder::RecRestart()
+{
+  Replayer.Restart();
+}
+
+void ACarlaRecorder::IncrTimeFactor(const float Amnt_s)
+{
+  Replayer.IncrTimeFactor(Amnt_s);
 }
