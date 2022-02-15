@@ -339,6 +339,8 @@ void AEgoVehicle::MirrorParams::Initialize(class UStaticMeshComponent *MirrorSM,
     Reflection->bShowPreviewPlane = false;
     Reflection->HideComponent(VehicleMesh);
     Reflection->SetVisibility(true);
+    /// TODO: use USceneCaptureComponent::ShowFlags to define what gets rendered in the mirror
+    // https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/FEngineShowFlags/
 }
 
 void AEgoVehicle::ConstructMirrors()
