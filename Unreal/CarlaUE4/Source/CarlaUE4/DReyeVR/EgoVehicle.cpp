@@ -68,6 +68,10 @@ void AEgoVehicle::ReadConfigVariables()
     InitMirrorParams("Rear", RearMirrorParams);
     InitMirrorParams("Left", LeftMirrorParams);
     InitMirrorParams("Right", RightMirrorParams);
+    // rear mirror chassis
+    ReadConfigValue("Mirrors", "RearMirrorChassisPos", RearMirrorChassisPos);
+    ReadConfigValue("Mirrors", "RearMirrorChassisRot", RearMirrorChassisRot);
+    ReadConfigValue("Mirrors", "RearMirrorChassisScale", RearMirrorChassisScale);
     // steering wheel
     ReadConfigValue("SteeringWheel", "InitLocation", InitWheelLocation);
     ReadConfigValue("SteeringWheel", "InitRotation", InitWheelRotation);
@@ -345,37 +349,51 @@ void AEgoVehicle::MirrorParams::Initialize(class UStaticMeshComponent *MirrorSM,
 
 void AEgoVehicle::ConstructMirrors()
 {
-    static ConstructorHelpers::FObjectFinder<UMaterial> MirrorTexture(
-        TEXT("Material'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/"
-             "Mirror_DReyeVR.Mirror_DReyeVR'"));
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneSM(TEXT("StaticMesh'/Engine/BasicShapes/Plane.Plane'"));
 
     class USkeletalMeshComponent *VehicleMesh = GetMesh();
     /// Rear mirror
     if (RearMirrorParams.Enabled)
     {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(
+            TEXT("StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/"
+                 "RearMirror_DReyeVR_Glass_SM.RearMirror_DReyeVR_Glass_SM'"));
         RearMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorSM")));
-        RearMirrorSM->SetStaticMesh(PlaneSM.Object);
-        RearMirrorSM->SetMaterial(0, MirrorTexture.Object);
+        RearMirrorSM->SetStaticMesh(RearSM.Object);
         RearReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RearMirrorParams.Name + "Refl")));
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
-        UE_LOG(LogTemp, Warning, TEXT("Rear percentage: %.3f"), RearMirrorParams.ScreenPercentage);
+        // also add the chassis for this mirror
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(TEXT(
+            "StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/RearMirror_DReyeVR_SM.RearMirror_DReyeVR_SM'"));
+        RearMirrorChassisSM =
+            CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorChassisSM")));
+        RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
+        RearMirrorChassisSM->SetupAttachment(VehicleMesh);
+        RearMirrorChassisSM->SetRelativeLocation(RearMirrorChassisPos);
+        RearMirrorChassisSM->SetRelativeRotation(RearMirrorChassisRot);
+        RearMirrorChassisSM->SetRelativeScale3D(RearMirrorChassisScale);
+        RearMirrorChassisSM->SetGenerateOverlapEvents(false); // don't collide with itself
+        RearMirrorChassisSM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        RearMirrorChassisSM->SetVisibility(true);
+        RearMirrorSM->SetupAttachment(RearMirrorChassisSM);
     }
     /// Left mirror
     if (LeftMirrorParams.Enabled)
     {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(TEXT(
+            "StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/LeftMirror_DReyeVR_SM.LeftMirror_DReyeVR_SM'"));
         LeftMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(LeftMirrorParams.Name + "MirrorSM")));
-        LeftMirrorSM->SetStaticMesh(PlaneSM.Object);
-        LeftMirrorSM->SetMaterial(0, MirrorTexture.Object);
+        LeftMirrorSM->SetStaticMesh(LeftSM.Object);
         LeftReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(LeftMirrorParams.Name + "Refl")));
         LeftMirrorParams.Initialize(LeftMirrorSM, LeftReflection, VehicleMesh);
     }
     /// Right mirror
     if (RightMirrorParams.Enabled)
     {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(
+            TEXT("StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/"
+                 "RightMirror_DReyeVR_SM.RightMirror_DReyeVR_SM'"));
         RightMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RightMirrorParams.Name + "MirrorSM")));
-        RightMirrorSM->SetStaticMesh(PlaneSM.Object);
-        RightMirrorSM->SetMaterial(0, MirrorTexture.Object);
+        RightMirrorSM->SetStaticMesh(RightSM.Object);
         RightReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RightMirrorParams.Name + "Refl")));
         RightMirrorParams.Initialize(RightMirrorSM, RightReflection, VehicleMesh);
     }

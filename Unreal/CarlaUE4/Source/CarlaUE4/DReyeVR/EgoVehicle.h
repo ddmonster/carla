@@ -121,6 +121,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UStaticMeshComponent *RearMirrorSM;
     UPROPERTY(Category = Mirrors, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UPlanarReflectionComponent *RearReflection;
+    // rear mirror chassis (dynamic)
+    UPROPERTY(Category = Mirrors, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    class UStaticMeshComponent *RearMirrorChassisSM;
+    FVector RearMirrorChassisPos, RearMirrorChassisScale;
+    FRotator RearMirrorChassisRot;
 
     ////////////////:INPUTS:////////////////
     /// NOTE: since there are so many functions here, they are defined in EgoInputs.cpp
