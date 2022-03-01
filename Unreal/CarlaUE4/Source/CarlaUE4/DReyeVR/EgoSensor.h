@@ -90,6 +90,7 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     int FrameCapWidth;
     int FrameCapHeight;
     bool bCaptureFrameData;
+    bool bFileFormatJPG = true;
 
     ////////////////:OTHER:////////////////
     int EgoSensorID;
