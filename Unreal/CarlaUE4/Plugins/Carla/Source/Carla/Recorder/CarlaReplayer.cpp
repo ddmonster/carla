@@ -8,8 +8,8 @@
 #include "CarlaRecorder.h"
 #include "Carla/Game/CarlaEpisode.h"
 
-// DReyeVR includes
-#include "Carla/Sensor/DReyeVRSensor.h" // DReyeVRTakeScreenshot
+// DReyeVR include
+#include "Carla/Sensor/DReyeVRSensor.h" // ADReyeVRSensor
 
 #include <ctime>
 #include <sstream>
@@ -782,11 +782,11 @@ void CarlaReplayer::ProcessFrameByFrame()
   if (SyncCurrentFrameId > 0)
     LastTime = FrameStartTimes[SyncCurrentFrameId - 1];
   ProcessToTime(FrameStartTimes[SyncCurrentFrameId] - LastTime, (SyncCurrentFrameId == 0));
-  if (Helper.DReyeVRActorPtr != nullptr)
-  {
-    ADReyeVRSensor *DReyeVRSensor = CastChecked<ADReyeVRSensor>(Helper.DReyeVRActorPtr);
-    DReyeVRSensor->TakeScreenshot(); // have the vehicle camera take a screenshot to record the replay
-  }
+  if (ADReyeVRSensor::GetDReyeVRSensor())
+    // have the vehicle camera take a screenshot to record the replay
+    ADReyeVRSensor::GetDReyeVRSensor()->TakeScreenshot();
+  else
+    UE_LOG(LogTemp, Error, TEXT("No DReyeVR sensor available!"));
 
   // progress to the next frame
   if (SyncCurrentFrameId < FrameStartTimes.size() - 1)
