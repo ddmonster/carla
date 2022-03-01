@@ -259,28 +259,33 @@ void ADReyeVRLevel::FastForward()
 
 void ADReyeVRLevel::Rewind()
 {
-    UCarlaStatics::GetRecorder(GetWorld())->RecRewind();
+    if (UCarlaStatics::GetRecorder(GetWorld()))
+        UCarlaStatics::GetRecorder(GetWorld())->RecRewind();
 }
 
 void ADReyeVRLevel::Restart()
 {
     UE_LOG(LogTemp, Log, TEXT("Restarting recording"));
-    UCarlaStatics::GetRecorder(GetWorld())->RecRestart();
+    if (UCarlaStatics::GetRecorder(GetWorld()))
+        UCarlaStatics::GetRecorder(GetWorld())->RecRestart();
 }
 
 void ADReyeVRLevel::IncrTimestep()
 {
-    UCarlaStatics::GetRecorder(GetWorld())->IncrTimeFactor(0.1);
+    if (UCarlaStatics::GetRecorder(GetWorld()))
+        UCarlaStatics::GetRecorder(GetWorld())->IncrTimeFactor(0.1);
 }
 
 void ADReyeVRLevel::DecrTimestep()
 {
-    UCarlaStatics::GetRecorder(GetWorld())->IncrTimeFactor(-0.1);
+    if (UCarlaStatics::GetRecorder(GetWorld()))
+        UCarlaStatics::GetRecorder(GetWorld())->IncrTimeFactor(-0.1);
 }
 
 void ADReyeVRLevel::SetupReplayer()
 {
-    UCarlaStatics::GetReplayer(GetWorld())->SetSyncMode(bReplaySync);
+    if (UCarlaStatics::GetRecorder(GetWorld()) && UCarlaStatics::GetRecorder(GetWorld())->GetReplayer())
+        UCarlaStatics::GetRecorder(GetWorld())->GetReplayer()->SetSyncMode(bReplaySync);
 }
 
 void ADReyeVRLevel::SetVolume()
