@@ -48,9 +48,6 @@ void ADReyeVRLevel::BeginPlay()
     // Initialize DReyeVR spectator
     SetupSpectator();
 
-    // Initialize recorder/replayer
-    SetupReplayer();
-
     // Initialize control mode
     /// TODO: read in initial control mode from .ini
     ControlMode = DRIVER::HUMAN;
@@ -153,6 +150,12 @@ void ADReyeVRLevel::BeginDestroy()
 void ADReyeVRLevel::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    /// TODO: clean up replay init
+    if (!bRecorderInitiated) // can't do this in constructor
+    {
+        // Initialize recorder/replayer
+        SetupReplayer(); // once this is successfully run, it no longer gets executed
+    }
     if (EgoVehiclePtr && SpectatorPtr && AI_Player)
     {
         if (ControlMode == DRIVER::AI) // when AI is controlling EgoVehicle
@@ -285,7 +288,10 @@ void ADReyeVRLevel::DecrTimestep()
 void ADReyeVRLevel::SetupReplayer()
 {
     if (UCarlaStatics::GetRecorder(GetWorld()) && UCarlaStatics::GetRecorder(GetWorld())->GetReplayer())
+    {
         UCarlaStatics::GetRecorder(GetWorld())->GetReplayer()->SetSyncMode(bReplaySync);
+        bRecorderInitiated = true;
+    }
 }
 
 void ADReyeVRLevel::SetVolume()
