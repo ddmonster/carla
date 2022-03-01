@@ -44,6 +44,7 @@ void AEgoSensor::ReadConfigVariables()
     // variables corresponding to the action of screencapture during replay
     ReadConfigValue("Replayer", "RecordFrames", bCaptureFrameData);
     ReadConfigValue("Replayer", "FileFormatJPG", bFileFormatJPG);
+    ReadConfigValue("Replayer", "LinearGamma", bFrameCapForceLinearGamma);
     ReadConfigValue("Replayer", "FrameWidth", FrameCapWidth);
     ReadConfigValue("Replayer", "FrameHeight", FrameCapHeight);
     ReadConfigValue("Replayer", "FrameDir", FrameCapLocation);
@@ -329,8 +330,7 @@ void AEgoSensor::ConstructFrameCapture()
         // CaptureRenderTarget->OverrideFormat = EPixelFormat::PF_FloatRGB;
         CaptureRenderTarget->AddressX = TextureAddress::TA_Clamp;
         CaptureRenderTarget->AddressY = TextureAddress::TA_Clamp;
-        const bool bInForceLinearGamma = false;
-        CaptureRenderTarget->InitCustomFormat(FrameCapWidth, FrameCapHeight, PF_B8G8R8A8, bInForceLinearGamma);
+        CaptureRenderTarget->InitCustomFormat(FrameCapWidth, FrameCapHeight, PF_B8G8R8A8, bFrameCapForceLinearGamma);
         check(CaptureRenderTarget->GetSurfaceWidth() > 0 && CaptureRenderTarget->GetSurfaceHeight() > 0);
 
         FrameCap = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("FrameCap"));
@@ -384,7 +384,8 @@ void AEgoSensor::TakeScreenshot()
     if (bCaptureFrameData && FrameCap && Camera)
     {
         FMinimalViewInfo DesiredView;
-        const FString Suffix = FString::Printf(TEXT("%04d.png"), ScreenshotCount);
+        // using 5 digits to reach frame 99999 ~ 30m (assuming ~50fps frame capture)
+        const FString Suffix = FString::Printf(TEXT("%05d.png"), ScreenshotCount);
         Camera->GetCameraView(0, DesiredView);
         FrameCap->SetCameraView(DesiredView); // move camera to the Camera view
         FrameCap->CaptureScene();             // also available: CaptureSceneDeferred()
