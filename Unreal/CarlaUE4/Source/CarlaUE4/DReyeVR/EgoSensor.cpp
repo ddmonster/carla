@@ -89,7 +89,6 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
                           Vehicle->GetVehicleInputs() // User inputs
         );
     }
-    TickFrameCapture();
     TickCount++;
 }
 
@@ -371,16 +370,16 @@ void AEgoSensor::InitFrameCapture()
     }
 }
 
-void AEgoSensor::TickFrameCapture()
+void AEgoSensor::TakeScreenshot()
 {
-    // frame capture
     if (bCaptureFrameData && FrameCap && Camera)
     {
         FMinimalViewInfo DesiredView;
+        const FString Suffix = FString::Printf(TEXT("%04d.png"), ScreenshotCount);
         Camera->GetCameraView(0, DesiredView);
         FrameCap->SetCameraView(DesiredView); // move camera to the Camera view
         FrameCap->CaptureScene();             // also available: CaptureSceneDeferred()
-        const FString Suffix = FString::Printf(TEXT("%04d.png"), TickCount);
+        ScreenshotCount++;                    // progress to next frame
         SaveFrameToDisk(*CaptureRenderTarget, FPaths::Combine(FrameCapLocation, FrameCapFilename + Suffix));
     }
 }

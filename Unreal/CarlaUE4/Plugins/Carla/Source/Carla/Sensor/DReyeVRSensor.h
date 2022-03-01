@@ -46,6 +46,10 @@ class CARLA_API ADReyeVRSensor : public ASensor
     bool IsReplaying() const;
     void UpdateWithReplayData(const class DReyeVR::AggregateData &RecorderData, const double Per); // starts replaying
     void StopReplaying();
+    virtual void TakeScreenshot()
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Not implemented! Implement in EgoSensor!"));
+    };
 
   protected:
     void BeginPlay() override;

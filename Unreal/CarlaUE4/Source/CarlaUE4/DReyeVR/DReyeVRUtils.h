@@ -276,6 +276,7 @@ static void SaveFrameToDisk(UTextureRenderTarget2D &RenderTarget, const FString 
     ImageTask->PixelPreProcessors.Add(TAsyncAlphaWrite<FColor>(255));
     FHighResScreenshotConfig &HighResScreenshotConfig = GetHighResScreenshotConfig();
     HighResScreenshotConfig.ImageWriteQueue->Enqueue(MoveTemp(ImageTask));
+    UE_LOG(LogTemp, Log, TEXT("Saving screenshot to %s"), *FilePath);
 
     /// TODO: write the OutBMP to disk via some ppm faniciness??
     // might need to buffer several images then write all at once
