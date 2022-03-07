@@ -43,6 +43,13 @@ void CarlaRecorderWeather::Read(std::ifstream &InFile)
   ReadValue<float>(InFile, this->Params.RayleighScatteringScale);
 }
 
+std::string CarlaRecorderWeather::Print() const
+{
+  std::ostringstream oss;
+  oss << TCHAR_TO_UTF8(*Params.ToString());
+  return oss.str();
+}
+
 // ---------------------------------------------
 
 void CarlaRecorderWeathers::Clear(void)

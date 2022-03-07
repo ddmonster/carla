@@ -51,4 +51,23 @@ struct CARLA_API FWeatherParameters
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin = "0.0", ClampMax = "2.0", UIMin = "0.0", UIMax = "2.0"))
   float RayleighScatteringScale = 0.0331f;
+
+  FString ToString() const
+  {
+    FString Print;
+    Print += FString::Printf(TEXT("Cloudiness: %.2f, "), Cloudiness);
+    Print += FString::Printf(TEXT("Precipitation: %.2f, "), Precipitation);
+    Print += FString::Printf(TEXT("PrecipitationDeposits: %.2f, "), PrecipitationDeposits);
+    Print += FString::Printf(TEXT("WindIntensity: %.2f, "), WindIntensity);
+    Print += FString::Printf(TEXT("SunAzimuthAngle: %.2f, "), SunAzimuthAngle);
+    Print += FString::Printf(TEXT("SunAltitudeAngle: %.2f, "), SunAltitudeAngle);
+    Print += FString::Printf(TEXT("FogDensity: %.2f, "), FogDensity);
+    Print += FString::Printf(TEXT("FogDistance: %.2f, "), FogDistance);
+    Print += FString::Printf(TEXT("FogFalloff: %.2f, "), FogFalloff);
+    Print += FString::Printf(TEXT("Wetness: %.2f, "), Wetness);
+    Print += FString::Printf(TEXT("ScatteringIntensity: %.2f, "), ScatteringIntensity);
+    Print += FString::Printf(TEXT("MieScatteringScale: %.2f, "), MieScatteringScale);
+    Print += FString::Printf(TEXT("RayleighScatteringScale: %.2f, "), RayleighScatteringScale);
+    return Print;
+  }
 };

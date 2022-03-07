@@ -19,6 +19,8 @@ struct CarlaRecorderWeather
   void Read(std::ifstream &InFile);
 
   void Write(std::ofstream &OutFile) const;
+
+  std::string Print() const;
 };
 #pragma pack(pop)
 
