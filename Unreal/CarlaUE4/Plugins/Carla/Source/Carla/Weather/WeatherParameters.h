@@ -52,6 +52,30 @@ struct CARLA_API FWeatherParameters
   UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin = "0.0", ClampMax = "2.0", UIMin = "0.0", UIMax = "2.0"))
   float RayleighScatteringScale = 0.0331f;
 
+  bool operator==(const FWeatherParameters &Other) const
+  {
+    return (
+      Cloudiness == Other.Cloudiness &&
+      Precipitation == Other.Precipitation &&
+      PrecipitationDeposits == Other.PrecipitationDeposits &&
+      WindIntensity == Other.WindIntensity &&
+      SunAzimuthAngle == Other.SunAzimuthAngle &&
+      SunAltitudeAngle == Other.SunAltitudeAngle &&
+      FogDensity == Other.FogDensity &&
+      FogDistance == Other.FogDistance &&
+      FogFalloff == Other.FogFalloff &&
+      Wetness == Other.Wetness &&
+      ScatteringIntensity == Other.ScatteringIntensity &&
+      MieScatteringScale == Other.MieScatteringScale &&
+      RayleighScatteringScale == Other.RayleighScatteringScale
+    );
+  }
+
+  bool operator!=(const FWeatherParameters &Other) const
+  {
+    return !(*this == Other);
+  }
+
   FString ToString() const
   {
     FString Print;

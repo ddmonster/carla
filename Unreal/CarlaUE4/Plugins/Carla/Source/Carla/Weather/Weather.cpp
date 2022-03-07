@@ -48,10 +48,14 @@ void AWeather::NotifyWeather()
 
 void AWeather::SetWeather(const FWeatherParameters &InWeather)
 {
-  Weather = InWeather;
+  // check if weather has changed (else, do nothing)
+  if (InWeather != Weather)
+  {
+    Weather = InWeather;
 
-  // Record the weather update
-  AddWeatherToRecorder();
+    // Record the weather update
+    AddWeatherToRecorder();
+  }
 }
 
 void AWeather::AddWeatherToRecorder() const
