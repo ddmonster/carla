@@ -275,6 +275,11 @@ void ACarlaRecorder::AddDReyeVRData()
 {
   // Add the latest instance of the DReyeVR snapshot to our data
   DReyeVRData.Add(DReyeVRDataRecorder(ADReyeVRSensor::Data));
+
+  for (auto *A : ADReyeVRSensor::AllCustomActors)
+  {
+    DReyeVRCustomActorRecorderData.Add(DReyeVRCustomActorRecorder(A));
+  }
 }
 
 void ACarlaRecorder::AddTriggerVolume(const ATrafficSignBase &TrafficSign)
@@ -408,6 +413,7 @@ void ACarlaRecorder::Clear(void)
   PhysicsControls.Clear();
   TrafficLightTimes.Clear();
   DReyeVRData.Clear();
+  DReyeVRCustomActorRecorderData.Clear();
   Weathers.Clear();
 }
 
@@ -447,6 +453,9 @@ void ACarlaRecorder::Write(double DeltaSeconds)
   }
   // custom DReyeVR data
   DReyeVRData.Write(File);
+
+  // custom DReyeVR Actor data write
+  DReyeVRCustomActorRecorderData.Write(File);
 
   // weather state
   Weathers.Write(File);

@@ -15,6 +15,10 @@
 #include "CarlaRecorderLightScene.h"
 #include "CarlaRecorderWeather.h"
 
+// DReyeVR includes
+#include "DReyeVRRecorder.h"
+#include "DReyeVRCustomActor.h"
+
 #include <unordered_map>
 
 class UCarlaEpisode;
@@ -73,6 +77,9 @@ public:
 
   // update the DReyeVR ego sensor
   void ProcessReplayerDReyeVRData(const DReyeVRDataRecorder &DReyeVRDataInstance, const double Per);
+
+  // update the DReyeVR custom actors
+  void ProcessReplayerDReyeVRCustomActor(const DReyeVRCustomActorRecorder &DReyeVRCustomActorInstance, const double Per);
 
   // set the camera position to follow an actor
   bool SetCameraPosition(uint32_t Id, FVector Offset, FQuat Rotation);

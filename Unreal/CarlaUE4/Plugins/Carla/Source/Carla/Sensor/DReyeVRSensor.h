@@ -4,9 +4,10 @@
 #include "Carla/Actor/ActorDescription.h" // FActorDescription
 #include "Carla/Game/CarlaEpisode.h"      // UCarlaEpisode
 #include "Carla/Sensor/Sensor.h"          // ASensor
-#include "DReyeVRData.h"                  // AggregateData struct
+#include "DReyeVRData.h"                  // AggregateData, CustomActorData
 #include <cstdint>                        // int64_t
 #include <string>
+#include <vector>
 
 #include "DReyeVRSensor.generated.h"
 
@@ -31,6 +32,7 @@ class CARLA_API ADReyeVRSensor : public ASensor
     // everything stored in the sensor is held in this struct
     /// TODO: make this non-static and use a smarter scheme for cross-class communication
     static class DReyeVR::AggregateData *Data;
+    static std::vector<class DReyeVR::CustomActorData *> AllCustomActors;
 
     class DReyeVR::AggregateData *GetData()
     {
@@ -45,6 +47,7 @@ class CARLA_API ADReyeVRSensor : public ASensor
 
     bool IsReplaying() const;
     void UpdateWithReplayData(const class DReyeVR::AggregateData &RecorderData, const double Per); // starts replaying
+    void UpdateDReyeVRActor(const class DReyeVR::CustomActorData &RecorderData, const double Per); // replay actor data
     void StopReplaying();
     virtual void TakeScreenshot()
     {

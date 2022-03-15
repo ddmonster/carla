@@ -528,6 +528,69 @@ class AggregateData // all DReyeVR sensor data is held here
     struct FocusInfo FocusData;
     struct UserInputs Inputs;
 };
+
+class CustomActorData
+{
+  public:
+    void Read(std::ifstream &InFile)
+    {
+        ReadFVector(InFile, Location);
+        ReadFRotator(InFile, Rotation);
+        ReadFString(InFile, Other);
+        ReadFString(InFile, Name);
+    }
+
+    void Write(std::ofstream &OutFile) const
+    {
+        WriteFVector(OutFile, Location);
+        WriteFRotator(OutFile, Rotation);
+        WriteFString(OutFile, Other);
+        WriteFString(OutFile, Name);
+    }
+
+    FString ToString() const
+    {
+        FString Print = "";
+        Print += FString::Printf(TEXT("Name:%s,"), *Name);
+        Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
+        Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
+        Print += FString::Printf(TEXT("Other:%s,"), *Other);
+        return Print;
+    }
+
+    // getters
+    const FVector &GetLocation() const
+    {
+        return Location;
+    }
+    const FRotator &GetRotation() const
+    {
+        return Rotation;
+    }
+    const FString &GetName() const
+    {
+        return Name;
+    }
+    const FString &GetOther() const
+    {
+        return Other;
+    }
+
+    // single setter
+    void Update(const FString &NameIn, const FVector &LocationIn, const FRotator &RotationIn, const FString &OtherIn)
+    {
+        Location = LocationIn;
+        Rotation = RotationIn;
+        Other = OtherIn;
+        Name = NameIn;
+    }
+
+  private:
+    FVector Location;
+    FRotator Rotation;
+    FString Other;
+    FString Name; // unique actor name of this actor
+};
 }; // namespace DReyeVR
 
 #endif

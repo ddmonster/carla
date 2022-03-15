@@ -165,7 +165,8 @@ private:
   void ProcessWeather(void);
 
   // DReyeVR recordings
-  void ProcessDReyeVRData(void);
+  void ProcessDReyeVRData(double Per, double DeltaTime);
+  void ProcessDReyeVRCustomActor(double Per, double DeltaTime);
 
   // For restarting the recording with the same params
   struct LastReplayStruct
@@ -176,10 +177,6 @@ private:
     uint32_t ThisFollowId = 0;
   };
   LastReplayStruct LastReplay;
-
-  // DReyeVR sensor data
-  DReyeVRDataRecorder DReyeVRDataInstance;
-  void UpdateDReyeVRSensor(double Per, double DeltaTime);
 
   bool bReplaySync = false;
   std::vector<double> FrameStartTimes;

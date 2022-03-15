@@ -33,6 +33,7 @@
 #include "CarlaReplayer.h"
 // DReyeVR packet
 #include "DReyeVRRecorder.h"
+#include "DReyeVRCustomActor.h"
 
 #include "CarlaRecorder.generated.h"
 
@@ -65,7 +66,8 @@ enum class CarlaRecorderPacketId : uint8_t
   TriggerVolume,
   Weather,
   // "We suggest to use id over 100 for user custom packets, because this list will keep growing in the future"
-  DReyeVR = 139 // out custom DReyeVR packet
+  DReyeVR = 139,           // our custom DReyeVR packet
+  DReyeVRCustomActor = 140 // our 2nd custom DReyeVR packet
 };
 
 /// Recorder for the simulation
@@ -205,6 +207,7 @@ private:
   CarlaRecorderTrafficLightTimes TrafficLightTimes;
   CarlaRecorderWeathers Weathers;
   DReyeVRDataRecorders DReyeVRData;
+  DReyeVRCustomActorRecorders DReyeVRCustomActorRecorderData;
 
 
   // replayer

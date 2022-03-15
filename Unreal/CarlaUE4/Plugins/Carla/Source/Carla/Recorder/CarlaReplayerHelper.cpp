@@ -494,6 +494,14 @@ void CarlaReplayerHelper::ProcessReplayerDReyeVRData(const DReyeVRDataRecorder &
     UE_LOG(LogTemp, Error, TEXT("No DReyeVR sensor available!"));
 }
 
+void CarlaReplayerHelper::ProcessReplayerDReyeVRCustomActor(const DReyeVRCustomActorRecorder &DReyeVRCustomActorInstance, const double Per)
+{
+  if (ADReyeVRSensor::GetDReyeVRSensor())
+    ADReyeVRSensor::GetDReyeVRSensor()->UpdateDReyeVRActor(DReyeVRCustomActorInstance.Data, Per);
+  else
+    UE_LOG(LogTemp, Error, TEXT("No DReyeVR sensor available!"));
+}
+
 void CarlaReplayerHelper::SetActorVelocity(FCarlaActor *CarlaActor, FVector Velocity)
 {
   if (!CarlaActor)
