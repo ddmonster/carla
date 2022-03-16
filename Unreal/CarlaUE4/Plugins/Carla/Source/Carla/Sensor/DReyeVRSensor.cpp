@@ -143,7 +143,7 @@ void ADReyeVRSensor::PostPhysTick(UWorld *W, ELevelTick TickType, float DeltaSec
                 });
 }
 
-void ADReyeVRSensor::UpdateWithReplayData(const DReyeVR::AggregateData &RecorderData, const double Per)
+void ADReyeVRSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const double Per)
 {
     // update global values
     bIsReplaying = true; // Replay has started
@@ -186,6 +186,20 @@ void ADReyeVRSensor::UpdateWithReplayData(const DReyeVR::AggregateData &Recorder
         {
             // assign updated DReyeVR data without interpolation
             (*ADReyeVRSensor::Data) = RecorderData;
+        }
+    }
+}
+
+void ADReyeVRSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)
+{
+    for (auto *A : ADReyeVRSensor::AllCustomActors)
+    {
+        /// TODO: find a better way than traverse by name (maybe unordered_map?)
+        if (A->GetName() == RecorderData.GetName())
+        {
+            A->Update(RecorderData.GetName(), RecorderData.GetLocation(), RecorderData.GetRotation(),
+                      RecorderData.GetOther());
+            break;
         }
     }
 }
@@ -249,19 +263,4 @@ class ADReyeVRSensor *ADReyeVRSensor::GetDReyeVRSensor()          // static gett
     }
 
     return DReyeVRSensorPtr;
-}
-
-/// NOTE: this to define the static variables that are set by the replayer
-void ADReyeVRSensor::UpdateDReyeVRActor(const DReyeVR::CustomActorData &RecorderData, const double Per)
-{
-    for (auto *A : ADReyeVRSensor::AllCustomActors)
-    {
-        /// TODO: find a better way than traverse by name (maybe unordered_map?)
-        if (A->GetName() == RecorderData.GetName())
-        {
-            A->Update(RecorderData.GetName(), RecorderData.GetLocation(), RecorderData.GetRotation(),
-                      RecorderData.GetOther());
-            break;
-        }
-    }
 }

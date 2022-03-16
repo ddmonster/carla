@@ -486,18 +486,10 @@ bool CarlaReplayerHelper::ProcessReplayerFinish(bool bApplyAutopilot, bool bIgno
   return true;
 }
 
-void CarlaReplayerHelper::ProcessReplayerDReyeVRData(const DReyeVRDataRecorder &DReyeVRDataInstance, const double Per)
+template <typename T> void CarlaReplayerHelper::ProcessReplayerDReyeVRData(const T &DReyeVRDataInstance, const double Per)
 {
   if (ADReyeVRSensor::GetDReyeVRSensor())
-    ADReyeVRSensor::GetDReyeVRSensor()->UpdateWithReplayData(DReyeVRDataInstance.Data, Per);
-  else
-    UE_LOG(LogTemp, Error, TEXT("No DReyeVR sensor available!"));
-}
-
-void CarlaReplayerHelper::ProcessReplayerDReyeVRCustomActor(const DReyeVRCustomActorRecorder &DReyeVRCustomActorInstance, const double Per)
-{
-  if (ADReyeVRSensor::GetDReyeVRSensor())
-    ADReyeVRSensor::GetDReyeVRSensor()->UpdateDReyeVRActor(DReyeVRCustomActorInstance.Data, Per);
+    ADReyeVRSensor::GetDReyeVRSensor()->UpdateData(DReyeVRDataInstance.Data, Per);
   else
     UE_LOG(LogTemp, Error, TEXT("No DReyeVR sensor available!"));
 }

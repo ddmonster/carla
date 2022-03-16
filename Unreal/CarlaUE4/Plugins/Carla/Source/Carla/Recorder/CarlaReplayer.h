@@ -165,8 +165,7 @@ private:
   void ProcessWeather(void);
 
   // DReyeVR recordings
-  void ProcessDReyeVRData(double Per, double DeltaTime);
-  void ProcessDReyeVRCustomActor(double Per, double DeltaTime);
+  template <typename T> void ProcessDReyeVRData(double Per, double DeltaTime);
 
   // For restarting the recording with the same params
   struct LastReplayStruct

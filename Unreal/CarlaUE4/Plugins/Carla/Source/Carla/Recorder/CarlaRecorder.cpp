@@ -19,6 +19,7 @@
 
 // DReyeVR include
 #include "Carla/Sensor/DReyeVRSensor.h"
+#include "DReyeVRRecorder.h"
 
 #include <ctime>
 #include <sstream>
@@ -274,11 +275,11 @@ void ACarlaRecorder::AddActorBoundingBox(FCarlaActor *CarlaActor)
 void ACarlaRecorder::AddDReyeVRData()
 {
   // Add the latest instance of the DReyeVR snapshot to our data
-  DReyeVRData.Add(DReyeVRDataRecorder(ADReyeVRSensor::Data));
+  DReyeVRAggData.Add(DReyeVRDataRecorder<DReyeVR::AggregateData>(ADReyeVRSensor::Data));
 
   for (auto *A : ADReyeVRSensor::AllCustomActors)
   {
-    DReyeVRCustomActorRecorderData.Add(DReyeVRCustomActorRecorder(A));
+    DReyeVRCustomActorData.Add(DReyeVRDataRecorder<DReyeVR::CustomActorData>(A));
   }
 }
 
@@ -412,8 +413,8 @@ void ACarlaRecorder::Clear(void)
   TriggerVolumes.Clear();
   PhysicsControls.Clear();
   TrafficLightTimes.Clear();
-  DReyeVRData.Clear();
-  DReyeVRCustomActorRecorderData.Clear();
+  DReyeVRAggData.Clear();
+  DReyeVRCustomActorData.Clear();
   Weathers.Clear();
 }
 
@@ -452,10 +453,10 @@ void ACarlaRecorder::Write(double DeltaSeconds)
     TrafficLightTimes.Write(File);
   }
   // custom DReyeVR data
-  DReyeVRData.Write(File);
+  DReyeVRAggData.Write(File);
 
   // custom DReyeVR Actor data write
-  DReyeVRCustomActorRecorderData.Write(File);
+  DReyeVRCustomActorData.Write(File);
 
   // weather state
   Weathers.Write(File);

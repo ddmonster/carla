@@ -46,8 +46,8 @@ class CARLA_API ADReyeVRSensor : public ASensor
     }
 
     bool IsReplaying() const;
-    void UpdateWithReplayData(const class DReyeVR::AggregateData &RecorderData, const double Per); // starts replaying
-    void UpdateDReyeVRActor(const class DReyeVR::CustomActorData &RecorderData, const double Per); // replay actor data
+    void UpdateData(const class DReyeVR::AggregateData &RecorderData, const double Per);   // starts replaying
+    void UpdateData(const class DReyeVR::CustomActorData &RecorderData, const double Per); // replay actor data
     void StopReplaying();
     virtual void TakeScreenshot()
     {

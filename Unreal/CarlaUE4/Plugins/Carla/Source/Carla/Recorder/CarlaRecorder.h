@@ -31,9 +31,10 @@
 #include "CarlaRecorderState.h"
 #include "CarlaRecorderWeather.h"
 #include "CarlaReplayer.h"
-// DReyeVR packet
+
+// DReyeVR includes
 #include "DReyeVRRecorder.h"
-#include "DReyeVRCustomActor.h"
+#include "Carla/Sensor/DReyeVRData.h"
 
 #include "CarlaRecorder.generated.h"
 
@@ -43,6 +44,9 @@ class ACarlaWheeledVehicle;
 class UCarlaLight;
 class ATrafficSignBase;
 class ATrafficLightBase;
+
+#define DREYEVR_PACKET_ID 139
+#define DREYEVR_CUSTOM_ACTOR_PACKET_ID 140
 
 enum class CarlaRecorderPacketId : uint8_t
 {
@@ -66,8 +70,8 @@ enum class CarlaRecorderPacketId : uint8_t
   TriggerVolume,
   Weather,
   // "We suggest to use id over 100 for user custom packets, because this list will keep growing in the future"
-  DReyeVR = 139,           // our custom DReyeVR packet
-  DReyeVRCustomActor = 140 // our 2nd custom DReyeVR packet
+  DReyeVR = DREYEVR_PACKET_ID,                        // our custom DReyeVR packet (for raw sensor data)
+  DReyeVRCustomActor = DREYEVR_CUSTOM_ACTOR_PACKET_ID // custom DReyeVR actors (not raw sensor data)
 };
 
 /// Recorder for the simulation
@@ -206,9 +210,8 @@ private:
   CarlaRecorderPhysicsControls PhysicsControls;
   CarlaRecorderTrafficLightTimes TrafficLightTimes;
   CarlaRecorderWeathers Weathers;
-  DReyeVRDataRecorders DReyeVRData;
-  DReyeVRCustomActorRecorders DReyeVRCustomActorRecorderData;
-
+  DReyeVRDataRecorders<DReyeVR::AggregateData, DREYEVR_PACKET_ID> DReyeVRAggData;
+  DReyeVRDataRecorders<DReyeVR::CustomActorData, DREYEVR_CUSTOM_ACTOR_PACKET_ID> DReyeVRCustomActorData;
 
   // replayer
   CarlaReplayer Replayer;

@@ -403,7 +403,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
       // DReyeVR eye logging data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVR):
         if (bFrameFound)
-          ProcessDReyeVRData(Per, Time);
+          ProcessDReyeVRData<DReyeVRDataRecorder<DReyeVR::AggregateData>>(Per, Time);
         else
           SkipPacket();
         break;
@@ -411,7 +411,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
       // DReyeVR eye logging data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVRCustomActor):
         if (bFrameFound)
-          ProcessDReyeVRCustomActor(Per, Time);
+          ProcessDReyeVRData<DReyeVRDataRecorder<DReyeVR::CustomActorData>>(Per, Time);
         else
           SkipPacket();
         break;
@@ -646,33 +646,20 @@ void CarlaReplayer::ProcessWeather(void)
   }
 }
 
-void CarlaReplayer::ProcessDReyeVRData(double Per, double DeltaTime)
+template <typename T> void CarlaReplayer::ProcessDReyeVRData(double Per, double DeltaTime)
 {
   uint16_t Total;
   // custom DReyeVR packets
 
-  // read Total DReyeVRevents
+  // read Total DReyeVR events
   ReadValue<uint16_t>(File, Total); // read number of events
 
   check(Total == 1); // there should only ever be one recorded DReyeVR sensor
   for (uint16_t i = 0; i < Total; ++i)
   {
-    DReyeVRDataRecorder DReyeVRDataInstance;
+    T DReyeVRDataInstance;
     DReyeVRDataInstance.Read(File);
-    Helper.ProcessReplayerDReyeVRData(DReyeVRDataInstance, Per);
-  }
-}
-
-void CarlaReplayer::ProcessDReyeVRCustomActor(double Per, double DeltaTime)
-{
-  uint16_t Total;
-  ReadValue<uint16_t>(File, Total);
-
-  for (uint16_t i = 0; i < Total; ++i)
-  {
-    DReyeVRCustomActorRecorder Tmp;
-    Tmp.Read(File);
-    Helper.ProcessReplayerDReyeVRCustomActor(Tmp, Per);
+    Helper.ProcessReplayerDReyeVRData<T>(DReyeVRDataInstance, Per);
   }
 }
 
