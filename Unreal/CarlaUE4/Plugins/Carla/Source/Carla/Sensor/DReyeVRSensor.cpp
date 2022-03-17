@@ -197,8 +197,7 @@ void ADReyeVRSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, co
         /// TODO: find a better way than traverse by name (maybe unordered_map?)
         if (A->GetName() == RecorderData.GetName())
         {
-            A->Update(RecorderData.GetName(), RecorderData.GetLocation(), RecorderData.GetRotation(),
-                      RecorderData.GetOther());
+            A->Update(RecorderData);
             break;
         }
     }

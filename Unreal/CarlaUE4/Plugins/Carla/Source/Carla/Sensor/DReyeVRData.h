@@ -536,6 +536,7 @@ class CustomActorData
     {
         ReadFVector(InFile, Location);
         ReadFRotator(InFile, Rotation);
+        ReadFVector(InFile, Scale3D);
         ReadFString(InFile, Other);
         ReadFString(InFile, Name);
     }
@@ -544,6 +545,7 @@ class CustomActorData
     {
         WriteFVector(OutFile, Location);
         WriteFRotator(OutFile, Rotation);
+        WriteFVector(OutFile, Scale3D);
         WriteFString(OutFile, Other);
         WriteFString(OutFile, Name);
     }
@@ -554,6 +556,7 @@ class CustomActorData
         Print += FString::Printf(TEXT("Name:%s,"), *Name);
         Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
         Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
+        Print += FString::Printf(TEXT("Scale3D:%s,"), *Scale3D.ToString());
         Print += FString::Printf(TEXT("Other:%s,"), *Other);
         return Print;
     }
@@ -562,6 +565,10 @@ class CustomActorData
     const FVector &GetLocation() const
     {
         return Location;
+    }
+    const FVector &GetScale3D() const
+    {
+        return Scale3D;
     }
     const FRotator &GetRotation() const
     {
@@ -577,16 +584,27 @@ class CustomActorData
     }
 
     // single setter
-    void Update(const FString &NameIn, const FVector &LocationIn, const FRotator &RotationIn, const FString &OtherIn)
+    void Update(const FString &NameIn, const FVector &LocationIn, const FRotator &RotationIn, const FVector &ScaleIn,
+                const FString &OtherIn)
     {
         Location = LocationIn;
         Rotation = RotationIn;
+        Scale3D = ScaleIn;
         Other = OtherIn;
         Name = NameIn;
+    }
+    void Update(const DReyeVR::CustomActorData &OtherActor)
+    {
+        Location = OtherActor.GetLocation();
+        Rotation = OtherActor.GetRotation();
+        Scale3D = OtherActor.GetScale3D();
+        Other = OtherActor.GetOther();
+        Name = OtherActor.GetName();
     }
 
   private:
     FVector Location;
+    FVector Scale3D;
     FRotator Rotation;
     FString Other;
     FString Name; // unique actor name of this actor
