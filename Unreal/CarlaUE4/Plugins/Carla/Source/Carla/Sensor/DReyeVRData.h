@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 /// NOTE: all functions here are inline to avoid nasty linker errors. Though this can
 // probably be refactored to have a proper associated .cpp file
@@ -532,8 +533,23 @@ class AggregateData // all DReyeVR sensor data is held here
 class CustomActorData
 {
   public:
+    FString Name; // unique actor name of this actor
+    FVector Location;
+    FRotator Rotation;
+    FVector Scale3D;
+    FString Other; // any other data deemed necessary to record
+    char TypeId;
+    enum class Types : uint8_t
+    {
+        SPHERE = 0,
+        CROSS
+    };
+
+    CustomActorData() = default;
+
     void Read(std::ifstream &InFile)
     {
+        ReadValue<char>(InFile, TypeId);
         ReadFVector(InFile, Location);
         ReadFRotator(InFile, Rotation);
         ReadFVector(InFile, Scale3D);
@@ -543,6 +559,7 @@ class CustomActorData
 
     void Write(std::ofstream &OutFile) const
     {
+        WriteValue<char>(OutFile, static_cast<char>(TypeId));
         WriteFVector(OutFile, Location);
         WriteFRotator(OutFile, Rotation);
         WriteFVector(OutFile, Scale3D);
@@ -553,6 +570,7 @@ class CustomActorData
     FString ToString() const
     {
         FString Print = "";
+        Print += FString::Printf(TEXT("Type:%d,"), static_cast<int>(TypeId));
         Print += FString::Printf(TEXT("Name:%s,"), *Name);
         Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
         Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
@@ -560,55 +578,8 @@ class CustomActorData
         Print += FString::Printf(TEXT("Other:%s,"), *Other);
         return Print;
     }
-
-    // getters
-    const FVector &GetLocation() const
-    {
-        return Location;
-    }
-    const FVector &GetScale3D() const
-    {
-        return Scale3D;
-    }
-    const FRotator &GetRotation() const
-    {
-        return Rotation;
-    }
-    const FString &GetName() const
-    {
-        return Name;
-    }
-    const FString &GetOther() const
-    {
-        return Other;
-    }
-
-    // single setter
-    void Update(const FString &NameIn, const FVector &LocationIn, const FRotator &RotationIn, const FVector &ScaleIn,
-                const FString &OtherIn)
-    {
-        Location = LocationIn;
-        Rotation = RotationIn;
-        Scale3D = ScaleIn;
-        Other = OtherIn;
-        Name = NameIn;
-    }
-    void Update(const DReyeVR::CustomActorData &OtherActor)
-    {
-        Location = OtherActor.GetLocation();
-        Rotation = OtherActor.GetRotation();
-        Scale3D = OtherActor.GetScale3D();
-        Other = OtherActor.GetOther();
-        Name = OtherActor.GetName();
-    }
-
-  private:
-    FVector Location;
-    FVector Scale3D;
-    FRotator Rotation;
-    FString Other;
-    FString Name; // unique actor name of this actor
 };
+
 }; // namespace DReyeVR
 
 #endif

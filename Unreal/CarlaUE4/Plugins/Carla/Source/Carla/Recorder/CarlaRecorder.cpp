@@ -18,6 +18,9 @@
 #include "CarlaReplayerHelper.h"
 
 // DReyeVR include
+#include "Carla/Actor/DReyeVRCustomActor.h"
+#include "Carla/Game/CarlaStatics.h"
+#include "Carla/Lights/CarlaLightSubsystem.h"
 #include "Carla/Sensor/DReyeVRSensor.h"
 #include "DReyeVRRecorder.h"
 
@@ -277,9 +280,15 @@ void ACarlaRecorder::AddDReyeVRData()
   // Add the latest instance of the DReyeVR snapshot to our data
   DReyeVRAggData.Add(DReyeVRDataRecorder<DReyeVR::AggregateData>(ADReyeVRSensor::Data));
 
-  for (auto *A : ADReyeVRSensor::AllCustomActors)
+  TArray<AActor *> FoundActors;
+  if (GetWorld() != nullptr)
   {
-    DReyeVRCustomActorData.Add(DReyeVRDataRecorder<DReyeVR::CustomActorData>(A));
+      UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADReyeVRCustomActor::StaticClass(), FoundActors);
+  }
+  for (AActor *A : FoundActors)
+  {
+    ADReyeVRCustomActor *CustomActor = CastChecked<ADReyeVRCustomActor>(A);
+    DReyeVRCustomActorData.Add(DReyeVRDataRecorder<DReyeVR::CustomActorData>(&(CustomActor->GetInternals())));
   }
 }
 

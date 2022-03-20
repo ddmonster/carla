@@ -1,6 +1,7 @@
 #include "Carla/Sensor/DReyeVRSensor.h"                // ADReyeVRSensor
 #include "Carla.h"                                     // all carla things
 #include "Carla/Actor/ActorBlueprintFunctionLibrary.h" // MakeGenericSensorDefinition
+#include "Carla/Actor/DReyeVRCustomActor.h"            // ADReyeVRCustomActor
 #include "Carla/Game/CarlaStatics.h"                   // GetGameInstance
 
 #include <sstream>
@@ -12,7 +13,6 @@
 #include "carla/sensor/s11n/DReyeVRSerializer.h" // DReyeVRSerializer::Data
 
 class DReyeVR::AggregateData *ADReyeVRSensor::Data = nullptr;
-std::vector<class DReyeVR::CustomActorData *> ADReyeVRSensor::AllCustomActors = {}; // empty initially
 
 ADReyeVRSensor::ADReyeVRSensor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -190,17 +190,9 @@ void ADReyeVRSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, cons
     }
 }
 
-void ADReyeVRSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)
+void ADReyeVRSensor::UpdateData(const class DReyeVR::CustomActorData &RecorderData, const double Per)
 {
-    for (auto *A : ADReyeVRSensor::AllCustomActors)
-    {
-        /// TODO: find a better way than traverse by name (maybe unordered_map?)
-        if (A->GetName() == RecorderData.GetName())
-        {
-            A->Update(RecorderData);
-            break;
-        }
-    }
+    // should be implemented in the child class impl
 }
 
 void ADReyeVRSensor::StopReplaying()
