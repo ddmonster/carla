@@ -69,6 +69,10 @@ void AEgoSensor::BeginPlay()
     // Register EgoSensor with the CarlaActorRegistry
     Register();
 
+    DReyeVR::CustomActorData Init;
+    Init.Name = "TestName";
+    B = ABall::RequestNewActor(World, Init);
+
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoSensor"));
 }
 
@@ -95,6 +99,12 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
                           FocusInfoData,              // FocusData
                           Vehicle->GetVehicleInputs() // User inputs
         );
+        if (B != nullptr)
+        {
+            B->SetActorLocation(GetData()->GetCameraLocationAbs() + GetData()->GetGazeDir() * 10 * 100.f);
+            B->SetActorScale3D(0.1f * FVector::OneVector);
+            UE_LOG(LogTemp, Log, TEXT("B: %s"), *(B->GetInternals().Location.ToString()));
+        }
     }
     TickCount++;
 }

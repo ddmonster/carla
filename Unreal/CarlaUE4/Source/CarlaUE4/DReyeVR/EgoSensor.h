@@ -3,6 +3,7 @@
 #include "Carla/Sensor/DReyeVRData.h"           // DReyeVR namespace
 #include "Carla/Sensor/DReyeVRSensor.h"         // ADReyeVRSensor
 #include "Components/SceneCaptureComponent2D.h" // USceneCaptureComponent2D
+#include "CustomActors.h"                       // ABall (DReyeVR custom actors)
 #include "EgoVehicle.h"                         // AEgoVehicle;
 #include <chrono>                               // timing threads
 #include <cstdint>
@@ -95,6 +96,9 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     bool bCaptureFrameData;
     bool bFileFormatJPG = true;
     bool bFrameCapForceLinearGamma = true;
+
+    ////////////////:CUSTOMACTORS:////////////////
+    class ABall *B = nullptr;
 
     ////////////////:OTHER:////////////////
     int EgoSensorID;

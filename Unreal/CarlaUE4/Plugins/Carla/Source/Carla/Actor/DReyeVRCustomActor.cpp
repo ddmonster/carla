@@ -31,7 +31,7 @@ void ADReyeVRCustomActor::BeginDestroy()
 
 void ADReyeVRCustomActor::Tick(float DeltaSeconds)
 {
-    if (true) // TODO: is replaying (from DReyeVRSensor??)
+    if (false) // TODO: is replaying (from DReyeVRSensor??)
     {
         // update world state with internals
         this->SetActorLocation(Internals.Location);
