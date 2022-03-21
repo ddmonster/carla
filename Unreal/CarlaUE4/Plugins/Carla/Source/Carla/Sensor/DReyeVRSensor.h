@@ -54,11 +54,11 @@ class CARLA_API ADReyeVRSensor : public ASensor
     };
 
     static class ADReyeVRSensor *GetDReyeVRSensor();
+    static bool bIsReplaying;
 
   protected:
     void BeginPlay() override;
     void BeginDestroy() override;
-    bool bIsReplaying = false; // initially not replaying
 
     class UWorld *World;
     static class UWorld *sWorld; // to get info about the world: time, frames, etc.

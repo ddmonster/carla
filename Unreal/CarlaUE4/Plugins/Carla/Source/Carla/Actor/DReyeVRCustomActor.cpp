@@ -1,5 +1,6 @@
 #include "DReyeVRCustomActor.h"
-#include "Carla/Game/CarlaStatics.h" // GetEpisode
+#include "Carla/Game/CarlaStatics.h"    // GetEpisode
+#include "Carla/Sensor/DReyeVRSensor.h" // ADReyeVRSensor::bIsReplaying
 
 #include <string>
 
@@ -31,7 +32,7 @@ void ADReyeVRCustomActor::BeginDestroy()
 
 void ADReyeVRCustomActor::Tick(float DeltaSeconds)
 {
-    if (false) // TODO: is replaying (from DReyeVRSensor??)
+    if (ADReyeVRSensor::bIsReplaying)
     {
         // update world state with internals
         this->SetActorLocation(Internals.Location);

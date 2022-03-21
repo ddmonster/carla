@@ -13,6 +13,7 @@
 #include "carla/sensor/s11n/DReyeVRSerializer.h" // DReyeVRSerializer::Data
 
 class DReyeVR::AggregateData *ADReyeVRSensor::Data = nullptr;
+bool ADReyeVRSensor::bIsReplaying = false; // initially not replaying
 
 ADReyeVRSensor::ADReyeVRSensor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -146,7 +147,7 @@ void ADReyeVRSensor::PostPhysTick(UWorld *W, ELevelTick TickType, float DeltaSec
 void ADReyeVRSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const double Per)
 {
     // update global values
-    bIsReplaying = true; // Replay has started
+    ADReyeVRSensor::bIsReplaying = true; // Replay has started
     if (ADReyeVRSensor::Data != nullptr)
     {
         // update local values but first interpolate camera and vehicle pose (Location & Rotation)
@@ -197,12 +198,12 @@ void ADReyeVRSensor::UpdateData(const class DReyeVR::CustomActorData &RecorderDa
 
 void ADReyeVRSensor::StopReplaying()
 {
-    bIsReplaying = false;
+    ADReyeVRSensor::bIsReplaying = false;
 }
 
 bool ADReyeVRSensor::IsReplaying() const
 {
-    return bIsReplaying;
+    return ADReyeVRSensor::bIsReplaying;
 }
 
 // smoothly interpolate with Per
