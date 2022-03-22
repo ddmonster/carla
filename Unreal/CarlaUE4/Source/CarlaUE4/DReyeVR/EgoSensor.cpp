@@ -101,9 +101,9 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
         );
         if (B != nullptr)
         {
-            B->SetActorLocation(GetData()->GetCameraLocationAbs() + GetData()->GetGazeDir() * 10 * 100.f);
             B->SetActorScale3D(0.1f * FVector::OneVector);
-            UE_LOG(LogTemp, Log, TEXT("B: %s"), *(B->GetInternals().Location.ToString()));
+            B->SetActorLocation(GetData()->GetCameraLocationAbs() +
+                                GetData()->GetCameraRotationAbs().RotateVector(GetData()->GetGazeDir()) * 10.f * 100.f);
         }
     }
     TickCount++;

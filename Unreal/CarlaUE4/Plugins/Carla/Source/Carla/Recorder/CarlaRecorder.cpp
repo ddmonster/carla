@@ -281,9 +281,9 @@ void ACarlaRecorder::AddDReyeVRData()
   DReyeVRAggData.Add(DReyeVRDataRecorder<DReyeVR::AggregateData>(ADReyeVRSensor::Data));
 
   TArray<AActor *> FoundActors;
-  if (GetWorld() != nullptr)
+  if (Episode != nullptr && Episode->GetWorld() != nullptr)
   {
-      UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADReyeVRCustomActor::StaticClass(), FoundActors);
+      UGameplayStatics::GetAllActorsOfClass(Episode->GetWorld(), ADReyeVRCustomActor::StaticClass(), FoundActors);
   }
   for (AActor *A : FoundActors)
   {

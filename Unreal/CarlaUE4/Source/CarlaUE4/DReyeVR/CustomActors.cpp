@@ -48,12 +48,14 @@ ACross::ACross(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitia
     ActorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     ActorMesh->SetupAttachment(this->GetRootComponent());
 
-    AssignSM("StaticMesh'/Engine/BasicShapes/Cube.Cube'");
+    AssignSM("StaticMesh'/Game/Carla/Static/Road/St_Road_XCross_Road0.St_Road_XCross_Road0'");
 
-    AssignMat("MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
+    // use default material
+    // AssignMat("MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
 
     // finalizing construction
     this->SetActorEnableCollision(false);
+    this->SetActorScale3D(0.01f * FVector::OneVector); // very small (original SM is huge)
 
     // set internals that are specific to this constructor
     Internals.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::CROSS);
