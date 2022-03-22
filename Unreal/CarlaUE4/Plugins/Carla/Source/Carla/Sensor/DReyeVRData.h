@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 /// NOTE: all functions here are inline to avoid nasty linker errors. Though this can
 // probably be refactored to have a proper associated .cpp file
@@ -467,6 +468,12 @@ class AggregateData // all DReyeVR sensor data is held here
         EgoVars.CameraRotation = NewCameraRot;
     }
 
+    void UpdateCameraAbs(const FVector &NewCameraLocAbs, const FRotator &NewCameraRotAbs)
+    {
+        EgoVars.CameraLocationAbs = NewCameraLocAbs;
+        EgoVars.CameraRotationAbs = NewCameraRotAbs;
+    }
+
     void UpdateVehicle(const FVector &NewVehicleLoc, const FRotator &NewVehicleRot)
     {
         EgoVars.VehicleLocation = NewVehicleLoc;
@@ -522,6 +529,57 @@ class AggregateData // all DReyeVR sensor data is held here
     struct FocusInfo FocusData;
     struct UserInputs Inputs;
 };
+
+class CustomActorData
+{
+  public:
+    FString Name; // unique actor name of this actor
+    FVector Location;
+    FRotator Rotation;
+    FVector Scale3D;
+    FString Other; // any other data deemed necessary to record
+    char TypeId;
+    enum class Types : uint8_t
+    {
+        SPHERE = 0,
+        CROSS
+    };
+
+    CustomActorData() = default;
+
+    void Read(std::ifstream &InFile)
+    {
+        ReadValue<char>(InFile, TypeId);
+        ReadFVector(InFile, Location);
+        ReadFRotator(InFile, Rotation);
+        ReadFVector(InFile, Scale3D);
+        ReadFString(InFile, Other);
+        ReadFString(InFile, Name);
+    }
+
+    void Write(std::ofstream &OutFile) const
+    {
+        WriteValue<char>(OutFile, static_cast<char>(TypeId));
+        WriteFVector(OutFile, Location);
+        WriteFRotator(OutFile, Rotation);
+        WriteFVector(OutFile, Scale3D);
+        WriteFString(OutFile, Other);
+        WriteFString(OutFile, Name);
+    }
+
+    FString ToString() const
+    {
+        FString Print = "";
+        Print += FString::Printf(TEXT("Type:%d,"), static_cast<int>(TypeId));
+        Print += FString::Printf(TEXT("Name:%s,"), *Name);
+        Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
+        Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
+        Print += FString::Printf(TEXT("Scale3D:%s,"), *Scale3D.ToString());
+        Print += FString::Printf(TEXT("Other:%s,"), *Other);
+        return Print;
+    }
+};
+
 }; // namespace DReyeVR
 
 #endif

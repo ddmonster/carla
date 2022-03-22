@@ -1,6 +1,7 @@
 #include "EgoSensor.h"
 
 #include "Carla/Game/CarlaStatics.h"    // GetEpisode
+#include "CustomActors.h"               // CustomActors (ABall, etc.)
 #include "DReyeVRUtils.h"               // ReadConfigValue, ComputeClosestToRayIntersection
 #include "Kismet/GameplayStatics.h"     // UGameplayStatics::ProjectWorldToScreen
 #include "Kismet/KismetMathLibrary.h"   // Sin, Cos, Normalize
@@ -68,6 +69,10 @@ void AEgoSensor::BeginPlay()
     // Register EgoSensor with the CarlaActorRegistry
     Register();
 
+    DReyeVR::CustomActorData Init;
+    Init.Name = "TestName";
+    B = ABall::RequestNewActor(World, Init);
+
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoSensor"));
 }
 
@@ -94,6 +99,12 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
                           FocusInfoData,              // FocusData
                           Vehicle->GetVehicleInputs() // User inputs
         );
+        if (B != nullptr)
+        {
+            B->SetActorScale3D(0.1f * FVector::OneVector);
+            B->SetActorLocation(GetData()->GetCameraLocationAbs() +
+                                GetData()->GetCameraRotationAbs().RotateVector(GetData()->GetGazeDir()) * 10.f * 100.f);
+        }
     }
     TickCount++;
 }
@@ -402,6 +413,33 @@ void AEgoSensor::TakeScreenshot()
         SaveFrameToDisk(*CaptureRenderTarget, FPaths::Combine(FrameCapLocation, FrameCapFilename + Suffix),
                         bFileFormatJPG);
     }
+}
+
+/// ========================================== ///
+/// -------------:CUSTOMACTORS:--------------- ///
+/// ========================================== ///
+
+void AEgoSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)
+{
+    // first spawn the actor if not currently active
+    const std::string ActorName = TCHAR_TO_UTF8(*RecorderData.Name);
+    if (ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) == ADReyeVRCustomActor::ActiveCustomActors.end())
+    {
+        switch (RecorderData.TypeId)
+        {
+        case static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE):
+            ABall::RequestNewActor(GetWorld(), RecorderData);
+            break;
+        default:
+            break; // ignore unknown actors
+        }
+    }
+    // ensure the actor is currently active (spawned)
+    check(ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) != ADReyeVRCustomActor::ActiveCustomActors.end());
+
+    // now that we know this actor exists, update its internals
+    ADReyeVRCustomActor::ActiveCustomActors[ActorName]->SetInternals(RecorderData);
+    /// TODO: add garbage collection for deleted actors
 }
 
 /// ========================================== ///
