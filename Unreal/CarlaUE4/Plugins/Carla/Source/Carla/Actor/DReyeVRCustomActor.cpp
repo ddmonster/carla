@@ -1,6 +1,8 @@
 #include "DReyeVRCustomActor.h"
 #include "Carla/Game/CarlaStatics.h"    // GetEpisode
 #include "Carla/Sensor/DReyeVRSensor.h" // ADReyeVRSensor::bIsReplaying
+#include "Materials/MaterialInstance.h" // UMaterialInstance
+#include "UObject/ConstructorHelpers.h" // ConstructorHelpers
 
 #include <string>
 
@@ -12,6 +14,27 @@ ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitial
     Internals.Location = this->GetActorLocation();
     Internals.Rotation = this->GetActorRotation();
     Internals.Scale3D = this->GetActorScale3D();
+}
+
+void ADReyeVRCustomActor::AssignSM(const FString &Path)
+{
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(*Path);
+    if (MeshAsset.Succeeded())
+        ActorMesh->SetStaticMesh(MeshAsset.Object);
+    else
+        UE_LOG(LogTemp, Error, TEXT("Unable to access mesh asset: %s"), *Path)
+}
+
+void ADReyeVRCustomActor::AssignMat(const FString &Path)
+{
+    static ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialAsset(*Path);
+    if (MaterialAsset.Succeeded())
+    {
+        Material = MaterialAsset.Object;
+        ActorMesh->SetMaterial(0, CastChecked<UMaterialInterface>(Material));
+    }
+    else
+        UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *Path)
 }
 
 void ADReyeVRCustomActor::Initialize(const DReyeVR::CustomActorData &In)

@@ -13,3 +13,13 @@ class CARLA_API ABall : public ADReyeVRCustomActor
 
     static ABall *RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init);
 };
+
+UCLASS()
+class CARLA_API ACross : public ADReyeVRCustomActor
+{
+    GENERATED_BODY()
+  public:
+    ACross(const FObjectInitializer &ObjectInitializer);
+
+    static ACross *RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init);
+};

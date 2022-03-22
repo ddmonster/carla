@@ -31,6 +31,9 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     void BeginPlay();
     void BeginDestroy();
 
+    void AssignSM(const FString &Path);
+    void AssignMat(const FString &Path);
+
     DReyeVR::CustomActorData Internals;
 
     UPROPERTY(EditAnywhere, Category = "Materials")
