@@ -11,7 +11,7 @@ class CARLA_API ABall : public ADReyeVRCustomActor
   public:
     ABall(const FObjectInitializer &ObjectInitializer);
 
-    static ABall *RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init);
+    static ABall *RequestNewActor(UWorld *World, const FString &Name);
 };
 
 UCLASS()
@@ -21,5 +21,5 @@ class CARLA_API ACross : public ADReyeVRCustomActor
   public:
     ACross(const FObjectInitializer &ObjectInitializer);
 
-    static ACross *RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init);
+    static ACross *RequestNewActor(UWorld *World, const FString &Name);
 };

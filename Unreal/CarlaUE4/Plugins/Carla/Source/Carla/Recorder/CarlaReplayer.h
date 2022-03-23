@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <functional>
@@ -165,7 +166,8 @@ private:
   void ProcessWeather(void);
 
   // DReyeVR recordings
-  template <typename T> void ProcessDReyeVRData(double Per, double DeltaTime);
+  template <typename T> void ProcessDReyeVRData(double Per, double DeltaTime, bool bShouldBeOnlyOne);
+  std::unordered_set<std::string> Visited = {};
 
   // For restarting the recording with the same params
   struct LastReplayStruct

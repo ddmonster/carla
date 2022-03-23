@@ -24,6 +24,10 @@ template <typename T> struct DReyeVRDataRecorder
     {
         Data.Write(OutFile);
     }
+    std::string GetUniqueName() const
+    {
+        return Data.GetUniqueName();
+    }
     std::string Print() const
     {
         std::ostringstream oss;

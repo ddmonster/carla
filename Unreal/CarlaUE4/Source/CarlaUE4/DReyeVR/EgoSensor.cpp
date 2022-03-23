@@ -69,9 +69,7 @@ void AEgoSensor::BeginPlay()
     // Register EgoSensor with the CarlaActorRegistry
     Register();
 
-    DReyeVR::CustomActorData Init;
-    Init.Name = "TestName";
-    B = ABall::RequestNewActor(World, Init);
+    B = ABall::RequestNewActor(World, "BallTest");
 
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoSensor"));
 }
@@ -423,23 +421,30 @@ void AEgoSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const 
 {
     // first spawn the actor if not currently active
     const std::string ActorName = TCHAR_TO_UTF8(*RecorderData.Name);
+    ADReyeVRCustomActor *A = nullptr;
     if (ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) == ADReyeVRCustomActor::ActiveCustomActors.end())
     {
         switch (RecorderData.TypeId)
         {
         case static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE):
-            ABall::RequestNewActor(GetWorld(), RecorderData);
+            A = ABall::RequestNewActor(GetWorld(), RecorderData.Name);
             break;
+        case static_cast<char>(DReyeVR::CustomActorData::Types::CROSS):
+            A = ACross::RequestNewActor(GetWorld(), RecorderData.Name);
+            break;
+        /// TODO: generalize for other types (templates?? :eyes:)
         default:
             break; // ignore unknown actors
         }
     }
+    else
+    {
+        A = ADReyeVRCustomActor::ActiveCustomActors[ActorName];
+    }
     // ensure the actor is currently active (spawned)
-    check(ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) != ADReyeVRCustomActor::ActiveCustomActors.end());
-
     // now that we know this actor exists, update its internals
-    ADReyeVRCustomActor::ActiveCustomActors[ActorName]->SetInternals(RecorderData);
-    /// TODO: add garbage collection for deleted actors
+    if (A != nullptr)
+        A->SetInternals(RecorderData);
 }
 
 /// ========================================== ///

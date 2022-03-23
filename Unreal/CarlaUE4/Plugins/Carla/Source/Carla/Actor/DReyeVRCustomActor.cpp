@@ -37,10 +37,11 @@ void ADReyeVRCustomActor::AssignMat(const FString &Path)
         UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *Path)
 }
 
-void ADReyeVRCustomActor::Initialize(const DReyeVR::CustomActorData &In)
+void ADReyeVRCustomActor::Initialize(const FString &Name)
 {
-    SetInternals(In);
-    ADReyeVRCustomActor::ActiveCustomActors[TCHAR_TO_UTF8(*In.Name)] = this;
+    Internals.Name = Name;
+    ADReyeVRCustomActor::ActiveCustomActors[TCHAR_TO_UTF8(*Name)] = this;
+    UE_LOG(LogTemp, Log, TEXT("Initialized custom actor: %s"), *Name);
 }
 
 void ADReyeVRCustomActor::BeginPlay()
@@ -51,6 +52,17 @@ void ADReyeVRCustomActor::BeginPlay()
 void ADReyeVRCustomActor::BeginDestroy()
 {
     Super::BeginDestroy();
+}
+
+void ADReyeVRCustomActor::RequestDestroy()
+{
+    const std::string s = TCHAR_TO_UTF8(*Internals.Name);
+    UE_LOG(LogTemp, Log, TEXT("Destroying custom actor: %s"), *Internals.Name);
+    if (ADReyeVRCustomActor::ActiveCustomActors.find(s) != ADReyeVRCustomActor::ActiveCustomActors.end())
+    {
+        ADReyeVRCustomActor::ActiveCustomActors.erase(s);
+    }
+    this->Destroy();
 }
 
 void ADReyeVRCustomActor::Tick(float DeltaSeconds)

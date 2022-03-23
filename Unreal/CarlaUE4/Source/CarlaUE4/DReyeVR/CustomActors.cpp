@@ -1,12 +1,12 @@
 #include "CustomActors.h"
 
-ABall *ABall::RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init)
+ABall *ABall::RequestNewActor(UWorld *World, const FString &Name)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
     SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    ABall *Actor = World->SpawnActor<ABall>(Init.Location, Init.Rotation, SpawnInfo);
-    Actor->Initialize(Init);
+    ABall *Actor = World->SpawnActor<ABall>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);
+    Actor->Initialize(Name);
     return Actor;
 }
 
@@ -30,13 +30,13 @@ ABall::ABall(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitiali
     Internals.Other = "TestSphere";
 }
 
-ACross *ACross::RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init)
+ACross *ACross::RequestNewActor(UWorld *World, const FString &Name)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
     SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    ACross *Actor = World->SpawnActor<ACross>(Init.Location, Init.Rotation, SpawnInfo);
-    Actor->Initialize(Init);
+    ACross *Actor = World->SpawnActor<ACross>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);
+    Actor->Initialize(Name);
     return Actor;
 }
 

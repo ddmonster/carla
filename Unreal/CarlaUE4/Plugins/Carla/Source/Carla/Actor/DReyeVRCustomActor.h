@@ -17,9 +17,10 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
 
     virtual void Tick(float DeltaSeconds) override;
 
-    static ADReyeVRCustomActor *RequestNewActor(UWorld *World, const DReyeVR::CustomActorData &Init);
+    static ADReyeVRCustomActor *RequestNewActor(UWorld *World, const FString &Name);
+    void RequestDestroy();
 
-    void Initialize(const DReyeVR::CustomActorData &In);
+    void Initialize(const FString &Name);
 
     void SetInternals(const DReyeVR::CustomActorData &In);
 

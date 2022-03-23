@@ -9,6 +9,7 @@
 #include "Components/PlanarReflectionComponent.h" // Planar Reflection
 #include "Components/SceneComponent.h"            // USceneComponent
 #include "CoreMinimal.h"                          // Unreal functions
+#include "CustomActors.h"                         // ACross
 #include "DReyeVRUtils.h"                         // ReadConfigValue
 #include "EgoSensor.h"                            // AEgoSensor
 #include "FlatHUD.h"                              // ADReyeVRHUD
@@ -278,4 +279,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     bool bIsHMDConnected = false;  // checks for HMD connection on BeginPlay
     bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
     bool bDrawDebugEditor = false;
+
+    ACross *Cross = nullptr;
 };

@@ -522,6 +522,11 @@ class AggregateData // all DReyeVR sensor data is held here
         return print;
     }
 
+    std::string GetUniqueName() const
+    {
+        return "DReyeVRSensorAggregateData";
+    }
+
   private:
     int64_t TimestampCarlaUE4; // Carla Timestamp (EgoSensor Tick() event) in milliseconds
     struct EyeTracker EyeTrackerData;
@@ -570,13 +575,18 @@ class CustomActorData
     FString ToString() const
     {
         FString Print = "";
-        Print += FString::Printf(TEXT("Type:%d,"), static_cast<int>(TypeId));
+        Print += FString::Printf(TEXT("Type:%d,"), int(TypeId));
         Print += FString::Printf(TEXT("Name:%s,"), *Name);
         Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
         Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
         Print += FString::Printf(TEXT("Scale3D:%s,"), *Scale3D.ToString());
         Print += FString::Printf(TEXT("Other:%s,"), *Other);
         return Print;
+    }
+
+    std::string GetUniqueName() const
+    {
+        return TCHAR_TO_UTF8(*Name);
     }
 };
 
