@@ -33,16 +33,11 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     void BeginDestroy();
 
     void AssignSM(const FString &Path);
-    void AssignMat(const FString &Path);
+    void AssignMat(const int MatIdx, const FString &Path);
 
-    DReyeVR::CustomActorData Internals;
-
-    UPROPERTY(EditAnywhere, Category = "Materials")
-    UMaterialInstance *Material = nullptr;
-
-    UPROPERTY(EditAnywhere, Category = "Materials")
-    UMaterialInstanceDynamic *DynamicMaterial = nullptr;
+    class DReyeVR::CustomActorData Internals;
 
     UPROPERTY(EditAnywhere, Category = "Mesh")
-    UStaticMeshComponent *ActorMesh = nullptr;
+    class UStaticMeshComponent *ActorMesh = nullptr;
+    static int AllMeshCount;
 };

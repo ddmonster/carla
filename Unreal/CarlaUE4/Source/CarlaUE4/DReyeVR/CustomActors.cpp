@@ -15,13 +15,9 @@ ABall::ABall(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitiali
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PrePhysics;
 
-    ActorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-    ActorMesh->SetupAttachment(this->GetRootComponent());
-
     AssignSM("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'");
 
-    AssignMat("MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
-
+    AssignMat(0, "MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
     // finalizing construction
     this->SetActorEnableCollision(false);
 
@@ -45,17 +41,15 @@ ACross::ACross(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitia
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PrePhysics;
 
-    ActorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-    ActorMesh->SetupAttachment(this->GetRootComponent());
-
-    AssignSM("StaticMesh'/Game/Carla/Static/Road/St_Road_XCross_Road0.St_Road_XCross_Road0'");
+    AssignSM("StaticMesh'/Game/DReyeVR/Custom/SMCross.SMCross'");
 
     // use default material
-    // AssignMat("MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
+    AssignMat(0, "MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
+    AssignMat(1, "MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
 
     // finalizing construction
     this->SetActorEnableCollision(false);
-    this->SetActorScale3D(0.01f * FVector::OneVector); // very small (original SM is huge)
+    this->SetActorScale3D(0.1f * FVector::OneVector); // very small
 
     // set internals that are specific to this constructor
     Internals.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::CROSS);

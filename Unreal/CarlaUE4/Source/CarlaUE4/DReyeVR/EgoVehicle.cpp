@@ -636,8 +636,7 @@ void AEgoVehicle::DrawFlatHUD(float DeltaSeconds)
     // Get eye tracker variables
     const FRotator WorldRot = GetCamera()->GetComponentRotation();
     const FVector CombinedGazePosn = CombinedOrigin + WorldRot.RotateVector(this->CombinedGaze);
-    if (Cross != nullptr)
-        Cross->SetActorLocation(CombinedGazePosn);
+
     // Draw elements of the HUD
     if (bDrawFlatReticle) // Draw reticle on flat-screen HUD
     {

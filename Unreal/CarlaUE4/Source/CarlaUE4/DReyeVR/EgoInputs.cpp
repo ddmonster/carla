@@ -62,18 +62,12 @@ void AEgoVehicle::CameraBack()
 
 void AEgoVehicle::CameraLeft()
 {
-    // CameraPositionAdjust(FVector(0.f, -1.f, 0.f));
-    ensure(Cross != nullptr);
-    if (Cross)
-    {
-        Cross->RequestDestroy();
-    }
+    CameraPositionAdjust(FVector(0.f, -1.f, 0.f));
 }
 
 void AEgoVehicle::CameraRight()
 {
-    // CameraPositionAdjust(FVector(0.f, 1.f, 0.f));
-    Cross = ACross::RequestNewActor(World, "CrossEgo");
+    CameraPositionAdjust(FVector(0.f, 1.f, 0.f));
 }
 
 void AEgoVehicle::CameraUp()

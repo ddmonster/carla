@@ -7,6 +7,7 @@
 #include <string>
 
 std::unordered_map<std::string, class ADReyeVRCustomActor *> ADReyeVRCustomActor::ActiveCustomActors = {};
+int ADReyeVRCustomActor::AllMeshCount = 0;
 
 ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -18,21 +19,25 @@ ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitial
 
 void ADReyeVRCustomActor::AssignSM(const FString &Path)
 {
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(*Path);
+    FName MeshName(*("Mesh" + FString::FromInt(ADReyeVRCustomActor::AllMeshCount)));
+    ActorMesh = CreateDefaultSubobject<UStaticMeshComponent>(MeshName);
+    ActorMesh->SetupAttachment(this->GetRootComponent());
+    this->SetRootComponent(ActorMesh);
+
+    ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(*Path);
     if (MeshAsset.Succeeded())
         ActorMesh->SetStaticMesh(MeshAsset.Object);
     else
         UE_LOG(LogTemp, Error, TEXT("Unable to access mesh asset: %s"), *Path)
+    // static count for how many meshes have been processed thus far
+    ADReyeVRCustomActor::AllMeshCount++;
 }
 
-void ADReyeVRCustomActor::AssignMat(const FString &Path)
+void ADReyeVRCustomActor::AssignMat(const int MatIdx, const FString &Path)
 {
-    static ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialAsset(*Path);
+    ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialAsset(*Path);
     if (MaterialAsset.Succeeded())
-    {
-        Material = MaterialAsset.Object;
-        ActorMesh->SetMaterial(0, CastChecked<UMaterialInterface>(Material));
-    }
+        ActorMesh->SetMaterial(MatIdx, CastChecked<UMaterialInterface>(MaterialAsset.Object));
     else
         UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *Path)
 }
