@@ -42,8 +42,8 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
 
     void SetEgoVehicle(class AEgoVehicle *EgoVehicle); // provide access to EgoVehicle (and by extension its camera)
 
-    virtual void UpdateData(const class DReyeVR::CustomActorData &RecorderData,
-                            const double Per) override; // replay actor data
+    void UpdateData(const DReyeVR::AggregateData &RecorderData, const double Per) override;
+    void UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per) override;
 
     // function where replayer requests a screenshot
     void TakeScreenshot() override;
@@ -97,7 +97,8 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     bool bFileFormatJPG = true;
     bool bFrameCapForceLinearGamma = true;
 
-    ////////////////:CUSTOMACTORS:////////////////
+    ////////////////:REPLAY:////////////////
+    bool bUsingLegacyPeriphFile = false;
     class ABall *PeriphBall = nullptr;
     // void  ();
 

@@ -144,19 +144,6 @@ inline void UserInputs::Read(std::ifstream &InFile)
     ReadValue<bool>(InFile, TurnSignalLeft);
     ReadValue<bool>(InFile, TurnSignalRight);
     ReadValue<bool>(InFile, HoldHandbrake);
-    FVector FVtmp;
-    FRotator FRtmp;
-    float tmp;
-    bool btmp;
-    ReadFVector(InFile, FVtmp);
-    ReadFRotator(InFile, FRtmp);
-    ReadFVector(InFile, FVtmp);
-    ReadValue<float>(InFile, tmp);
-    ReadValue<float>(InFile, tmp);
-    ReadValue<float>(InFile, tmp);
-    ReadValue<float>(InFile, tmp);
-    ReadValue<bool>(InFile, btmp);
-    ReadValue<bool>(InFile, btmp);
 }
 
 inline void UserInputs::Write(std::ofstream &OutFile) const
@@ -181,6 +168,43 @@ inline FString UserInputs::ToString() const
     Print += FString::Printf(TEXT("TurnSignalRight:%d,"), TurnSignalRight);
     Print += FString::Printf(TEXT("HoldHandbrake:%d,"), HoldHandbrake);
     return Print;
+}
+
+/// ========================================== ///
+/// ----------------:LEGACY:------------------ ///
+/// ========================================== ///
+
+inline void LegacyPeriphDataStruct::Read(std::ifstream &InFile)
+{
+    ReadFVector(InFile, WorldPos);
+    ReadFRotator(InFile, WorldRot);
+    ReadFVector(InFile, CombinedOrigin);
+    ReadValue<float>(InFile, gaze2target_pitch);
+    ReadValue<float>(InFile, gaze2target_yaw);
+    ReadValue<float>(InFile, head2target_pitch);
+    ReadValue<float>(InFile, head2target_yaw);
+    ReadValue<bool>(InFile, Visible);
+    ReadValue<bool>(InFile, TriggerPressed);
+}
+
+inline FString LegacyPeriphDataStruct::ToString() const
+{
+    FString Print;
+    Print += FString::Printf(TEXT("WorldPos:%s,"), *WorldPos.ToString());
+    Print += FString::Printf(TEXT("WorldRot:%s,"), *WorldRot.ToString());
+    Print += FString::Printf(TEXT("CombinedOrigin:%s,"), *CombinedOrigin.ToString());
+    Print += FString::Printf(TEXT("gaze2target_pitch:%.4f,"), gaze2target_pitch);
+    Print += FString::Printf(TEXT("gaze2target_yaw:%.4f,"), gaze2target_yaw);
+    Print += FString::Printf(TEXT("head2target_pitch:%.4f,"), head2target_pitch);
+    Print += FString::Printf(TEXT("head2target_yaw:%.4f,"), head2target_yaw);
+    Print += FString::Printf(TEXT("LightOn:%d,"), Visible);
+    Print += FString::Printf(TEXT("ButtonPressed:%d,"), TriggerPressed);
+    return Print;
+}
+
+const inline LegacyPeriphDataStruct &AggregateData::GetLegacyPeriphData() const
+{
+    return LegacyPeriphData;
 }
 
 /// ========================================== ///
@@ -477,6 +501,8 @@ inline void AggregateData::Read(std::ifstream &InFile)
     EyeTrackerData.Read(InFile);
     FocusData.Read(InFile);
     Inputs.Read(InFile);
+    if (bUsingLegacyPeriphFile)
+        LegacyPeriphData.Read(InFile);
 }
 
 inline void AggregateData::Write(std::ofstream &OutFile) const
@@ -496,7 +522,10 @@ inline FString AggregateData::ToString() const
     print += FString::Printf(TEXT("[DReyeVR]EyeTracker:%s,\n"), *EyeTrackerData.ToString());
     print += FString::Printf(TEXT("[DReyeVR]FocusInfo:%s,\n"), *FocusData.ToString());
     print += FString::Printf(TEXT("[DReyeVR]EgoVariables:%s,\n"), *EgoVars.ToString());
-    print += FString::Printf(TEXT("[DReyeVR]UserInputs:%s,\n"), *Inputs.ToString());
+    print += FString::Printf(TEXT("[DReyeVR]UserInputs:%s,"), *Inputs.ToString());
+    if (bUsingLegacyPeriphFile)
+        print += LegacyPeriphData.ToString();
+    print += "\n";
     return print;
 }
 

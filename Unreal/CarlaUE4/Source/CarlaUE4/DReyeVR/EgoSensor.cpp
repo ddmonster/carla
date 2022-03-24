@@ -51,6 +51,11 @@ void AEgoSensor::ReadConfigVariables()
     ReadConfigValue("Replayer", "FrameHeight", FrameCapHeight);
     ReadConfigValue("Replayer", "FrameDir", FrameCapLocation);
     ReadConfigValue("Replayer", "FrameName", FrameCapFilename);
+
+    // legacy code for periph recording support
+    ReadConfigValue("Replayer", "UsingLegacyPeriph", bUsingLegacyPeriphFile);
+    check(GetData() != nullptr);
+    GetData()->bUsingLegacyPeriphFile = bUsingLegacyPeriphFile;
 }
 
 void AEgoSensor::BeginPlay()
@@ -399,8 +404,29 @@ void AEgoSensor::TakeScreenshot()
 }
 
 /// ========================================== ///
-/// -------------:CUSTOMACTORS:--------------- ///
+/// ----------------:REPLAY:------------------ ///
 /// ========================================== ///
+
+void AEgoSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const double Per)
+{
+    if (bUsingLegacyPeriphFile)
+    {
+        const DReyeVR::LegacyPeriphDataStruct &LegacyData = RecorderData.GetLegacyPeriphData();
+        // treat the periph ball target as a CustomActor
+        // visibility triggers spawning/destroying the actor
+        if (LegacyData.Visible)
+        {
+            DReyeVR::CustomActorData PeriphBall;
+            PeriphBall.Name = "Legacy_PeriphBall";
+            PeriphBall.Location = LegacyData.WorldPos;
+            PeriphBall.Scale3D = 0.05f * FVector::OneVector;
+            PeriphBall.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE);
+            UpdateData(PeriphBall, Per);
+        }
+    }
+    // call the parent function
+    ADReyeVRSensor::UpdateData(RecorderData, Per);
+}
 
 void AEgoSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)
 {

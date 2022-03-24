@@ -106,6 +106,23 @@ struct EyeTracker
     FString ToString() const;
 };
 
+struct LegacyPeriphDataStruct
+{
+    // don't use this unless you are using a legacy periph file
+    // (if you don't know what that means, don't use it!)
+    FVector WorldPos;
+    FRotator WorldRot;
+    FVector CombinedOrigin;
+    float gaze2target_pitch;
+    float gaze2target_yaw;
+    float head2target_pitch;
+    float head2target_yaw;
+    bool Visible;
+    bool TriggerPressed;
+    void Read(std::ifstream &InFile);
+    FString ToString() const;
+};
+
 enum class Gaze
 {
     COMBINED, // default for functions
@@ -166,12 +183,19 @@ class AggregateData // all DReyeVR sensor data is held here
     void Write(std::ofstream &OutFile) const;
     FString ToString() const;
 
+    ////////////////////:LEGACY:////////////////////////
+    // don't use this unless you are using a legacy periph file
+    // (if you don't know what that means, don't use it!)
+    bool bUsingLegacyPeriphFile = false;
+    const LegacyPeriphDataStruct &GetLegacyPeriphData() const;
+
   private:
     int64_t TimestampCarlaUE4; // Carla Timestamp (EgoSensor Tick() event) in milliseconds
     struct EyeTracker EyeTrackerData;
     struct EgoVariables EgoVars;
     struct FocusInfo FocusData;
     struct UserInputs Inputs;
+    struct LegacyPeriphDataStruct LegacyPeriphData;
 };
 
 class CustomActorData
