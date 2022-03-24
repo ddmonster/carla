@@ -69,8 +69,6 @@ void AEgoSensor::BeginPlay()
     // Register EgoSensor with the CarlaActorRegistry
     Register();
 
-    B = ABall::RequestNewActor(World, "BallTest");
-
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoSensor"));
 }
 
@@ -97,12 +95,6 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
                           FocusInfoData,              // FocusData
                           Vehicle->GetVehicleInputs() // User inputs
         );
-        if (B != nullptr)
-        {
-            B->SetActorScale3D(0.1f * FVector::OneVector);
-            B->SetActorLocation(GetData()->GetCameraLocationAbs() +
-                                GetData()->GetCameraRotationAbs().RotateVector(GetData()->GetGazeDir()) * 10.f * 100.f);
-        }
     }
     TickCount++;
 }
@@ -205,13 +197,6 @@ void AEgoSensor::TickEyeTracker()
     ComputeDummyEyeData();
 #endif
     Combined->Vergence = ComputeVergence(Left->GazeOrigin, Left->GazeDir, Right->GazeOrigin, Right->GazeDir);
-
-    // compute the projected coordinates from the left gaze direction to be tracked
-    if (Vehicle)
-    {
-        // using the left gaze bc thats what the spectator screen sees
-        EyeSensorData.ProjectedCoords = Vehicle->ProjectGazeToScreen(Left->GazeOrigin, Left->GazeDir);
-    }
 
     // FPlatformProcess::Sleep(0.00833f); // use in async thread to get 120hz
 }

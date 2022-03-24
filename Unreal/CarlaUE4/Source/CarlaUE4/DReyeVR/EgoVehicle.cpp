@@ -589,7 +589,8 @@ void AEgoVehicle::DrawSpectatorScreen()
     /// TODO: draw other things on the spectator screen?
     if (bDrawSpectatorReticle)
     {
-        const FVector2D &ReticlePos = EgoSensor->GetData()->GetProjectedReticleCoords();
+        const FVector2D ReticlePos = ProjectGazeToScreen(EgoSensor->GetData()->GetGazeOrigin(DReyeVR::Gaze::LEFT),
+                                                         EgoSensor->GetData()->GetGazeDir(DReyeVR::Gaze::LEFT));
         /// NOTE: the SetSpectatorScreenModeTexturePlusEyeLayout expects normalized positions on the screen
         // define min and max bounds (where the texture is actually drawn on screen)
         const FVector2D TextureRectMin = ReticlePos / ViewSize;                 // top left

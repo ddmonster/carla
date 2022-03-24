@@ -4,6 +4,7 @@
 
 #include "CustomActors.generated.h"
 
+/// TODO: template partial specialization metaprogramming
 UCLASS()
 class CARLA_API ABall : public ADReyeVRCustomActor
 {

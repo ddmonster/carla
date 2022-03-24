@@ -98,7 +98,8 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     bool bFrameCapForceLinearGamma = true;
 
     ////////////////:CUSTOMACTORS:////////////////
-    class ABall *B = nullptr;
+    class ABall *PeriphBall = nullptr;
+    // void  ();
 
     ////////////////:OTHER:////////////////
     int EgoSensorID;

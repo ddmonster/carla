@@ -101,7 +101,6 @@ struct EyeTracker
     CombinedEyeData Combined;
     SingleEyeData Left;
     SingleEyeData Right;
-    FVector2D ProjectedCoords;
     void Read(std::ifstream &InFile);
     void Write(std::ofstream &OutFile) const;
     FString ToString() const;
@@ -138,7 +137,6 @@ class AggregateData // all DReyeVR sensor data is held here
     float GetPupilDiameter(DReyeVR::Eye Index) const; // returns diameter in mm
     const FVector2D &GetPupilPosition(DReyeVR::Eye Index) const;
     bool GetPupilPositionValidity(DReyeVR::Eye Index) const;
-    const FVector2D &GetProjectedReticleCoords() const;
 
     // from EgoVars
     const FVector &GetCameraLocation() const;

@@ -144,6 +144,19 @@ inline void UserInputs::Read(std::ifstream &InFile)
     ReadValue<bool>(InFile, TurnSignalLeft);
     ReadValue<bool>(InFile, TurnSignalRight);
     ReadValue<bool>(InFile, HoldHandbrake);
+    FVector FVtmp;
+    FRotator FRtmp;
+    float tmp;
+    bool btmp;
+    ReadFVector(InFile, FVtmp);
+    ReadFRotator(InFile, FRtmp);
+    ReadFVector(InFile, FVtmp);
+    ReadValue<float>(InFile, tmp);
+    ReadValue<float>(InFile, tmp);
+    ReadValue<float>(InFile, tmp);
+    ReadValue<float>(InFile, tmp);
+    ReadValue<bool>(InFile, btmp);
+    ReadValue<bool>(InFile, btmp);
 }
 
 inline void UserInputs::Write(std::ofstream &OutFile) const
@@ -214,7 +227,6 @@ inline void EyeTracker::Read(std::ifstream &InFile)
     Combined.Read(InFile);
     Left.Read(InFile);
     Right.Read(InFile);
-    ReadFVector2D(InFile, ProjectedCoords);
 }
 
 inline void EyeTracker::Write(std::ofstream &OutFile) const
@@ -224,7 +236,6 @@ inline void EyeTracker::Write(std::ofstream &OutFile) const
     Combined.Write(OutFile);
     Left.Write(OutFile);
     Right.Write(OutFile);
-    WriteFVector2D(OutFile, ProjectedCoords);
 }
 
 inline FString EyeTracker::ToString() const
@@ -235,7 +246,6 @@ inline FString EyeTracker::ToString() const
     Print += FString::Printf(TEXT("COMBINED:{%s},"), *Combined.ToString());
     Print += FString::Printf(TEXT("LEFT:{%s},"), *Left.ToString());
     Print += FString::Printf(TEXT("RIGHT:{%s},"), *Right.ToString());
-    Print += FString::Printf(TEXT("ReticleCoords:%s,"), *ProjectedCoords.ToString());
     return Print;
 }
 
@@ -371,11 +381,6 @@ inline bool AggregateData::GetPupilPositionValidity(DReyeVR::Eye Index) const
     default: // need a default case for MSVC >:(
         return EyeTrackerData.Right.PupilPositionValid;
     }
-}
-
-inline const FVector2D &AggregateData::GetProjectedReticleCoords() const
-{
-    return EyeTrackerData.ProjectedCoords;
 }
 
 // from EgoVars
