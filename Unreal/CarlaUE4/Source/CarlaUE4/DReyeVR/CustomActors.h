@@ -6,7 +6,7 @@
 
 /// TODO: template partial specialization metaprogramming
 UCLASS()
-class CARLA_API ABall : public ADReyeVRCustomActor
+class ABall : public ADReyeVRCustomActor
 {
     GENERATED_BODY()
   public:
@@ -16,7 +16,7 @@ class CARLA_API ABall : public ADReyeVRCustomActor
 };
 
 UCLASS()
-class CARLA_API ACross : public ADReyeVRCustomActor
+class ACross : public ADReyeVRCustomActor
 {
     GENERATED_BODY()
   public:
