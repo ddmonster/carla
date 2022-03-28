@@ -2,6 +2,16 @@
 
 void AEgoSensor::TickPeriphTarget(float DeltaTime)
 {
+    if (bUseFixedCrosshair)
+    {
+        if (Crosshair == nullptr)
+            Crosshair = ACross::RequestNewActor(World, "PeriphCrosshair");
+        const FVector CrosshairVector = GetData()->GetCameraRotationAbs().RotateVector(FVector::ForwardVector);
+        Crosshair->SetActorLocation(Camera->GetComponentLocation() + CrosshairVector * TargetRenderDistance * 100.f);
+        Crosshair->SetActorRotation(Camera->GetComponentRotation());
+        Crosshair->SetActorScale3D(0.1f * FVector::OneVector);
+    }
+
     if (!bUsePeriphTarget)
         return;
 

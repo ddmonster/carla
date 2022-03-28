@@ -72,10 +72,10 @@ void AEgoSensor::ReadConfigVariables()
     ReadConfigValue("PeripheralTarget", "FlashDurationSec", FlashDuration);
     ReadConfigValue("PeripheralTarget", "TargetRadius", TargetRadius);
     ReadConfigValue("PeripheralTarget", "TargetRenderDistanceM", TargetRenderDistance);
+    ReadConfigValue("PeripheralTarget", "EnableFixedCrosshair", bUseFixedCrosshair);
 
     // legacy code for periph recording support
     ReadConfigValue("Replayer", "UsingLegacyPeriph", bUsingLegacyPeriphFile);
-    UE_LOG(LogTemp, Warning, TEXT("USING LEGACY PERIPH?????: %d"), bUsingLegacyPeriphFile);
     check(GetData() != nullptr);
     GetData()->bUsingLegacyPeriphFile = bUsingLegacyPeriphFile;
 }
