@@ -23,9 +23,6 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
         return;
     }
 
-    const FVector2D YawBounds(-40, 40);   // (degrees)
-    const FVector2D PitchBounds(-20, 20); // (degrees)
-
     // generate stimuli every TimeBetweenFlash second chunks, and log that time
     /// TODO: all these magic numbers need to be parameterized
     if (TimeSinceLastFlash < MaxTimeBetweenFlash)
@@ -36,10 +33,10 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
             NextPeriphTrigger = FMath::RandRange(MinTimeBetweenFlash, MaxTimeBetweenFlash);
 
             // generate random position for the next periph target
-            float RandYaw = FMath::RandRange(YawBounds.X, YawBounds.Y);
-            float RandPitch = FMath::RandRange(PitchBounds.X, PitchBounds.Y);
+            float RandYaw = FMath::RandRange(PeriphYawBounds.X, PeriphYawBounds.Y);
+            float RandPitch = FMath::RandRange(PeriphPitchBounds.X, PeriphPitchBounds.Y);
             float Roll = 0.f;
-            PeriphVector = GetData()->GetCameraRotationAbs().RotateVector(FRotator(RandPitch, RandYaw, Roll).Vector());
+            PeriphRotator = FRotator(RandPitch, RandYaw, Roll);
         }
         else if (FMath::IsNearlyEqual(TimeSinceLastFlash, NextPeriphTrigger, 0.05f))
         {
@@ -47,7 +44,7 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
             if (PeriphTarget == nullptr)
             {
                 PeriphTarget = ABall::RequestNewActor(World, "PeriphTarget");
-                UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), TimeSinceLastFlash);
+                UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
             }
         }
         else if (FMath::IsNearlyEqual(TimeSinceLastFlash, NextPeriphTrigger + FlashDuration, 0.05f))
@@ -57,7 +54,7 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
             {
                 PeriphTarget->RequestDestroy();
                 PeriphTarget = nullptr;
-                UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), TimeSinceLastFlash);
+                UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
             }
         }
         TimeSinceLastFlash += DeltaTime;
@@ -72,10 +69,14 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
 #if WITH_EDITOR
     const FRotator &HeadDirection = GetData()->GetCameraRotationAbs();
     const FVector &HeadPos = GetData()->GetCameraLocationAbs();
-    const FVector TopLeft = HeadDirection.RotateVector(FRotator(PitchBounds.X, YawBounds.X, 0.f).Vector());
-    const FVector TopRight = HeadDirection.RotateVector(FRotator(PitchBounds.X, YawBounds.Y, 0.f).Vector());
-    const FVector BotLeft = HeadDirection.RotateVector(FRotator(PitchBounds.Y, YawBounds.X, 0.f).Vector());
-    const FVector BotRight = HeadDirection.RotateVector(FRotator(PitchBounds.Y, YawBounds.Y, 0.f).Vector());
+    const FVector TopLeft = HeadDirection.RotateVector(
+        (PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.X, 0.f)).Vector());
+    const FVector TopRight = HeadDirection.RotateVector(
+        (PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.Y, 0.f)).Vector());
+    const FVector BotLeft = HeadDirection.RotateVector(
+        (PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.X, 0.f)).Vector());
+    const FVector BotRight = HeadDirection.RotateVector(
+        (PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.Y, 0.f)).Vector());
     DrawDebugSphere(World, HeadPos + TopLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
     DrawDebugSphere(World, HeadPos + TopRight * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
     DrawDebugSphere(World, HeadPos + BotLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
@@ -84,7 +85,9 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
 
     if (PeriphTarget != nullptr)
     {
-        PeriphTarget->SetActorLocation(Camera->GetComponentLocation() + PeriphVector * TargetRenderDistance * 100.f);
-        PeriphTarget->SetActorScale3D(0.1f * FVector::OneVector);
+        const FVector PeriphFinal =
+            GetData()->GetCameraRotationAbs().RotateVector((PeriphRotationOffset + PeriphRotator).Vector());
+        PeriphTarget->SetActorLocation(Camera->GetComponentLocation() + PeriphFinal * TargetRenderDistance * 100.f);
+        PeriphTarget->SetActorScale3D(PeriphTargetRadius * FVector::OneVector);
     }
 }

@@ -67,10 +67,13 @@ void AEgoSensor::ReadConfigVariables()
 
     // peripheral target
     ReadConfigValue("PeripheralTarget", "EnablePeriphTarget", bUsePeriphTarget);
+    ReadConfigValue("PeripheralTarget", "YawBounds", PeriphYawBounds);
+    ReadConfigValue("PeripheralTarget", "PitchBounds", PeriphPitchBounds);
+    ReadConfigValue("PeripheralTarget", "RotationOffset", PeriphRotationOffset);
     ReadConfigValue("PeripheralTarget", "MaxTimeBetweenFlashSec", MaxTimeBetweenFlash);
     ReadConfigValue("PeripheralTarget", "MinTimeBetweenFlashSec", MinTimeBetweenFlash);
     ReadConfigValue("PeripheralTarget", "FlashDurationSec", FlashDuration);
-    ReadConfigValue("PeripheralTarget", "TargetRadius", TargetRadius);
+    ReadConfigValue("PeripheralTarget", "TargetRadius", PeriphTargetRadius);
     ReadConfigValue("PeripheralTarget", "TargetRenderDistanceM", TargetRenderDistance);
     ReadConfigValue("PeripheralTarget", "EnableFixedCrosshair", bUseFixedCrosshair);
 
@@ -479,7 +482,8 @@ void AEgoSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const do
             DReyeVR::CustomActorData PeriphBall;
             PeriphBall.Name = FString(UTF8_TO_TCHAR(Name.c_str()));
             const FRotator PeriphRotation{LegacyData.head2target_pitch, LegacyData.head2target_yaw, 0.f};
-            FVector RotVecDirection = RecorderData.GetCameraRotationAbs().RotateVector(PeriphRotation.Vector());
+            FVector RotVecDirection =
+                RecorderData.GetCameraRotationAbs().RotateVector((PeriphRotationOffset + PeriphRotation).Vector());
             PeriphBall.Location = LegacyData.WorldPos + RotVecDirection * 3.f * 100.f;
             PeriphBall.Scale3D = 0.05f * FVector::OneVector;
             PeriphBall.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE);

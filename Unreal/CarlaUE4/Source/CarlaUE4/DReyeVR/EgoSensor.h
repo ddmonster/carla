@@ -109,11 +109,12 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     void TickPeriphTarget(float DeltaSeconds);
     class ABall *PeriphTarget = nullptr;
     class ACross *Crosshair = nullptr;
-    FVector PeriphVector;
+    FRotator PeriphRotator, PeriphRotationOffset;
+    FVector2D PeriphYawBounds, PeriphPitchBounds;
     float MaxTimeBetweenFlash;
     float MinTimeBetweenFlash;
     float FlashDuration;
-    float TargetRadius;
+    float PeriphTargetRadius;
     float TargetRenderDistance;
     float TimeSinceLastFlash = 0.f;
     float NextPeriphTrigger = 0.f;
