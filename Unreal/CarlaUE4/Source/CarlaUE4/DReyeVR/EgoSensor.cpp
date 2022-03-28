@@ -65,8 +65,17 @@ void AEgoSensor::ReadConfigVariables()
     UVariableRateShadingFunctionLibrary::EnableEyeTracking(bEnableFovRender);
 #endif
 
+    // peripheral target
+    ReadConfigValue("PeripheralTarget", "EnablePeriphTarget", bUsePeriphTarget);
+    ReadConfigValue("PeripheralTarget", "MaxTimeBetweenFlashSec", MaxTimeBetweenFlash);
+    ReadConfigValue("PeripheralTarget", "MinTimeBetweenFlashSec", MinTimeBetweenFlash);
+    ReadConfigValue("PeripheralTarget", "FlashDurationSec", FlashDuration);
+    ReadConfigValue("PeripheralTarget", "TargetRadius", TargetRadius);
+    ReadConfigValue("PeripheralTarget", "TargetRenderDistanceM", TargetRenderDistance);
+
     // legacy code for periph recording support
     ReadConfigValue("Replayer", "UsingLegacyPeriph", bUsingLegacyPeriphFile);
+    UE_LOG(LogTemp, Warning, TEXT("USING LEGACY PERIPH?????: %d"), bUsingLegacyPeriphFile);
     check(GetData() != nullptr);
     GetData()->bUsingLegacyPeriphFile = bUsingLegacyPeriphFile;
 }
@@ -114,6 +123,7 @@ void AEgoSensor::ManualTick(float DeltaSeconds)
                           Vehicle->GetVehicleInputs() // User inputs
         );
         TickFoveatedRender();
+        TickPeriphTarget(DeltaSeconds);
     }
     TickCount++;
 }
@@ -468,9 +478,8 @@ void AEgoSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const do
         {
             DReyeVR::CustomActorData PeriphBall;
             PeriphBall.Name = FString(UTF8_TO_TCHAR(Name.c_str()));
-            FVector RotVecDirection = GenerateRotVecGivenAngles(RecorderData.GetCameraRotationAbs().Vector(), //
-                                                                LegacyData.head2target_yaw,                   //
-                                                                LegacyData.head2target_pitch);
+            const FRotator PeriphRotation{LegacyData.head2target_pitch, LegacyData.head2target_yaw, 0.f};
+            FVector RotVecDirection = RecorderData.GetCameraRotationAbs().RotateVector(PeriphRotation.Vector());
             PeriphBall.Location = LegacyData.WorldPos + RotVecDirection * 3.f * 100.f;
             PeriphBall.Scale3D = 0.05f * FVector::OneVector;
             PeriphBall.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE);

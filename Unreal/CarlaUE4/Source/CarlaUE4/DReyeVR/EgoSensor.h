@@ -104,11 +104,19 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
 
     ////////////////:REPLAY:////////////////
     bool bUsingLegacyPeriphFile = false;
-    class ABall *PeriphBall = nullptr;
-    // void  ();
 
     ///////////////:PERIPH:////////////////
-    FVector GenerateRotVecGivenAngles(const FVector &UnitGazeVec, float yaw, float pitch) const;
+    void TickPeriphTarget(float DeltaSeconds);
+    class ABall *PeriphTarget = nullptr;
+    FVector PeriphVector;
+    float MaxTimeBetweenFlash;
+    float MinTimeBetweenFlash;
+    float FlashDuration;
+    float TargetRadius;
+    float TargetRenderDistance;
+    float TimeSinceLastFlash = 0.f;
+    float NextPeriphTrigger = 0.f;
+    bool bUsePeriphTarget = false;
 
     ////////////////:OTHER:////////////////
     int EgoSensorID;
