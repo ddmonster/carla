@@ -59,11 +59,6 @@ void AEgoSensor::ReadConfigVariables()
 
     // foveated rendering variables
     ReadConfigValue("FoveatedRender", "Enabled", bEnableFovRender);
-#if USE_FOVEATED_RENDER
-    // Initialize VRS plugin (using our VRS fork!)
-    UVariableRateShadingFunctionLibrary::EnableVRS(bEnableFovRender);
-    UVariableRateShadingFunctionLibrary::EnableEyeTracking(bEnableFovRender);
-#endif
 
     // peripheral target
     ReadConfigValue("PeripheralTarget", "EnablePeriphTarget", bUsePeriphTarget);
@@ -98,6 +93,12 @@ void AEgoSensor::BeginPlay()
 
     // Register EgoSensor with the CarlaActorRegistry
     Register();
+
+#if USE_FOVEATED_RENDER
+    // Initialize VRS plugin (using our VRS fork!)
+    UVariableRateShadingFunctionLibrary::EnableVRS(bEnableFovRender);
+    UVariableRateShadingFunctionLibrary::EnableEyeTracking(bEnableFovRender);
+#endif
 
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoSensor"));
 }
