@@ -25,7 +25,7 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
 
     // generate stimuli every TimeBetweenFlash second chunks, and log that time
     /// TODO: all these magic numbers need to be parameterized
-    if (TimeSinceLastFlash < MaxTimeBetweenFlash)
+    if (TimeSinceLastFlash < MaxTimeBetweenFlash + FlashDuration + 0.05f)
     {
         if (TimeSinceLastFlash == 0.f)
         {
