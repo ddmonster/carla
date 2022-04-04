@@ -116,6 +116,7 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     float FlashDuration;
     float PeriphTargetRadius;
     float TargetRenderDistance;
+    float LastPeriphTick = 0.f;
     float TimeSinceLastFlash = 0.f;
     float NextPeriphTrigger = 0.f;
     bool bUsePeriphTarget = false;

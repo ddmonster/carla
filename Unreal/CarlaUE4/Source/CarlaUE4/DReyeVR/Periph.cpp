@@ -25,7 +25,7 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
 
     // generate stimuli every TimeBetweenFlash second chunks, and log that time
     /// TODO: all these magic numbers need to be parameterized
-    if (TimeSinceLastFlash < MaxTimeBetweenFlash + FlashDuration + 0.05f)
+    if (TimeSinceLastFlash < MaxTimeBetweenFlash + FlashDuration)
     {
         if (TimeSinceLastFlash == 0.f)
         {
@@ -38,25 +38,23 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
             float Roll = 0.f;
             PeriphRotator = FRotator(RandPitch, RandYaw, Roll);
         }
-        else if (FMath::IsNearlyEqual(TimeSinceLastFlash, NextPeriphTrigger, 0.05f))
+        else if (LastPeriphTick <= NextPeriphTrigger && TimeSinceLastFlash > NextPeriphTrigger)
         {
             // turn on periph target
-            if (PeriphTarget == nullptr)
-            {
-                PeriphTarget = ABall::RequestNewActor(World, "PeriphTarget");
-                UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
-            }
+            ensure(PeriphTarget == nullptr);
+            PeriphTarget = ABall::RequestNewActor(World, "PeriphTarget");
+            UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }
-        else if (FMath::IsNearlyEqual(TimeSinceLastFlash, NextPeriphTrigger + FlashDuration, 0.05f))
+        else if (LastPeriphTick <= NextPeriphTrigger + FlashDuration &&
+                 TimeSinceLastFlash > NextPeriphTrigger + FlashDuration)
         {
             // turn off periph target
-            if (PeriphTarget)
-            {
-                PeriphTarget->RequestDestroy();
-                PeriphTarget = nullptr;
-                UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
-            }
+            ensure(PeriphTarget != nullptr);
+            PeriphTarget->RequestDestroy();
+            PeriphTarget = nullptr;
+            UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }
+        LastPeriphTick = TimeSinceLastFlash;
         TimeSinceLastFlash += DeltaTime;
     }
     else
