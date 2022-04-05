@@ -35,3 +35,13 @@ class ACross : public ADReyeVRCustomActor
 
     CREATE_REQUEST_FACTORY_FN(ACross);
 };
+
+UCLASS()
+class APeriphTarget : public ADReyeVRCustomActor
+{
+    GENERATED_BODY()
+  public:
+    APeriphTarget(const FObjectInitializer &ObjectInitializer);
+
+    CREATE_REQUEST_FACTORY_FN(APeriphTarget);
+};

@@ -63,7 +63,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     FVector2D ProjectGazeToScreen(const FVector &Origin, const FVector &Dir, bool bPlayerViewportRelative = true) const;
 
     // "clean slate" camera room in a closed box in Town04 which removes the cognitive load of driving
-    bool EnableCleanSlateRoom();  // enable teleport to clean-slate room
+    bool EnableCleanSlateRoom(); // enable teleport to clean-slate room
+    bool IsInCleanSlateRoom() const;
     void DisableCleanSlateRoom(); // return back to normal vehicle operations
 
     // Play sounds

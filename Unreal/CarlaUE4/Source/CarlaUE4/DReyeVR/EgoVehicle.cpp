@@ -246,6 +246,11 @@ bool AEgoVehicle::EnableCleanSlateRoom()
     return bBlankSlateRoomActive; // true if sucessfull, false otherwise
 }
 
+bool AEgoVehicle::IsInCleanSlateRoom() const
+{
+    return bBlankSlateRoomActive;
+}
+
 void AEgoVehicle::DisableCleanSlateRoom()
 {
     UE_LOG(LogTemp, Log, TEXT("Disabling clean slate calibration"));
@@ -825,6 +830,9 @@ void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 void AEgoVehicle::SetLevel(ADReyeVRLevel *Level)
 {
     this->DReyeVRLevel = Level;
+    check(DReyeVRLevel != nullptr);
+    if (EgoSensor)
+        EgoSensor->SetLevel(Level);
 }
 
 void AEgoVehicle::TickLevel(float DeltaSeconds)

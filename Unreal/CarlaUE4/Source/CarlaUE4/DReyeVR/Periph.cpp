@@ -1,27 +1,67 @@
-#include "EgoSensor.h"
+#include "Periph.h"
+#include "DReyeVRUtils.h" // ReadConfigValue
 
-void AEgoSensor::TickPeriphTarget(float DeltaTime)
+PeriphSystem::PeriphSystem()
 {
-    if (bUseFixedCrosshair)
-    {
-        if (Crosshair == nullptr)
-            Crosshair = ACross::RequestNewActor(World, "PeriphCrosshair");
-        const FVector CrosshairVector = GetData()->GetCameraRotationAbs().RotateVector(FVector::ForwardVector);
-        Crosshair->SetActorLocation(Camera->GetComponentLocation() + CrosshairVector * TargetRenderDistance * 100.f);
-        Crosshair->SetActorRotation(Camera->GetComponentRotation());
-        Crosshair->SetActorScale3D(0.1f * FVector::OneVector);
-    }
+    ReadConfigVariables();
+}
 
-    if (!bUsePeriphTarget)
-        return;
+void PeriphSystem::ReadConfigVariables()
+{
+    // peripheral target
+    ReadConfigValue("PeripheralTarget", "EnablePeriphTarget", bUsePeriphTarget);
+    ReadConfigValue("PeripheralTarget", "YawBounds", PeriphYawBounds);
+    ReadConfigValue("PeripheralTarget", "PitchBounds", PeriphPitchBounds);
+    ReadConfigValue("PeripheralTarget", "RotationOffset", PeriphRotationOffset);
+    ReadConfigValue("PeripheralTarget", "MaxTimeBetweenFlashSec", MaxTimeBetweenFlash);
+    ReadConfigValue("PeripheralTarget", "MinTimeBetweenFlashSec", MinTimeBetweenFlash);
+    ReadConfigValue("PeripheralTarget", "FlashDurationSec", FlashDuration);
+    ReadConfigValue("PeripheralTarget", "TargetRadius", PeriphTargetRadius);
+    ReadConfigValue("PeripheralTarget", "TargetRenderDistanceM", TargetRenderDistance);
+    ReadConfigValue("PeripheralTarget", "EnableFixedCrosshair", bUseFixedCrosshair);
+}
 
-    if (IsReplaying() && bUsingLegacyPeriphFile)
+void PeriphSystem::Initialize(class UWorld *WorldIn)
+{
+    World = WorldIn;
+    check(World != nullptr);
+}
+
+void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExperiment, const UCameraComponent *Camera)
+{
+    // if replaying, don't tick periph system
+    if (bIsReplaying || World == nullptr)
     {
         // replay of legacy periph target is handled in UpdateData
         if (PeriphTarget != nullptr)
             PeriphTarget->RequestDestroy();
+        if (Crosshair != nullptr)
+            Crosshair->RequestDestroy();
         return;
     }
+
+    const FVector &CameraLoc = Camera->GetComponentLocation();
+    const FRotator &CameraRot = Camera->GetComponentRotation();
+    if (bUseFixedCrosshair)
+    {
+        if (bInCleanRoomExperiment)
+        {
+            if (Crosshair == nullptr)
+                Crosshair = ACross::RequestNewActor(World, "PeriphCrosshair");
+            const FVector CrosshairVector = CameraRot.RotateVector(FVector::ForwardVector);
+            Crosshair->SetActorLocation(CameraLoc + CrosshairVector * TargetRenderDistance * 100.f);
+            Crosshair->SetActorRotation(CameraRot);
+            Crosshair->SetActorScale3D(0.1f * FVector::OneVector);
+        }
+        else
+        {
+            if (Crosshair != nullptr)
+                Crosshair->RequestDestroy();
+        }
+    }
+
+    if (!bUsePeriphTarget)
+        return;
 
     // generate stimuli every TimeBetweenFlash second chunks, and log that time
     /// TODO: all these magic numbers need to be parameterized
@@ -42,7 +82,7 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
         {
             // turn on periph target
             ensure(PeriphTarget == nullptr);
-            PeriphTarget = ABall::RequestNewActor(World, "PeriphTarget");
+            PeriphTarget = APeriphTarget::RequestNewActor(World, "PeriphTarget");
             UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }
         else if (LastPeriphTick <= NextPeriphTrigger + FlashDuration &&
@@ -65,27 +105,24 @@ void AEgoSensor::TickPeriphTarget(float DeltaTime)
 
 // Draw debug border markers
 #if WITH_EDITOR
-    const FRotator &HeadDirection = GetData()->GetCameraRotationAbs();
-    const FVector &HeadPos = GetData()->GetCameraLocationAbs();
-    const FVector TopLeft = HeadDirection.RotateVector(
-        (PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.X, 0.f)).Vector());
-    const FVector TopRight = HeadDirection.RotateVector(
-        (PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.Y, 0.f)).Vector());
-    const FVector BotLeft = HeadDirection.RotateVector(
-        (PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.X, 0.f)).Vector());
-    const FVector BotRight = HeadDirection.RotateVector(
-        (PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.Y, 0.f)).Vector());
-    DrawDebugSphere(World, HeadPos + TopLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
-    DrawDebugSphere(World, HeadPos + TopRight * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
-    DrawDebugSphere(World, HeadPos + BotLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
-    DrawDebugSphere(World, HeadPos + BotRight * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
+    const FVector TopLeft =
+        CameraRot.RotateVector((PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.X, 0.f)).Vector());
+    const FVector TopRight =
+        CameraRot.RotateVector((PeriphRotationOffset + FRotator(PeriphPitchBounds.X, PeriphYawBounds.Y, 0.f)).Vector());
+    const FVector BotLeft =
+        CameraRot.RotateVector((PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.X, 0.f)).Vector());
+    const FVector BotRight =
+        CameraRot.RotateVector((PeriphRotationOffset + FRotator(PeriphPitchBounds.Y, PeriphYawBounds.Y, 0.f)).Vector());
+    DrawDebugSphere(World, CameraLoc + TopLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
+    DrawDebugSphere(World, CameraLoc + TopRight * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
+    DrawDebugSphere(World, CameraLoc + BotLeft * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
+    DrawDebugSphere(World, CameraLoc + BotRight * TargetRenderDistance * 100.f, 4.0f, 12, FColor::Blue);
 #endif
 
     if (PeriphTarget != nullptr)
     {
-        const FVector PeriphFinal =
-            GetData()->GetCameraRotationAbs().RotateVector((PeriphRotationOffset + PeriphRotator).Vector());
-        PeriphTarget->SetActorLocation(Camera->GetComponentLocation() + PeriphFinal * TargetRenderDistance * 100.f);
+        const FVector PeriphFinal = CameraRot.RotateVector((PeriphRotationOffset + PeriphRotator).Vector());
+        PeriphTarget->SetActorLocation(CameraLoc + PeriphFinal * TargetRenderDistance * 100.f);
         PeriphTarget->SetActorScale3D(PeriphTargetRadius * FVector::OneVector);
     }
 }

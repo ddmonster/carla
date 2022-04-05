@@ -1,4 +1,5 @@
 #include "CustomActors.h"
+#include "DReyeVRUtils.h" // Read
 
 ABall::ABall(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -14,7 +15,6 @@ ABall::ABall(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitiali
 
     // set internals that are specific to this constructor
     Internals.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE);
-    Internals.Other = "";
 }
 
 ACross::ACross(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
@@ -33,5 +33,27 @@ ACross::ACross(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitia
 
     // set internals that are specific to this constructor
     Internals.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::CROSS);
-    Internals.Other = "";
+}
+
+APeriphTarget::APeriphTarget(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
+{
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickGroup = TG_PrePhysics;
+
+    AssignSM("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'");
+
+    // create emissive red texture
+    check(ActorMesh != nullptr);
+    UMaterialInstanceDynamic *DynMat = ActorMesh->CreateAndSetMaterialInstanceDynamic(0);
+    float Emission = 0.f;
+    ReadConfigValue("PeripheralTarget", "Emission", Emission);
+    DynMat->SetScalarParameterValue("Emission", Emission);
+    DynMat->SetVectorParameterValue("Color", FLinearColor::Red); // bright red
+    ActorMesh->SetMaterial(0, DynMat);
+
+    // finalizing construction
+    this->SetActorEnableCollision(false);
+
+    // set internals that are specific to this constructor
+    Internals.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::PERIPH_TARGET);
 }
