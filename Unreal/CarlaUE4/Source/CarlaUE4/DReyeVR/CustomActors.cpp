@@ -1,5 +1,4 @@
 #include "CustomActors.h"
-#include "DReyeVRUtils.h" // Read
 
 ABall::ABall(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -22,11 +21,8 @@ ACross::ACross(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitia
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PrePhysics;
 
-    AssignSM("StaticMesh'/Game/DReyeVR/Custom/SMCross.SMCross'");
-
-    // use default material
-    AssignMat(0, "MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
-    AssignMat(1, "MaterialInstanceConstant'/Game/Carla/Static/Vehicles/GeneralMaterials/BrightRed.BrightRed'");
+    // material color and lighting is defined in: Material'/Game/DReyeVR/Custom/Periph/EmissiveRed.EmissiveRed'
+    AssignSM("StaticMesh'/Game/DReyeVR/Custom/Periph/SMFixationCross.SMFixationCross'");
 
     // finalizing construction
     this->SetActorEnableCollision(false);
@@ -40,16 +36,8 @@ APeriphTarget::APeriphTarget(const FObjectInitializer &ObjectInitializer) : Supe
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PrePhysics;
 
-    AssignSM("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'");
-
-    // create emissive red texture
-    check(ActorMesh != nullptr);
-    UMaterialInstanceDynamic *DynMat = ActorMesh->CreateAndSetMaterialInstanceDynamic(0);
-    float Emission = 0.f;
-    ReadConfigValue("PeripheralTarget", "Emission", Emission);
-    DynMat->SetScalarParameterValue("Emission", Emission);
-    DynMat->SetVectorParameterValue("Color", FLinearColor::Red); // bright red
-    ActorMesh->SetMaterial(0, DynMat);
+    // material color and lighting is defined in: Material'/Game/DReyeVR/Custom/Periph/EmissiveRed.EmissiveRed'
+    AssignSM("StaticMesh'/Game/DReyeVR/Custom/Periph/SMPeriphTarget.SMPeriphTarget'");
 
     // finalizing construction
     this->SetActorEnableCollision(false);
