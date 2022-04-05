@@ -4,7 +4,18 @@
 
 #include "CustomActors.generated.h"
 
-/// TODO: template partial specialization metaprogramming
+/// NOTE: include this as part of your custom actor instance class!
+#define CREATE_REQUEST_FACTORY_FN(T)                                                                                   \
+    static T *RequestNewActor(UWorld *World, const FString &Name)                                                      \
+    {                                                                                                                  \
+        check(World != nullptr);                                                                                       \
+        FActorSpawnParameters SpawnInfo;                                                                               \
+        SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;                    \
+        T *Actor = World->SpawnActor<T>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);                        \
+        Actor->Initialize(Name);                                                                                       \
+        return Actor;                                                                                                  \
+    }
+
 UCLASS()
 class ABall : public ADReyeVRCustomActor
 {
@@ -12,7 +23,7 @@ class ABall : public ADReyeVRCustomActor
   public:
     ABall(const FObjectInitializer &ObjectInitializer);
 
-    static ABall *RequestNewActor(UWorld *World, const FString &Name);
+    CREATE_REQUEST_FACTORY_FN(ABall);
 };
 
 UCLASS()
@@ -22,5 +33,5 @@ class ACross : public ADReyeVRCustomActor
   public:
     ACross(const FObjectInitializer &ObjectInitializer);
 
-    static ACross *RequestNewActor(UWorld *World, const FString &Name);
+    CREATE_REQUEST_FACTORY_FN(ACross);
 };
