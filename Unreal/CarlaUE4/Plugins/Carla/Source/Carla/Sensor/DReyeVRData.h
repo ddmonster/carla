@@ -136,7 +136,7 @@ enum class Eye
     LEFT,
 };
 
-class AggregateData // all DReyeVR sensor data is held here
+class AggregateData // all DReyeVR senspor data is held here
 {
   public:
     AggregateData() = default;
