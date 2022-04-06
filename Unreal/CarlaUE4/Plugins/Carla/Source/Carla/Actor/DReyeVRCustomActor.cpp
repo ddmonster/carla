@@ -70,6 +70,14 @@ void ADReyeVRCustomActor::RequestDestroy()
     this->Destroy();
 }
 
+bool ADReyeVRCustomActor::RequestDestroy(ADReyeVRCustomActor *ToDie)
+{
+    if (ToDie)
+        ToDie->RequestDestroy();
+    ToDie = nullptr; // set to null immediately
+    return (ToDie == nullptr);
+}
+
 void ADReyeVRCustomActor::Tick(float DeltaSeconds)
 {
     if (ADReyeVRSensor::bIsReplaying)

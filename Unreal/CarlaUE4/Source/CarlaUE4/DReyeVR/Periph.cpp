@@ -34,9 +34,9 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
     {
         // replay of legacy periph target is handled in UpdateData
         if (PeriphTarget != nullptr)
-            PeriphTarget->RequestDestroy();
+            ADReyeVRCustomActor::RequestDestroy(PeriphTarget);
         if (Crosshair != nullptr)
-            Crosshair->RequestDestroy();
+            ADReyeVRCustomActor::RequestDestroy(Crosshair);
         return;
     }
 
@@ -56,7 +56,7 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
         else
         {
             if (Crosshair != nullptr)
-                Crosshair->RequestDestroy();
+                ADReyeVRCustomActor::RequestDestroy(Crosshair);
         }
     }
 
@@ -90,8 +90,7 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
         {
             // turn off periph target
             ensure(PeriphTarget != nullptr);
-            PeriphTarget->RequestDestroy();
-            PeriphTarget = nullptr;
+            ADReyeVRCustomActor::RequestDestroy(PeriphTarget);
             UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }
         LastPeriphTick = TimeSinceLastFlash;

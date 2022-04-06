@@ -316,6 +316,8 @@ void AEgoVehicle::InitSensor()
     // Attach the EgoSensor as a child to the EgoVehicle
     EgoSensor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
     EgoSensor->SetEgoVehicle(this);
+    if (DReyeVRLevel)
+        EgoSensor->SetLevel(DReyeVRLevel);
 }
 
 void AEgoVehicle::ReplayTick()
@@ -831,8 +833,6 @@ void AEgoVehicle::SetLevel(ADReyeVRLevel *Level)
 {
     this->DReyeVRLevel = Level;
     check(DReyeVRLevel != nullptr);
-    if (EgoSensor)
-        EgoSensor->SetLevel(Level);
 }
 
 void AEgoVehicle::TickLevel(float DeltaSeconds)
