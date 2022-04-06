@@ -18,22 +18,22 @@ void PeriphSystem::ReadConfigVariables()
     ReadConfigValue("PeripheralTarget", "FlashDurationSec", FlashDuration);
     ReadConfigValue("PeripheralTarget", "TargetRadius", PeriphTargetRadius);
     ReadConfigValue("PeripheralTarget", "TargetRenderDistanceM", TargetRenderDistance);
-    ReadConfigValue("PeripheralTarget", "EnableFixedCrosshair", bUseFixedCrosshair);
+    ReadConfigValue("PeripheralTarget", "EnableFixedCross", bUseFixedCross);
 }
 
 void PeriphSystem::Initialize(class UWorld *WorldIn)
 {
     World = WorldIn;
     check(World != nullptr);
-    if (bUseFixedCrosshair)
+    if (bUseFixedCross)
     {
-        Crosshair = ACross::RequestNewActor(World, PeriphFixationName);
-        Crosshair->SetActorScale3D(0.1f * FVector::OneVector);
-        check(Crosshair != nullptr);
+        Cross = ACross::RequestNewActor(World, PeriphFixationName);
+        Cross->SetActorScale3D(0.1f * FVector::OneVector);
+        check(Cross != nullptr);
     }
     if (bUsePeriphTarget)
     {
-        PeriphTarget = APeriphTarget::RequestNewActor(World, PeriphFixationName);
+        PeriphTarget = APeriphTarget::RequestNewActor(World, PeriphTargetName);
         PeriphTarget->SetActorScale3D(PeriphTargetRadius * FVector::OneVector);
         check(PeriphTarget != nullptr);
     }
@@ -47,25 +47,25 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
         // replay of legacy periph target is handled in UpdateData
         if (PeriphTarget != nullptr)
             PeriphTarget->Disable();
-        if (Crosshair != nullptr)
-            Crosshair->Disable();
+        if (Cross != nullptr)
+            Cross->Disable();
         return;
     }
 
     const FVector &CameraLoc = Camera->GetComponentLocation();
     const FRotator &CameraRot = Camera->GetComponentRotation();
-    if (bUseFixedCrosshair)
+    if (bUseFixedCross)
     {
         if (bInCleanRoomExperiment)
         {
-            const FVector CrosshairVector = CameraRot.RotateVector(FVector::ForwardVector);
-            Crosshair->SetActorLocation(CameraLoc + CrosshairVector * TargetRenderDistance * 100.f);
-            Crosshair->SetActorRotation(CameraRot);
-            Crosshair->Enable();
+            const FVector CrossVector = CameraRot.RotateVector(FVector::ForwardVector);
+            Cross->SetActorLocation(CameraLoc + CrossVector * TargetRenderDistance * 100.f);
+            Cross->SetActorRotation(CameraRot);
+            Cross->Enable();
         }
         else
         {
-            Crosshair->Disable();
+            Cross->Disable();
         }
     }
 
