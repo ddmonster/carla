@@ -47,7 +47,7 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
         if (bInCleanRoomExperiment)
         {
             if (Crosshair == nullptr)
-                Crosshair = ACross::RequestNewActor(World, "PeriphCrosshair");
+                Crosshair = ACross::RequestNewActor(World, PeriphFixationName);
             const FVector CrosshairVector = CameraRot.RotateVector(FVector::ForwardVector);
             Crosshair->SetActorLocation(CameraLoc + CrosshairVector * TargetRenderDistance * 100.f);
             Crosshair->SetActorRotation(CameraRot);
@@ -81,15 +81,17 @@ void PeriphSystem::Tick(float DeltaTime, bool bIsReplaying, bool bInCleanRoomExp
         else if (LastPeriphTick <= NextPeriphTrigger && TimeSinceLastFlash > NextPeriphTrigger)
         {
             // turn on periph target
-            ensure(PeriphTarget == nullptr);
-            PeriphTarget = APeriphTarget::RequestNewActor(World, "PeriphTarget");
+            if (PeriphTarget != nullptr)
+                ADReyeVRCustomActor::RequestDestroy(PeriphTarget);
+            PeriphTarget = APeriphTarget::RequestNewActor(World, PeriphName);
             UE_LOG(LogTemp, Log, TEXT("Periph Target On @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }
         else if (LastPeriphTick <= NextPeriphTrigger + FlashDuration &&
                  TimeSinceLastFlash > NextPeriphTrigger + FlashDuration)
         {
             // turn off periph target
-            ensure(PeriphTarget != nullptr);
+            if (PeriphTarget == nullptr)
+                PeriphTarget = APeriphTarget::RequestNewActor(World, PeriphName);
             ADReyeVRCustomActor::RequestDestroy(PeriphTarget);
             UE_LOG(LogTemp, Log, TEXT("Periph Target Off @ %f"), UGameplayStatics::GetRealTimeSeconds(World));
         }

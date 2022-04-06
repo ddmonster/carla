@@ -32,4 +32,6 @@ class PeriphSystem
     float NextPeriphTrigger = 0.f;
     bool bUsePeriphTarget = false;
     bool bUseFixedCrosshair = false;
+    const FString PeriphName = "PeriphTarget";
+    const FString PeriphFixationName = "PeriphCrosshair";
 };
