@@ -116,11 +116,11 @@ void ADReyeVRCustomActor::ApplyMaterialParams(const std::vector<std::pair<FName,
             DynamicMat->SetVectorParameterValue(VectorParam.first, VectorParam.second);
             // UE_LOG(LogTemp, Log, TEXT("Apply %s=%s"), *VectorParam.first.ToString(), *VectorParam.second.ToString());
         }
-        if (MaterialIdx == -1)
+        if (MaterialIdx < 0)
         {
-            // loop through all materials
-            for (int i = 0; i < ActorMesh->GetNumMaterials(); i++)
-                ActorMesh->SetMaterial(MaterialIdx, DynamicMat);
+            // loop through |MaterialIdx| materials (dynamic array assignment)
+            for (int i = 0; i < std::abs(MaterialIdx); i++)
+                ActorMesh->SetMaterial(i, DynamicMat);
         }
         else
             ActorMesh->SetMaterial(MaterialIdx, DynamicMat);
