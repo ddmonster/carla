@@ -321,7 +321,7 @@ void ADReyeVRLevel::LegacyReplayPeriph(const DReyeVR::AggregateData &RecorderDat
     else
     {
         if (ADReyeVRCustomActor::ActiveCustomActors.find(Name) != ADReyeVRCustomActor::ActiveCustomActors.end())
-            ADReyeVRCustomActor::ActiveCustomActors[Name]->Disable();
+            ADReyeVRCustomActor::ActiveCustomActors[Name]->Deactivate();
     }
 }
 
@@ -357,7 +357,7 @@ void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderDa
     if (A != nullptr)
     {
         A->SetInternals(RecorderData);
-        A->Enable();
+        A->Activate();
     }
 }
 

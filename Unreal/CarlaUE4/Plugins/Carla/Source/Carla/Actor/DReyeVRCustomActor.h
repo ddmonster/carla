@@ -20,11 +20,11 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     virtual void Tick(float DeltaSeconds) override;
 
     static ADReyeVRCustomActor *RequestNewActor(UWorld *World, const FString &Name);
-    void Enable();
-    void Disable();
-    bool IsEnabled() const
+    void Activate();
+    void Deactivate();
+    bool IsActive() const
     {
-        return bIsEnabled;
+        return bIsActive;
     }
 
     void Initialize(const FString &Name);
@@ -43,8 +43,8 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
   protected:
     void BeginPlay() override;
     void BeginDestroy() override;
-    bool bIsEnabled = false; // initially disabled
-    int NumMaterials = 1;    // default assumes 1 material
+    bool bIsActive = false; // initially deactivated
+    int NumMaterials = 1;   // default assumes 1 material
 
     void AssignSM(const FString &Path);
     void AssignMat(const int MatIdx, const FString &Path);

@@ -60,11 +60,11 @@ void ADReyeVRCustomActor::BeginPlay()
 
 void ADReyeVRCustomActor::BeginDestroy()
 {
-    this->Disable(); // remove from global static table
+    this->Deactivate(); // remove from global static table
     Super::BeginDestroy();
 }
 
-void ADReyeVRCustomActor::Disable()
+void ADReyeVRCustomActor::Deactivate()
 {
     const std::string s = TCHAR_TO_UTF8(*Internals.Name);
     // UE_LOG(LogTemp, Log, TEXT("Disabling custom actor: %s"), *Internals.Name);
@@ -74,10 +74,10 @@ void ADReyeVRCustomActor::Disable()
     }
     this->SetActorHiddenInGame(true);
     this->SetActorTickEnabled(false);
-    this->bIsEnabled = false;
+    this->bIsActive = false;
 }
 
-void ADReyeVRCustomActor::Enable()
+void ADReyeVRCustomActor::Activate()
 {
     // UE_LOG(LogTemp, Log, TEXT("Enabling custom actor: %s"), *Internals.Name);
     const std::string s = TCHAR_TO_UTF8(*Internals.Name);
@@ -87,7 +87,7 @@ void ADReyeVRCustomActor::Enable()
         ensure(ADReyeVRCustomActor::ActiveCustomActors[s] == this);
     this->SetActorHiddenInGame(false);
     this->SetActorTickEnabled(true);
-    this->bIsEnabled = true;
+    this->bIsActive = true;
 }
 
 void ADReyeVRCustomActor::ApplyMaterialParams(const std::vector<std::pair<FName, float>> &ScalarParamsIn,
