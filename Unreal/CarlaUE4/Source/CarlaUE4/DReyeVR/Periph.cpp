@@ -30,16 +30,16 @@ void PeriphSystem::Initialize(class UWorld *WorldIn)
     check(World != nullptr);
     if (bUseFixedCross)
     {
-        Cross = ACross::RequestNewActor(World, PeriphFixationName);
+        Cross = ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types::CROSS, World, PeriphFixationName);
         Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
-        Cross->AssignMat(ACross::OpaqueMaterial);
+        Cross->AssignMat(ADReyeVRCustomActor::OpaqueMaterial);
         check(Cross != nullptr);
     }
     if (bUsePeriphTarget)
     {
-        PeriphTarget = ASphere::RequestNewActor(World, PeriphTargetName);
+        PeriphTarget = ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types::SPHERE, World, PeriphTargetName);
         PeriphTarget->SetActorScale3D(PeriphTargetSize * FVector::OneVector);
-        PeriphTarget->AssignMat(ASphere::OpaqueMaterial);
+        PeriphTarget->AssignMat(ADReyeVRCustomActor::OpaqueMaterial);
         float Emissive;
         ReadConfigValue("PeripheralTarget", "EmissionFactor", Emissive);
         PeriphTarget->MaterialParams.Emissive = Emissive * FLinearColor::Red;

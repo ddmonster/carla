@@ -3,8 +3,7 @@
 #include "Carla/Sensor/DReyeVRSensor.h"        // ADReyeVRSensor::bIsReplaying
 #include "Materials/MaterialInstance.h"        // UMaterialInstance
 #include "Materials/MaterialInstanceDynamic.h" // UMaterialInstanceDynamic
-#include "UObject/ConstructorHelpers.h"        // ConstructorHelpers
-#include "UObject/UObjectGlobals.h"            // LoadObject
+#include "UObject/UObjectGlobals.h"            // LoadObject, NewObject
 
 #include <string>
 
@@ -14,6 +13,44 @@ const FString ADReyeVRCustomActor::OpaqueMaterial =
     "Material'/Game/DReyeVR/Custom/OpaqueParamMaterial.OpaqueParamMaterial'";
 const FString ADReyeVRCustomActor::TransparentMaterial =
     "Material'/Game/DReyeVR/Custom/TransparentParamMaterial.TransparentParamMaterial'";
+
+ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types RequestedType, UWorld *World,
+                                                    const FString &Name)
+{
+    check(World != nullptr);
+    FActorSpawnParameters SpawnInfo;
+    SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    ADReyeVRCustomActor *Actor =
+        World->SpawnActor<ADReyeVRCustomActor>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);
+
+    FString SM_Path;
+    switch (RequestedType)
+    {
+    case DReyeVR::CustomActorData::Types::SPHERE:
+        SM_Path = "StaticMesh'/Engine/BasicShapes/Sphere.Sphere'";
+        break;
+    case DReyeVR::CustomActorData::Types::CUBE:
+        SM_Path = "StaticMesh'/Engine/BasicShapes/Cube.Cube'";
+        break;
+    case DReyeVR::CustomActorData::Types::CONE:
+        SM_Path = "StaticMesh'/Engine/BasicShapes/Cone.Cone'";
+        break;
+    case DReyeVR::CustomActorData::Types::CROSS:
+        SM_Path = "StaticMesh'/Game/DReyeVR/Custom/Periph/SM_FixationCross.SM_FixationCross'";
+        break;
+    case DReyeVR::CustomActorData::Types::ARROW:
+        /// TODO: make Arrow static mesh
+        SM_Path = "StaticMesh'/Engine/BasicShapes/Cube.Cube'";
+        break;
+    /// TODO: generalize for other types (templates?? :eyes:)
+    default:
+        UE_LOG(LogTemp, Warning, TEXT("Unknown actor type: %d"), int(RequestedType));
+        break; // ignore unknown actors
+    }
+    Actor->AssignSM(SM_Path, World);
+    Actor->Initialize(Name);
+    return Actor;
+}
 
 ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -26,19 +63,28 @@ ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitial
     Internals.Scale3D = this->GetActorScale3D();
 }
 
-void ADReyeVRCustomActor::AssignSM(const FString &Path)
+void ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
 {
-    FName MeshName(*("Mesh" + FString::FromInt(ADReyeVRCustomActor::AllMeshCount)));
-    ActorMesh = CreateDefaultSubobject<UStaticMeshComponent>(MeshName);
-    ActorMesh->SetupAttachment(this->GetRootComponent());
-    this->SetRootComponent(ActorMesh);
-
-    ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(*Path);
-    if (MeshAsset.Succeeded())
-        ActorMesh->SetStaticMesh(MeshAsset.Object);
+    UStaticMesh *SM = LoadObject<UStaticMesh>(nullptr, *Path);
+    ensure(SM != nullptr);
+    ensure(World != nullptr);
+    if (SM)
+    {
+        // Using static AllMeshCount to create a unique component name every time
+        FName MeshName(*("Mesh" + FString::FromInt(ADReyeVRCustomActor::AllMeshCount)));
+        ActorMesh = NewObject<UStaticMeshComponent>(this, MeshName);
+        ensure(ActorMesh != nullptr);
+        ActorMesh->SetupAttachment(this->GetRootComponent());
+        this->SetRootComponent(ActorMesh);
+        ActorMesh->SetStaticMesh(SM);
+        ActorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        ActorMesh->RegisterComponentWithWorld(World);
+        this->AddInstanceComponent(ActorMesh);
+    }
     else
-        UE_LOG(LogTemp, Error, TEXT("Unable to access mesh asset: %s"), *Path)
-    // static count for how many meshes have been processed thus far
+    {
+        UE_LOG(LogTemp, Error, TEXT("Unable to find mesh: %s"), *Path);
+    }
     ADReyeVRCustomActor::AllMeshCount++;
 }
 

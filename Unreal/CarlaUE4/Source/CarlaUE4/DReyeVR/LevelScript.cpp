@@ -336,18 +336,8 @@ void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderDa
     ADReyeVRCustomActor *A = nullptr;
     if (ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) == ADReyeVRCustomActor::ActiveCustomActors.end())
     {
-        switch (RecorderData.TypeId)
-        {
-        case static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE):
-            A = ASphere::RequestNewActor(GetWorld(), RecorderData.Name);
-            break;
-        case static_cast<char>(DReyeVR::CustomActorData::Types::CROSS):
-            A = ACross::RequestNewActor(GetWorld(), RecorderData.Name);
-            break;
-        /// TODO: generalize for other types (templates?? :eyes:)
-        default:
-            break; // ignore unknown actors
-        }
+        DReyeVR::CustomActorData::Types ActorType = DReyeVR::CustomActorData::Types(RecorderData.TypeId);
+        A = ADReyeVRCustomActor::CreateNew(ActorType, GetWorld(), RecorderData.Name);
     }
     else
     {
