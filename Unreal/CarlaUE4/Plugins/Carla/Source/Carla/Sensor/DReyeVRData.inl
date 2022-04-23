@@ -538,12 +538,82 @@ inline std::string AggregateData::GetUniqueName() const
 /// ------------:CUSTOMACTORDATA:------------- ///
 /// ========================================== ///
 
+inline void CustomActorData::MaterialParamsStruct::Apply(class UMaterialInstanceDynamic *Material) const
+{
+    /// PARAMS:
+    // these are either scalar (float) or vector (FLinearColor) attributes baked into the texture as follows
+
+    /// SCALAR:
+    // "Metallic" -> controls how metal-like your surface looks like
+    // "Specular" -> used to scale the current amount of specularity on non-metallic surfaces. Bw [0, 1], default 0.5
+    // "Roughness" -> Controls how rough the material is. [0 (smooth/mirror), 1(rough/diffuse)], default 0.5
+    // "Anisotropy" -> Determines the extent the specular highlight is stretched along the tangent. Bw [0, 1], default 0
+    // "Opacity" -> How opaque is this material NOTE: ONLY APPLIES TO TRANSLUCENT MATERIAL. Bw [0, 1], default 0.15
+
+    /// VECTOR:
+    // "BaseColor" -> defines the overall colour of the material (each channel is clamped to [0, 1])
+    // "Emissive" -> controls which parts of the material appear to glow
+
+    /// NOTE: Opacity only gets applied when the material is based on the TranslucentParamMaterial, all the other scalar
+    // params only get applied in the opaque case.
+
+    // assign material params
+    Material->SetScalarParameterValue("Metallic", Metallic);
+    Material->SetScalarParameterValue("Specular", Specular);
+    Material->SetScalarParameterValue("Roughness", Roughness);
+    Material->SetScalarParameterValue("Anisotropy", Anisotropy);
+    Material->SetScalarParameterValue("Opacity", Opacity);
+    Material->SetVectorParameterValue("BaseColor", BaseColor);
+    Material->SetVectorParameterValue("Emissive", Emissive);
+}
+
+inline void CustomActorData::MaterialParamsStruct::Read(std::ifstream &InFile)
+{
+    ReadValue<float>(InFile, Metallic);
+    ReadValue<float>(InFile, Specular);
+    ReadValue<float>(InFile, Roughness);
+    ReadValue<float>(InFile, Anisotropy);
+    ReadValue<float>(InFile, Opacity);
+    ReadFLinearColor(InFile, BaseColor);
+    ReadFLinearColor(InFile, Emissive);
+}
+
+inline void CustomActorData::MaterialParamsStruct::Write(std::ofstream &OutFile) const
+{
+    WriteValue<float>(OutFile, Metallic);
+    WriteValue<float>(OutFile, Specular);
+    WriteValue<float>(OutFile, Roughness);
+    WriteValue<float>(OutFile, Anisotropy);
+    WriteValue<float>(OutFile, Opacity);
+    WriteFLinearColor(OutFile, BaseColor);
+    WriteFLinearColor(OutFile, Emissive);
+}
+
+inline FString CustomActorData::MaterialParamsStruct::ToString() const
+{
+    FString Print = "";
+    Print += FString::Printf(TEXT("Metallic: %.3f"), Metallic);
+    Print += FString::Printf(TEXT("Specular: %.3f"), Specular);
+    Print += FString::Printf(TEXT("Roughness: %.3f"), Roughness);
+    Print += FString::Printf(TEXT("Anisotropy: %.3f"), Anisotropy);
+    Print += FString::Printf(TEXT("Opacity: %.3f"), Opacity);
+    Print += FString::Printf(TEXT("BaseColor: %s"), *BaseColor.ToString());
+    Print += FString::Printf(TEXT("Emissive: %s"), *Emissive.ToString());
+    return Print;
+}
+
 inline void CustomActorData::Read(std::ifstream &InFile)
 {
     ReadValue<char>(InFile, TypeId);
+    // 9 dof
     ReadFVector(InFile, Location);
     ReadFRotator(InFile, Rotation);
     ReadFVector(InFile, Scale3D);
+    // visual properties
+    ReadFString(InFile, Mesh);
+    // material properties
+    MaterialParams.Read(InFile);
+    // other
     ReadFString(InFile, Other);
     ReadFString(InFile, Name);
 }
@@ -551,9 +621,15 @@ inline void CustomActorData::Read(std::ifstream &InFile)
 inline void CustomActorData::Write(std::ofstream &OutFile) const
 {
     WriteValue<char>(OutFile, static_cast<char>(TypeId));
+    // 9 dof
     WriteFVector(OutFile, Location);
     WriteFRotator(OutFile, Rotation);
     WriteFVector(OutFile, Scale3D);
+    // visual properties
+    WriteFString(OutFile, Mesh);
+    // material properties
+    MaterialParams.Write(OutFile);
+    // other
     WriteFString(OutFile, Other);
     WriteFString(OutFile, Name);
 }
@@ -566,6 +642,8 @@ inline FString CustomActorData::ToString() const
     Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
     Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
     Print += FString::Printf(TEXT("Scale3D:%s,"), *Scale3D.ToString());
+    Print += FString::Printf(TEXT("Mesh:%s,"), *Mesh);
+    Print += FString::Printf(TEXT("Material:{%s},"), *MaterialParams.ToString());
     Print += FString::Printf(TEXT("Other:%s,"), *Other);
     return Print;
 }

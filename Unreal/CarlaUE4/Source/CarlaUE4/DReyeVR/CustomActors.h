@@ -17,13 +17,33 @@
     }
 
 UCLASS()
-class ABall : public ADReyeVRCustomActor
+class ASphere : public ADReyeVRCustomActor
 {
     GENERATED_BODY()
   public:
-    ABall(const FObjectInitializer &ObjectInitializer);
+    ASphere(const FObjectInitializer &ObjectInitializer);
 
-    CREATE_REQUEST_FACTORY_FN(ABall);
+    CREATE_REQUEST_FACTORY_FN(ASphere);
+};
+
+UCLASS()
+class ACube : public ADReyeVRCustomActor
+{
+    GENERATED_BODY()
+  public:
+    ACube(const FObjectInitializer &ObjectInitializer);
+
+    CREATE_REQUEST_FACTORY_FN(ACube);
+};
+
+UCLASS()
+class ACone : public ADReyeVRCustomActor
+{
+    GENERATED_BODY()
+  public:
+    ACone(const FObjectInitializer &ObjectInitializer);
+
+    CREATE_REQUEST_FACTORY_FN(ACone);
 };
 
 UCLASS()
@@ -37,11 +57,11 @@ class ACross : public ADReyeVRCustomActor
 };
 
 UCLASS()
-class APeriphTarget : public ADReyeVRCustomActor
+class AArrow : public ADReyeVRCustomActor
 {
     GENERATED_BODY()
   public:
-    APeriphTarget(const FObjectInitializer &ObjectInitializer);
+    AArrow(const FObjectInitializer &ObjectInitializer);
 
-    CREATE_REQUEST_FACTORY_FN(APeriphTarget);
+    CREATE_REQUEST_FACTORY_FN(AArrow);
 };

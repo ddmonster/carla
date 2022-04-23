@@ -32,12 +32,17 @@ void PeriphSystem::Initialize(class UWorld *WorldIn)
     {
         Cross = ACross::RequestNewActor(World, PeriphFixationName);
         Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
+        Cross->AssignMat(ACross::OpaqueMaterial);
         check(Cross != nullptr);
     }
     if (bUsePeriphTarget)
     {
-        PeriphTarget = APeriphTarget::RequestNewActor(World, PeriphTargetName);
+        PeriphTarget = ASphere::RequestNewActor(World, PeriphTargetName);
         PeriphTarget->SetActorScale3D(PeriphTargetSize * FVector::OneVector);
+        PeriphTarget->AssignMat(ASphere::OpaqueMaterial);
+        float Emissive;
+        ReadConfigValue("PeripheralTarget", "EmissionFactor", Emissive);
+        PeriphTarget->MaterialParams.Emissive = Emissive * FLinearColor::Red;
         check(PeriphTarget != nullptr);
     }
 }

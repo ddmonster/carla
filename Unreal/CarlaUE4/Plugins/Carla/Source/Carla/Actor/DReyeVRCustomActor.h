@@ -27,6 +27,8 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
         return bIsActive;
     }
 
+    const static FString OpaqueMaterial, TransparentMaterial;
+
     void Initialize(const FString &Name);
 
     void SetInternals(const DReyeVR::CustomActorData &In);
@@ -36,18 +38,15 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     static std::unordered_map<std::string, class ADReyeVRCustomActor *> ActiveCustomActors;
 
     // function to dynamically change the material params of the object at runtime
-    void ApplyMaterialParams(const std::vector<std::pair<FName, float>> &ScalarParamsIn,
-                             const std::vector<std::pair<FName, FLinearColor>> &VectorParamIn,
-                             const int StartMaterialIdx = 0, const int NumMaterials = 1);
+    void AssignMat(const FString &Path);
+    struct DReyeVR::CustomActorData::MaterialParamsStruct MaterialParams;
 
   protected:
     void BeginPlay() override;
     void BeginDestroy() override;
     bool bIsActive = false; // initially deactivated
-    int NumMaterials = 1;   // default assumes 1 material
 
     void AssignSM(const FString &Path);
-    void AssignMat(const int MatIdx, const FString &Path);
 
     class DReyeVR::CustomActorData Internals;
 
@@ -55,7 +54,7 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     class UStaticMeshComponent *ActorMesh = nullptr;
     static int AllMeshCount;
 
-    // for dynamic (parametrized) material
-    std::vector<std::pair<FName, float>> ScalarParams;
-    std::vector<std::pair<FName, FLinearColor>> VectorParams;
+    UPROPERTY(EditAnywhere, Category = "Materials")
+    class UMaterialInstanceDynamic *DynamicMat = nullptr;
+    int NumMaterials = 1; // change this to apply the dynamic material to more than 1 materials
 };

@@ -4,14 +4,22 @@
 #include "Materials/MaterialInstance.h"        // UMaterialInstance
 #include "Materials/MaterialInstanceDynamic.h" // UMaterialInstanceDynamic
 #include "UObject/ConstructorHelpers.h"        // ConstructorHelpers
+#include "UObject/UObjectGlobals.h"            // LoadObject
 
 #include <string>
 
 std::unordered_map<std::string, class ADReyeVRCustomActor *> ADReyeVRCustomActor::ActiveCustomActors = {};
 int ADReyeVRCustomActor::AllMeshCount = 0;
+const FString ADReyeVRCustomActor::OpaqueMaterial =
+    "Material'/Game/DReyeVR/Custom/OpaqueParamMaterial.OpaqueParamMaterial'";
+const FString ADReyeVRCustomActor::TransparentMaterial =
+    "Material'/Game/DReyeVR/Custom/TransparentParamMaterial.TransparentParamMaterial'";
 
 ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
+    // turning off physics interaction
+    this->SetActorEnableCollision(false);
+
     // done in child class
     Internals.Location = this->GetActorLocation();
     Internals.Rotation = this->GetActorRotation();
@@ -34,11 +42,19 @@ void ADReyeVRCustomActor::AssignSM(const FString &Path)
     ADReyeVRCustomActor::AllMeshCount++;
 }
 
-void ADReyeVRCustomActor::AssignMat(const int MatIdx, const FString &Path)
+void ADReyeVRCustomActor::AssignMat(const FString &Path)
 {
-    ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialAsset(*Path);
-    if (MaterialAsset.Succeeded() && ActorMesh != nullptr)
-        ActorMesh->SetMaterial(MatIdx, CastChecked<UMaterialInterface>(MaterialAsset.Object));
+    UMaterial *Material = LoadObject<UMaterial>(nullptr, *Path);
+    ensure(Material != nullptr);
+
+    // create sole dynamic material
+    DynamicMat = UMaterialInstanceDynamic::Create(Material, this);
+    MaterialParams.Apply(DynamicMat);
+    MaterialParams.MaterialPath = Path;
+
+    if (DynamicMat != nullptr && ActorMesh != nullptr)
+        for (int i = 0; i < NumMaterials; i++)
+            ActorMesh->SetMaterial(i, DynamicMat);
     else
         UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *Path)
 }
@@ -53,9 +69,6 @@ void ADReyeVRCustomActor::Initialize(const FString &Name)
 void ADReyeVRCustomActor::BeginPlay()
 {
     Super::BeginPlay();
-
-    // apply these dynamic params if there are any
-    ApplyMaterialParams(ScalarParams, VectorParams, 0, NumMaterials);
 }
 
 void ADReyeVRCustomActor::BeginDestroy()
@@ -90,42 +103,6 @@ void ADReyeVRCustomActor::Activate()
     this->bIsActive = true;
 }
 
-void ADReyeVRCustomActor::ApplyMaterialParams(const std::vector<std::pair<FName, float>> &ScalarParamsIn,
-                                              const std::vector<std::pair<FName, FLinearColor>> &VectorParamsIn,
-                                              const int StartMaterialIdx, const int NumMaterials)
-{
-    /// SCALAR:
-    // "Metallic" -> controls how metal-like your surface looks like
-    // "Specular" -> used to scale the current amount of specularity on non-metallic surfaces. Bw [0, 1], default 0.5
-    // "Roughness" -> Controls how rough the material is. [0 (smooth/mirror), 1(rough/diffuse)], default 0.5
-    // "Anisotropy" -> Determines the extent the specular highlight is stretched along the tangent. Bw [0, 1], default 0
-
-    /// VECTOR:
-    // "BaseColor" -> defines the overall colour of the material (each channel is clamped to [0, 1])
-    // "Emissive" -> controls which parts of the material appear to glow
-
-    if (ActorMesh != nullptr && (ScalarParamsIn.size() > 0 || VectorParamsIn.size() > 0))
-    {
-        class UMaterialInstanceDynamic *DynamicMat = UMaterialInstanceDynamic::Create(ActorMesh->GetMaterial(0), this);
-        for (const std::pair<FName, float> &ScalarParam : ScalarParamsIn)
-        {
-            DynamicMat->SetScalarParameterValue(ScalarParam.first, ScalarParam.second);
-            // UE_LOG(LogTemp, Log, TEXT("Apply %s=%.3f"), *ScalarParam.first.ToString(), ScalarParam.second);
-        }
-        for (const std::pair<FName, FLinearColor> &VectorParam : VectorParamsIn)
-        {
-            DynamicMat->SetVectorParameterValue(VectorParam.first, VectorParam.second);
-            // UE_LOG(LogTemp, Log, TEXT("Apply %s=%s"), *VectorParam.first.ToString(), *VectorParam.second.ToString());
-        }
-        for (int i = 0; i < NumMaterials; i++)
-            ActorMesh->SetMaterial(StartMaterialIdx + i, DynamicMat);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Unable to create dynamic material: ActorMesh is null!"));
-    }
-}
-
 void ADReyeVRCustomActor::Tick(float DeltaSeconds)
 {
     if (ADReyeVRSensor::bIsReplaying)
@@ -134,6 +111,7 @@ void ADReyeVRCustomActor::Tick(float DeltaSeconds)
         this->SetActorLocation(Internals.Location);
         this->SetActorRotation(Internals.Rotation);
         this->SetActorScale3D(Internals.Scale3D);
+        this->MaterialParams = Internals.MaterialParams;
     }
     else
     {
@@ -141,7 +119,11 @@ void ADReyeVRCustomActor::Tick(float DeltaSeconds)
         Internals.Location = this->GetActorLocation();
         Internals.Rotation = this->GetActorRotation();
         Internals.Scale3D = this->GetActorScale3D();
+        Internals.MaterialParams = MaterialParams;
     }
+    // update the materials according to the params
+    if (DynamicMat)
+        MaterialParams.Apply(DynamicMat);
     /// TODO: use other string?
 }
 

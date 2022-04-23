@@ -3,6 +3,7 @@
 #define DREYEVR_SENSOR_DATA
 
 #include "Carla/Recorder/CarlaRecorderHelpers.h" // WriteValue, WriteFVector, WriteFString, ...
+#include "Materials/MaterialInstanceDynamic.h"   // UMaterialInstanceDynamic
 #include <chrono>                                // timing threads
 #include <cstdint>                               // int64_t
 #include <fstream>
@@ -202,18 +203,42 @@ class CustomActorData
 {
   public:
     FString Name; // unique actor name of this actor
+    // 9 dof (location, rotation, scale) for non-rigid body in 3D space
     FVector Location;
     FRotator Rotation;
     FVector Scale3D;
+    // visual properties
+    FString Mesh;
+    // material properties
+    struct MaterialParamsStruct
+    {
+        /// for an explanation of these, see MaterialParamsStruct::Apply
+        // in DReyeVRData.inl
+        float Metallic = 1.f;
+        float Specular = 0.f;
+        float Roughness = 1.f;
+        float Anisotropy = 1.f;
+        float Opacity = 1.f;
+        FLinearColor BaseColor = FLinearColor::Red;
+        // usually a scale factor like 500 is good to emit bright light on a sunny day
+        FLinearColor Emissive = 500.f * FLinearColor::Red;
+        FString MaterialPath;
+        void Apply(class UMaterialInstanceDynamic *Material) const;
+        void Read(std::ifstream &InFile);
+        void Write(std::ofstream &OutFile) const;
+        FString ToString() const;
+    };
+    MaterialParamsStruct MaterialParams;
+    // other
     FString Other; // any other data deemed necessary to record
     char TypeId;
     enum class Types : uint8_t
     {
         SPHERE = 0,
+        CUBE,
+        CONE,
         CROSS,
-        PERIPH_TARGET,
-        ARROW, /// TODO
-        BBOX   /// TODO
+        ARROW,
     };
 
     CustomActorData() = default;

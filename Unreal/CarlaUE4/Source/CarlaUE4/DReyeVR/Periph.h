@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Carla/Actor/DReyeVRCustomActor.h" // ADReyeVRCustomActor
-#include "CustomActors.h"                   // APeriphTarget, ACross
+#include "CustomActors.h"                   // ASphere, ACross
 
 class PeriphSystem
 {
@@ -9,7 +9,7 @@ class PeriphSystem
     PeriphSystem();
     void ReadConfigVariables();
 
-    class APeriphTarget *PeriphTarget = nullptr;
+    class ASphere *PeriphTarget = nullptr;
     class ACross *Cross = nullptr;
 
     void Initialize(class UWorld *World);
