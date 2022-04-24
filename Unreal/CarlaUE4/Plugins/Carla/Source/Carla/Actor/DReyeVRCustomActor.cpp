@@ -11,11 +11,11 @@ std::unordered_map<std::string, class ADReyeVRCustomActor *> ADReyeVRCustomActor
 int ADReyeVRCustomActor::AllMeshCount = 0;
 const FString ADReyeVRCustomActor::OpaqueMaterial =
     "Material'/Game/DReyeVR/Custom/OpaqueParamMaterial.OpaqueParamMaterial'";
-const FString ADReyeVRCustomActor::TransparentMaterial =
-    "Material'/Game/DReyeVR/Custom/TransparentParamMaterial.TransparentParamMaterial'";
+const FString ADReyeVRCustomActor::TranslucentMaterial =
+    "Material'/Game/DReyeVR/Custom/TranslucentParamMaterial.TranslucentParamMaterial'";
 
 ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types RequestedType, UWorld *World,
-                                                    const FString &Name)
+                                                    const FString &Name, const int KnownNumMaterials)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
@@ -48,12 +48,16 @@ ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Ty
         break; // ignore unknown actors
     }
     Actor->AssignSM(SM_Path, World);
+    Actor->NumMaterials = KnownNumMaterials;
     Actor->Initialize(Name);
     return Actor;
 }
 
 ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickGroup = TG_PrePhysics;
+
     // turning off physics interaction
     this->SetActorEnableCollision(false);
 
@@ -77,6 +81,7 @@ void ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
         ActorMesh->SetupAttachment(this->GetRootComponent());
         this->SetRootComponent(ActorMesh);
         ActorMesh->SetStaticMesh(SM);
+        ActorMesh->SetVisibility(false);
         ActorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         ActorMesh->RegisterComponentWithWorld(World);
         this->AddInstanceComponent(ActorMesh);
@@ -90,13 +95,14 @@ void ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
 
 void ADReyeVRCustomActor::AssignMat(const FString &Path)
 {
+    // Path should be one of {ADReyeVRCustomActor::OpaqueMaterial, ADReyeVRCustomActor::TranslucentMaterial}
     UMaterial *Material = LoadObject<UMaterial>(nullptr, *Path);
     ensure(Material != nullptr);
 
     // create sole dynamic material
     DynamicMat = UMaterialInstanceDynamic::Create(Material, this);
-    MaterialParams.Apply(DynamicMat);
-    MaterialParams.MaterialPath = Path;
+    MaterialParams.Apply(DynamicMat);   // apply the parameters to this dynamic material
+    MaterialParams.MaterialPath = Path; // for now does not change over time
 
     if (DynamicMat != nullptr && ActorMesh != nullptr)
         for (int i = 0; i < NumMaterials; i++)
@@ -132,6 +138,8 @@ void ADReyeVRCustomActor::Deactivate()
         ADReyeVRCustomActor::ActiveCustomActors.erase(s);
     }
     this->SetActorHiddenInGame(true);
+    if (ActorMesh)
+        ActorMesh->SetVisibility(false);
     this->SetActorTickEnabled(false);
     this->bIsActive = false;
 }
@@ -145,6 +153,8 @@ void ADReyeVRCustomActor::Activate()
     else
         ensure(ADReyeVRCustomActor::ActiveCustomActors[s] == this);
     this->SetActorHiddenInGame(false);
+    if (ActorMesh)
+        ActorMesh->SetVisibility(true);
     this->SetActorTickEnabled(true);
     this->bIsActive = true;
 }
@@ -168,8 +178,7 @@ void ADReyeVRCustomActor::Tick(float DeltaSeconds)
         Internals.MaterialParams = MaterialParams;
     }
     // update the materials according to the params
-    if (DynamicMat)
-        MaterialParams.Apply(DynamicMat);
+    MaterialParams.Apply(DynamicMat);
     /// TODO: use other string?
 }
 

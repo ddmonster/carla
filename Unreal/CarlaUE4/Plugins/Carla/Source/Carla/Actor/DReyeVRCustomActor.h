@@ -16,7 +16,8 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
 
   public:
     /// factory function to create a new instance of a given type
-    static ADReyeVRCustomActor *CreateNew(DReyeVR::CustomActorData::Types T, UWorld *World, const FString &Name);
+    static ADReyeVRCustomActor *CreateNew(DReyeVR::CustomActorData::Types T, UWorld *World, const FString &Name,
+                                          const int KnownNumMaterials = 1);
 
     virtual void Tick(float DeltaSeconds) override;
 
@@ -27,7 +28,7 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
         return bIsActive;
     }
 
-    const static FString OpaqueMaterial, TransparentMaterial;
+    const static FString OpaqueMaterial, TranslucentMaterial;
 
     void Initialize(const FString &Name);
 

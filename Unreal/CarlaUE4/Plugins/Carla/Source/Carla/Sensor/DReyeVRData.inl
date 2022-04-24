@@ -538,7 +538,7 @@ inline std::string AggregateData::GetUniqueName() const
 /// ------------:CUSTOMACTORDATA:------------- ///
 /// ========================================== ///
 
-inline void CustomActorData::MaterialParamsStruct::Apply(class UMaterialInstanceDynamic *Material) const
+inline void CustomActorData::MaterialParamsStruct::Apply(class UMaterialInstanceDynamic *DynamicMaterial) const
 {
     /// PARAMS:
     // these are either scalar (float) or vector (FLinearColor) attributes baked into the texture as follows
@@ -558,13 +558,16 @@ inline void CustomActorData::MaterialParamsStruct::Apply(class UMaterialInstance
     // params only get applied in the opaque case.
 
     // assign material params
-    Material->SetScalarParameterValue("Metallic", Metallic);
-    Material->SetScalarParameterValue("Specular", Specular);
-    Material->SetScalarParameterValue("Roughness", Roughness);
-    Material->SetScalarParameterValue("Anisotropy", Anisotropy);
-    Material->SetScalarParameterValue("Opacity", Opacity);
-    Material->SetVectorParameterValue("BaseColor", BaseColor);
-    Material->SetVectorParameterValue("Emissive", Emissive);
+    if (DynamicMaterial != nullptr)
+    {
+        DynamicMaterial->SetScalarParameterValue("Metallic", Metallic);
+        DynamicMaterial->SetScalarParameterValue("Specular", Specular);
+        DynamicMaterial->SetScalarParameterValue("Roughness", Roughness);
+        DynamicMaterial->SetScalarParameterValue("Anisotropy", Anisotropy);
+        DynamicMaterial->SetScalarParameterValue("Opacity", Opacity);
+        DynamicMaterial->SetVectorParameterValue("BaseColor", BaseColor);
+        DynamicMaterial->SetVectorParameterValue("Emissive", Emissive);
+    }
 }
 
 inline void CustomActorData::MaterialParamsStruct::Read(std::ifstream &InFile)
