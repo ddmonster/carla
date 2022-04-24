@@ -594,6 +594,13 @@ inline void CustomActorData::MaterialParamsStruct::Write(std::ofstream &OutFile)
     WriteFString(OutFile, MaterialPath);
 }
 
+FString PrintFLinearColor(const FLinearColor &F)
+{
+    // so the print output is consistent with FVector::ToString(), FVector2D::ToString(), FRotator::ToString()
+    // and the parser can treat this similarly
+    return FString::Printf(TEXT("R=%.6f G=%.6f B=%.6f A=%.6f"), F.R, F.G, F.B, F.A);
+}
+
 inline FString CustomActorData::MaterialParamsStruct::ToString() const
 {
     FString Print = "";
@@ -602,8 +609,8 @@ inline FString CustomActorData::MaterialParamsStruct::ToString() const
     Print += FString::Printf(TEXT("Roughness:%.3f,"), Roughness);
     Print += FString::Printf(TEXT("Anisotropy:%.3f,"), Anisotropy);
     Print += FString::Printf(TEXT("Opacity:%.3f,"), Opacity);
-    Print += FString::Printf(TEXT("BaseColor:%s,"), *BaseColor.ToString());
-    Print += FString::Printf(TEXT("Emissive:%s,"), *Emissive.ToString());
+    Print += FString::Printf(TEXT("BaseColor:%s,"), *PrintFLinearColor(BaseColor));
+    Print += FString::Printf(TEXT("Emissive:%s,"), *PrintFLinearColor(Emissive));
     Print += FString::Printf(TEXT("Path:%s,"), *MaterialPath);
     return Print;
 }
@@ -645,7 +652,7 @@ inline FString CustomActorData::ToString() const
     Print += FString::Printf(TEXT("Location:%s,"), *Location.ToString());
     Print += FString::Printf(TEXT("Rotation:%s,"), *Rotation.ToString());
     Print += FString::Printf(TEXT("Scale3D:%s,"), *Scale3D.ToString());
-    Print += FString::Printf(TEXT("Mesh:%s,"), *MeshPath);
+    Print += FString::Printf(TEXT("MeshPath:%s,"), *MeshPath);
     Print += FString::Printf(TEXT("Material:{%s},"), *MaterialParams.ToString());
     Print += FString::Printf(TEXT("Other:%s,"), *Other);
     return Print;
