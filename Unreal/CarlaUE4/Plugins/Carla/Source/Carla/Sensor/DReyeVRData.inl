@@ -544,9 +544,9 @@ inline void CustomActorData::MaterialParamsStruct::Apply(class UMaterialInstance
     // these are either scalar (float) or vector (FLinearColor) attributes baked into the texture as follows
 
     /// SCALAR:
-    // "Metallic" -> controls how metal-like your surface looks like
+    // "Metallic" -> controls how metal-like your surface looks like, default 0
     // "Specular" -> used to scale the current amount of specularity on non-metallic surfaces. Bw [0, 1], default 0.5
-    // "Roughness" -> Controls how rough the material is. [0 (smooth/mirror), 1(rough/diffuse)], default 0.5
+    // "Roughness" -> Controls how rough the material is. [0 (smooth/mirror), 1(rough/diffuse)], default 0
     // "Anisotropy" -> Determines the extent the specular highlight is stretched along the tangent. Bw [0, 1], default 0
     // "Opacity" -> How opaque is this material NOTE: ONLY APPLIES TO TRANSLUCENT MATERIAL. Bw [0, 1], default 0.15
 

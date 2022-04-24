@@ -31,17 +31,26 @@ void PeriphSystem::Initialize(class UWorld *WorldIn)
     if (bUseFixedCross)
     {
         Cross = ADReyeVRCustomActor::CreateNew(SM_CROSS, MAT_OPAQUE, World, PeriphFixationName);
-        Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
         check(Cross != nullptr);
+        Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
     }
     if (bUsePeriphTarget)
     {
-        PeriphTarget = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_TRANSLUCENT, World, PeriphTargetName);
+        PeriphTarget = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_OPAQUE, World, PeriphTargetName);
+        check(PeriphTarget != nullptr);
         PeriphTarget->SetActorScale3D(PeriphTargetSize * FVector::OneVector);
         float Emissive;
         ReadConfigValue("PeripheralTarget", "EmissionFactor", Emissive);
         PeriphTarget->MaterialParams.Emissive = Emissive * FLinearColor::Red;
-        check(PeriphTarget != nullptr);
+        bool bUseLegacyPeriphColour;
+        ReadConfigValue("PeripheralTarget", "UseLegacyPeriphColour", bUseLegacyPeriphColour);
+        if (bUseLegacyPeriphColour)
+        {
+            PeriphTarget->MaterialParams.Metallic = 0.f;
+            PeriphTarget->MaterialParams.Specular = 0.5f;
+            PeriphTarget->MaterialParams.Roughness = 0.f;
+            PeriphTarget->MaterialParams.Anisotropy = 0.f;
+        }
     }
 }
 
