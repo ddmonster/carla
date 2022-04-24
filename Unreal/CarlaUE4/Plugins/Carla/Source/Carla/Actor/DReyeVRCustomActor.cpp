@@ -7,11 +7,17 @@
 
 #include <string>
 
+// HACK: assuming you have no more than 10 unique material instances on a single static mesh
+// this is what is used to broadacast the single DynamicMat instance to all material slots in the SM
+// and calls SetMaterial which grows an internal array (of pointers) to match the index:
+// https://docs.unrealengine.com/4.26/en-US/API/Runtime/Engine/Components/UMeshComponent/SetMaterial/
+#define MAX_POSSIBLE_MATERIALS 10
+
 std::unordered_map<std::string, class ADReyeVRCustomActor *> ADReyeVRCustomActor::ActiveCustomActors = {};
 int ADReyeVRCustomActor::AllMeshCount = 0;
 
 ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(const FString &SM_Path, const FString &Mat_Path, UWorld *World,
-                                                    const FString &Name, const int KnownNumMaterials)
+                                                    const FString &Name)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
@@ -23,7 +29,6 @@ ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(const FString &SM_Path, cons
     if (Actor->AssignSM(SM_Path, World))
     {
         Actor->Internals.MeshPath = SM_Path;
-        Actor->NumMaterials = KnownNumMaterials;
         Actor->AssignMat(Mat_Path);
     }
 
@@ -84,7 +89,7 @@ void ADReyeVRCustomActor::AssignMat(const FString &MaterialPath)
     MaterialParams.MaterialPath = MaterialPath; // for now does not change over time
 
     if (DynamicMat != nullptr && ActorMesh != nullptr)
-        for (int i = 0; i < NumMaterials; i++)
+        for (int i = 0; i < MAX_POSSIBLE_MATERIALS; i++)
             ActorMesh->SetMaterial(i, DynamicMat);
     else
         UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *MaterialPath)

@@ -27,7 +27,7 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
   public:
     /// factory function to create a new instance of a given type
     static ADReyeVRCustomActor *CreateNew(const FString &SM_Path, const FString &Mat_Path, UWorld *World,
-                                          const FString &Name, const int KnownNumMaterials = 1);
+                                          const FString &Name);
 
     virtual void Tick(float DeltaSeconds) override;
 
@@ -66,5 +66,4 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
 
     UPROPERTY(EditAnywhere, Category = "Materials")
     class UMaterialInstanceDynamic *DynamicMat = nullptr;
-    int NumMaterials = 1; // change this to apply the dynamic material to more than 1 materials
 };

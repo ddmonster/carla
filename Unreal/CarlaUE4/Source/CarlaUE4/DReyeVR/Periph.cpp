@@ -30,7 +30,7 @@ void PeriphSystem::Initialize(class UWorld *WorldIn)
     check(World != nullptr);
     if (bUseFixedCross)
     {
-        Cross = ADReyeVRCustomActor::CreateNew(SM_CROSS, MAT_OPAQUE, World, PeriphFixationName, 2);
+        Cross = ADReyeVRCustomActor::CreateNew(SM_CROSS, MAT_OPAQUE, World, PeriphFixationName);
         Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
         check(Cross != nullptr);
     }
