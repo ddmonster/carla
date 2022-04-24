@@ -15,7 +15,7 @@
 #define SM_SPHERE "StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"
 #define SM_CUBE "StaticMesh'/Engine/BasicShapes/Cube.Cube'"
 #define SM_CONE "StaticMesh'/Engine/BasicShapes/Cone.Cone'"
-#define SM_CROSS "StaticMesh'/Game/DReyeVR/Custom/Periph/SM_FixationCross.SM_FixationCross'"
+#define SM_CROSS "StaticMesh'/Game/DReyeVR/Custom/Shapes/SM_Cross.SM_Cross'"
 /// TODO: make Arrow mesh
 #define SM_ARROW "StaticMesh'/Engine/BasicShapes/Cube.Cube'"
 
