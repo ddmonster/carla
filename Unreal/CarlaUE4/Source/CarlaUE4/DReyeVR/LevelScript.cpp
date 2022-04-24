@@ -336,9 +336,8 @@ void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderDa
     if (ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) == ADReyeVRCustomActor::ActiveCustomActors.end())
     {
         /// TODO: also track KnownNumMaterials?
-        A = ADReyeVRCustomActor::CreateNew(RecorderData.MeshPath, GetWorld(), RecorderData.Name);
-        if (A != nullptr)
-            A->AssignMat(RecorderData.MaterialParams.MaterialPath);
+        A = ADReyeVRCustomActor::CreateNew(RecorderData.MeshPath, RecorderData.MaterialParams.MaterialPath, GetWorld(),
+                                           RecorderData.Name);
     }
     else
     {
@@ -350,6 +349,7 @@ void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderDa
     {
         A->SetInternals(RecorderData);
         A->Activate();
+        A->Tick(Per); // update locations immediately
     }
 }
 

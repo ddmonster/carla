@@ -10,6 +10,8 @@
 #include "DReyeVRCustomActor.generated.h"
 
 // define some paths to common custom actor types
+#define MAT_OPAQUE "Material'/Game/DReyeVR/Custom/OpaqueParamMaterial.OpaqueParamMaterial'"
+#define MAT_TRANSLUCENT "Material'/Game/DReyeVR/Custom/TranslucentParamMaterial.TranslucentParamMaterial'"
 #define SM_SPHERE "StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"
 #define SM_CUBE "StaticMesh'/Engine/BasicShapes/Cube.Cube'"
 #define SM_CONE "StaticMesh'/Engine/BasicShapes/Cone.Cone'"
@@ -24,8 +26,8 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
 
   public:
     /// factory function to create a new instance of a given type
-    static ADReyeVRCustomActor *CreateNew(const FString &SM_Path, UWorld *World, const FString &Name,
-                                          const int KnownNumMaterials = 1);
+    static ADReyeVRCustomActor *CreateNew(const FString &SM_Path, const FString &Mat_Path, UWorld *World,
+                                          const FString &Name, const int KnownNumMaterials = 1);
 
     virtual void Tick(float DeltaSeconds) override;
 
@@ -35,8 +37,6 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
     {
         return bIsActive;
     }
-
-    const static FString OpaqueMaterial, TranslucentMaterial;
 
     void Initialize(const FString &Name);
 

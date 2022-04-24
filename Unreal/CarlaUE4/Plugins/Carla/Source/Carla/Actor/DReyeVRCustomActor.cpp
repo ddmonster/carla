@@ -9,24 +9,24 @@
 
 std::unordered_map<std::string, class ADReyeVRCustomActor *> ADReyeVRCustomActor::ActiveCustomActors = {};
 int ADReyeVRCustomActor::AllMeshCount = 0;
-const FString ADReyeVRCustomActor::OpaqueMaterial =
-    "Material'/Game/DReyeVR/Custom/OpaqueParamMaterial.OpaqueParamMaterial'";
-const FString ADReyeVRCustomActor::TranslucentMaterial =
-    "Material'/Game/DReyeVR/Custom/TranslucentParamMaterial.TranslucentParamMaterial'";
 
-ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(const FString &SM_Path, UWorld *World, const FString &Name,
-                                                    const int KnownNumMaterials)
+ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(const FString &SM_Path, const FString &Mat_Path, UWorld *World,
+                                                    const FString &Name, const int KnownNumMaterials)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
     SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     ADReyeVRCustomActor *Actor =
         World->SpawnActor<ADReyeVRCustomActor>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);
+    Actor->Initialize(Name);
 
     if (Actor->AssignSM(SM_Path, World))
+    {
         Actor->Internals.MeshPath = SM_Path;
-    Actor->NumMaterials = KnownNumMaterials;
-    Actor->Initialize(Name);
+        Actor->NumMaterials = KnownNumMaterials;
+        Actor->AssignMat(Mat_Path);
+    }
+
     return Actor;
 }
 
@@ -74,7 +74,7 @@ bool ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
 
 void ADReyeVRCustomActor::AssignMat(const FString &MaterialPath)
 {
-    // MaterialPath should be one of {ADReyeVRCustomActor::OpaqueMaterial, ADReyeVRCustomActor::TranslucentMaterial}
+    // MaterialPath should be one of {MAT_OPAQUE, MAT_TRANSLUCENT} to receive params
     UMaterial *Material = LoadObject<UMaterial>(nullptr, *MaterialPath);
     ensure(Material != nullptr);
 
