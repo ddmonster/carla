@@ -95,7 +95,7 @@ def get_libcarla_extensions():
                 extra_compile_args += ['-DLIBCARLA_IMAGE_WITH_PNG_SUPPORT=false']
             else:
                 if is_mac:
-                    extra_link_args += ['-lpng'] # TODO: find a suitable MacOS replacement for libjpeg and libtiff
+                    extra_link_args += ['-lpng', '-ltiff'] # TODO: find a suitable MacOS replacement for libjpeg 
                 else:
                     extra_link_args += ['-lpng', '-ljpeg', '-ltiff']
                 extra_compile_args += ['-DLIBCARLA_IMAGE_WITH_PNG_SUPPORT=true']
