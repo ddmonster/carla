@@ -319,7 +319,6 @@ void ADReyeVRLevel::LegacyReplayPeriph(const DReyeVR::AggregateData &RecorderDat
         float Emissive;
         ReadConfigValue("PeripheralTarget", "EmissionFactor", Emissive);
         PeriphBall.MaterialParams.Emissive = Emissive * FLinearColor::Red;
-        PeriphBall.TypeId = static_cast<char>(DReyeVR::CustomActorData::Types::SPHERE);
         this->ReplayCustomActor(PeriphBall, Per);
     }
     else
@@ -336,8 +335,10 @@ void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderDa
     ADReyeVRCustomActor *A = nullptr;
     if (ADReyeVRCustomActor::ActiveCustomActors.find(ActorName) == ADReyeVRCustomActor::ActiveCustomActors.end())
     {
-        DReyeVR::CustomActorData::Types ActorType = DReyeVR::CustomActorData::Types(RecorderData.TypeId);
-        A = ADReyeVRCustomActor::CreateNew(ActorType, GetWorld(), RecorderData.Name);
+        /// TODO: also track KnownNumMaterials?
+        A = ADReyeVRCustomActor::CreateNew(RecorderData.MeshPath, GetWorld(), RecorderData.Name);
+        if (A != nullptr)
+            A->AssignMat(RecorderData.MaterialParams.MaterialPath);
     }
     else
     {

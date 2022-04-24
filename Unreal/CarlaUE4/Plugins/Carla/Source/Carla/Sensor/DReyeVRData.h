@@ -208,7 +208,7 @@ class CustomActorData
     FRotator Rotation;
     FVector Scale3D;
     // visual properties
-    FString Mesh;
+    FString MeshPath;
     // material properties
     struct MaterialParamsStruct
     {
@@ -231,15 +231,6 @@ class CustomActorData
     MaterialParamsStruct MaterialParams;
     // other
     FString Other; // any other data deemed necessary to record
-    char TypeId;
-    enum class Types : uint8_t
-    {
-        SPHERE = 0,
-        CUBE,
-        CONE,
-        CROSS,
-        ARROW,
-    };
 
     CustomActorData() = default;
 

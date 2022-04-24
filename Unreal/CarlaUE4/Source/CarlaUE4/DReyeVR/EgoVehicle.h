@@ -150,7 +150,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void SetThrottleKbd(const float ThrottleInput);
     void SetBrakeKbd(const float BrakeInput);
     bool bReverse;
-    ADReyeVRCustomActor *tmp = nullptr;
+
     // "button presses" should have both a "Press" and "Release" function
     // And, if using the logitech plugin, should also have an "is rising edge" bool so they can only
     // be pressed after being released (cant double press w/ no release)

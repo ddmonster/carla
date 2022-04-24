@@ -30,14 +30,14 @@ void PeriphSystem::Initialize(class UWorld *WorldIn)
     check(World != nullptr);
     if (bUseFixedCross)
     {
-        Cross = ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types::CROSS, World, PeriphFixationName, 2);
+        Cross = ADReyeVRCustomActor::CreateNew(SM_CROSS, World, PeriphFixationName, 2);
         Cross->SetActorScale3D(FixationCrossSize * FVector::OneVector);
         Cross->AssignMat(ADReyeVRCustomActor::OpaqueMaterial);
         check(Cross != nullptr);
     }
     if (bUsePeriphTarget)
     {
-        PeriphTarget = ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types::SPHERE, World, PeriphTargetName);
+        PeriphTarget = ADReyeVRCustomActor::CreateNew(SM_SPHERE, World, PeriphTargetName);
         PeriphTarget->SetActorScale3D(PeriphTargetSize * FVector::OneVector);
         PeriphTarget->AssignMat(ADReyeVRCustomActor::OpaqueMaterial);
         float Emissive;

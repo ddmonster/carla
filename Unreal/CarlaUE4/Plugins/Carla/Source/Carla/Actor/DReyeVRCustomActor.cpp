@@ -14,8 +14,8 @@ const FString ADReyeVRCustomActor::OpaqueMaterial =
 const FString ADReyeVRCustomActor::TranslucentMaterial =
     "Material'/Game/DReyeVR/Custom/TranslucentParamMaterial.TranslucentParamMaterial'";
 
-ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types RequestedType, UWorld *World,
-                                                    const FString &Name, const int KnownNumMaterials)
+ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(const FString &SM_Path, UWorld *World, const FString &Name,
+                                                    const int KnownNumMaterials)
 {
     check(World != nullptr);
     FActorSpawnParameters SpawnInfo;
@@ -23,31 +23,8 @@ ADReyeVRCustomActor *ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Ty
     ADReyeVRCustomActor *Actor =
         World->SpawnActor<ADReyeVRCustomActor>(FVector::ZeroVector, FRotator::ZeroRotator, SpawnInfo);
 
-    FString SM_Path;
-    switch (RequestedType)
-    {
-    case DReyeVR::CustomActorData::Types::SPHERE:
-        SM_Path = "StaticMesh'/Engine/BasicShapes/Sphere.Sphere'";
-        break;
-    case DReyeVR::CustomActorData::Types::CUBE:
-        SM_Path = "StaticMesh'/Engine/BasicShapes/Cube.Cube'";
-        break;
-    case DReyeVR::CustomActorData::Types::CONE:
-        SM_Path = "StaticMesh'/Engine/BasicShapes/Cone.Cone'";
-        break;
-    case DReyeVR::CustomActorData::Types::CROSS:
-        SM_Path = "StaticMesh'/Game/DReyeVR/Custom/Periph/SM_FixationCross.SM_FixationCross'";
-        break;
-    case DReyeVR::CustomActorData::Types::ARROW:
-        /// TODO: make Arrow static mesh
-        SM_Path = "StaticMesh'/Engine/BasicShapes/Cube.Cube'";
-        break;
-    /// TODO: generalize for other types (templates?? :eyes:)
-    default:
-        UE_LOG(LogTemp, Warning, TEXT("Unknown actor type: %d"), int(RequestedType));
-        break; // ignore unknown actors
-    }
-    Actor->AssignSM(SM_Path, World);
+    if (Actor->AssignSM(SM_Path, World))
+        Actor->Internals.MeshPath = SM_Path;
     Actor->NumMaterials = KnownNumMaterials;
     Actor->Initialize(Name);
     return Actor;
@@ -67,12 +44,12 @@ ADReyeVRCustomActor::ADReyeVRCustomActor(const FObjectInitializer &ObjectInitial
     Internals.Scale3D = this->GetActorScale3D();
 }
 
-void ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
+bool ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
 {
     UStaticMesh *SM = LoadObject<UStaticMesh>(nullptr, *Path);
     ensure(SM != nullptr);
     ensure(World != nullptr);
-    if (SM)
+    if (SM && World)
     {
         // Using static AllMeshCount to create a unique component name every time
         FName MeshName(*("Mesh" + FString::FromInt(ADReyeVRCustomActor::AllMeshCount)));
@@ -88,27 +65,29 @@ void ADReyeVRCustomActor::AssignSM(const FString &Path, UWorld *World)
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Unable to find mesh: %s"), *Path);
+        UE_LOG(LogTemp, Error, TEXT("Unable to create static mesh: %s"), *Path);
+        return false;
     }
     ADReyeVRCustomActor::AllMeshCount++;
+    return true;
 }
 
-void ADReyeVRCustomActor::AssignMat(const FString &Path)
+void ADReyeVRCustomActor::AssignMat(const FString &MaterialPath)
 {
-    // Path should be one of {ADReyeVRCustomActor::OpaqueMaterial, ADReyeVRCustomActor::TranslucentMaterial}
-    UMaterial *Material = LoadObject<UMaterial>(nullptr, *Path);
+    // MaterialPath should be one of {ADReyeVRCustomActor::OpaqueMaterial, ADReyeVRCustomActor::TranslucentMaterial}
+    UMaterial *Material = LoadObject<UMaterial>(nullptr, *MaterialPath);
     ensure(Material != nullptr);
 
     // create sole dynamic material
     DynamicMat = UMaterialInstanceDynamic::Create(Material, this);
-    MaterialParams.Apply(DynamicMat);   // apply the parameters to this dynamic material
-    MaterialParams.MaterialPath = Path; // for now does not change over time
+    MaterialParams.Apply(DynamicMat);           // apply the parameters to this dynamic material
+    MaterialParams.MaterialPath = MaterialPath; // for now does not change over time
 
     if (DynamicMat != nullptr && ActorMesh != nullptr)
         for (int i = 0; i < NumMaterials; i++)
             ActorMesh->SetMaterial(i, DynamicMat);
     else
-        UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *Path)
+        UE_LOG(LogTemp, Error, TEXT("Unable to access material asset: %s"), *MaterialPath)
 }
 
 void ADReyeVRCustomActor::Initialize(const FString &Name)

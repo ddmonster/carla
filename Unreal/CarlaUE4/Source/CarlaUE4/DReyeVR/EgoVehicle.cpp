@@ -377,24 +377,6 @@ void AEgoVehicle::UpdateSensor(const float DeltaSeconds)
     // Both eyes
     CombinedGaze = RayLength * VRMeterScale * Data->GetGazeDir();
     CombinedOrigin = WorldPos + WorldRot.RotateVector(Data->GetGazeOrigin());
-    if (tmp == nullptr)
-    {
-        tmp = ADReyeVRCustomActor::CreateNew(DReyeVR::CustomActorData::Types::CUBE, GetWorld(), "CubeMan");
-        tmp->SetActorScale3D(0.1 * FVector::OneVector);
-        tmp->AssignMat(ADReyeVRCustomActor::TranslucentMaterial);
-        tmp->MaterialParams.BaseColor = FLinearColor::Blue;
-        tmp->MaterialParams.Emissive = 500.f * FLinearColor::Blue;
-        tmp->Activate();
-    }
-    else
-    {
-        tmp->SetActorLocation(CombinedOrigin + 1 * CombinedGaze);
-        tmp->MaterialParams.Opacity = tmp->MaterialParams.Opacity + DeltaSeconds;
-        if (tmp->MaterialParams.Opacity > 1)
-        {
-            tmp->MaterialParams.Opacity = 0;
-        }
-    }
 
     // Left eye
     LeftGaze = RayLength * VRMeterScale * Data->GetGazeDir(DReyeVR::Gaze::LEFT);
