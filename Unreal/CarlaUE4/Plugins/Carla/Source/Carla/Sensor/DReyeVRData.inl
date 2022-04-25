@@ -594,7 +594,7 @@ inline void CustomActorData::MaterialParamsStruct::Write(std::ofstream &OutFile)
     WriteFString(OutFile, MaterialPath);
 }
 
-FString PrintFLinearColor(const FLinearColor &F)
+inline FString PrintFLinearColor(const FLinearColor &F)
 {
     // so the print output is consistent with FVector::ToString(), FVector2D::ToString(), FRotator::ToString()
     // and the parser can treat this similarly
