@@ -14,40 +14,40 @@ const DReyeVR::UserInputs &AEgoVehicle::GetVehicleInputs() const
 }
 
 // Called to bind functionality to input
-void AEgoVehicle::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
-{
-    /// NOTE: to see all DReyeVR inputs see DefaultInput.ini
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
+// void AEgoVehicle::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
+// {
+//     /// NOTE: to see all DReyeVR inputs see DefaultInput.ini
+//     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    /// NOTE: an Action is a digital input, an Axis is an analog input
-    // steering and throttle analog inputs (axes)
-    PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &AEgoVehicle::SetSteeringKbd);
-    PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &AEgoVehicle::SetThrottleKbd);
-    PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &AEgoVehicle::SetBrakeKbd);
-    // button actions (press & release)
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressTurnSignalL);
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseTurnSignalL);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, this, &AEgoVehicle::HoldHandbrake);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseHandbrake);
-    PlayerInputComponent->BindAction("ResetCamera_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressResetCamera);
-    PlayerInputComponent->BindAction("ResetCamera_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseResetCamera);
-    // clean/empty room experiment
-    PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, this, &AEgoVehicle::ToggleCleanRoom);
-    /// Mouse X and Y input for looking up and turning
-    PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &AEgoVehicle::MouseLookUp);
-    PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &AEgoVehicle::MouseTurn);
-    // Camera position adjustments
-    PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraFwd);
-    PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraBack);
-    PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraLeft);
-    PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraRight);
-    PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraUp);
-    PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraDown);
-}
+//     /// NOTE: an Action is a digital input, an Axis is an analog input
+//     // steering and throttle analog inputs (axes)
+//     PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &AEgoVehicle::SetSteeringKbd);
+//     PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &AEgoVehicle::SetThrottleKbd);
+//     PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &AEgoVehicle::SetBrakeKbd);
+//     // button actions (press & release)
+//     PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressReverse);
+//     PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressTurnSignalR);
+//     PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressTurnSignalL);
+//     PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseReverse);
+//     PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseTurnSignalR);
+//     PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseTurnSignalL);
+//     PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, this, &AEgoVehicle::HoldHandbrake);
+//     PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseHandbrake);
+//     PlayerInputComponent->BindAction("ResetCamera_DReyeVR", IE_Pressed, this, &AEgoVehicle::PressResetCamera);
+//     PlayerInputComponent->BindAction("ResetCamera_DReyeVR", IE_Released, this, &AEgoVehicle::ReleaseResetCamera);
+//     // clean/empty room experiment
+//     PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, this, &AEgoVehicle::ToggleCleanRoom);
+//     /// Mouse X and Y input for looking up and turning
+//     PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &AEgoVehicle::MouseLookUp);
+//     PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &AEgoVehicle::MouseTurn);
+//     // Camera position adjustments
+//     PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraFwd);
+//     PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraBack);
+//     PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraLeft);
+//     PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraRight);
+//     PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraUp);
+//     PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &AEgoVehicle::CameraDown);
+// }
 
 void AEgoVehicle::CameraFwd()
 {
@@ -83,35 +83,6 @@ void AEgoVehicle::CameraPositionAdjust(const FVector &displacement)
 {
     const FVector &CurrentRelLocation = VRCameraRoot->GetRelativeLocation();
     VRCameraRoot->SetRelativeLocation(CurrentRelLocation + displacement);
-}
-
-void AEgoVehicle::PressResetCamera()
-{
-    if (!bCanResetCamera)
-        return;
-    bCanResetCamera = false;
-    ResetCamera();
-}
-
-void AEgoVehicle::ReleaseResetCamera()
-{
-    bCanResetCamera = true;
-}
-
-void AEgoVehicle::ResetCamera()
-{
-    // First, set the root of the camera to the driver's seat head pos
-    VRCameraRoot->SetRelativeLocation(CameraLocnInVehicle);
-    // Then set the actual camera to be at its origin (attached to VRCameraRoot)
-    FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
-    FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
-    if (bIsHMDConnected)
-    {
-        UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition(
-            0, EOrientPositionSelector::OrientationAndPosition);
-        // reload world
-        UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
-    }
 }
 
 void AEgoVehicle::ToggleCleanRoom()
@@ -490,12 +461,13 @@ void AEgoVehicle::LogitechWheelUpdate()
     const float BrakePedal = fabs(((WheelState->lRz - 32767.0f) / (65535.0f))); // (0, 1)
     // -1 = not pressed. 0 = Top. 0.25 = Right. 0.5 = Bottom. 0.75 = Left.
     const float Dpad = fabs(((WheelState->rgdwPOV[0] - 32767.0f) / (65535.0f)));
-    
+
     // weird behaviour: "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input"
     // as per https://github.com/HARPLab/LogitechWheelPlugin
     if (bPedalsDefaulting)
     {
-        if (!(FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) && FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) && FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f)))
+        if (!(FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) && FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) &&
+              FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f)))
         {
             bPedalsDefaulting = false;
         }
@@ -531,10 +503,7 @@ void AEgoVehicle::LogitechWheelUpdate()
     else
         ReleaseTurnSignalL();
 
-    if (WheelState->rgbButtons[23]) // big red button on right side of g923
-        PressResetCamera();
-    else
-        ReleaseResetCamera();
+    // if (WheelState->rgbButtons[23]) // big red button on right side of g923
 
     // VRCamerRoot base position adjustment
     if (WheelState->rgdwPOV[0] == 0) // positive in X

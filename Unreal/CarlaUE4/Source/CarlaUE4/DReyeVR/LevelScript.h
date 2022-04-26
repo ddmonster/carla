@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Engine/LevelScriptActor.h" // ALevelScriptActor
-#include "Periph.h"                  // PeriphSystem
+#include "Carla/Vehicle/WheeledVehicleAIController.h" // AWheeledVehicleAIController
+#include "Engine/LevelScriptActor.h"                  // ALevelScriptActor
+#include "Periph.h"                                   // PeriphSystem
 
 #include "LevelScript.generated.h"
 
 class AEgoVehicle;
+class ADReyeVRPawn;
 
 UCLASS()
 class ADReyeVRLevel : public ALevelScriptActor
@@ -61,7 +63,9 @@ class ADReyeVRLevel : public ALevelScriptActor
   private:
     // for handling inputs and possessions
     APlayerController *Player = nullptr;
-    AController *AI_Player = nullptr;
+    AWheeledVehicleAIController *AI_Player = nullptr;
+    void StartDReyeVRPawn();
+    ADReyeVRPawn *DReyeVR_Pawn = nullptr;
 
     // for toggling bw spectator mode
     bool bIsSpectating = true;

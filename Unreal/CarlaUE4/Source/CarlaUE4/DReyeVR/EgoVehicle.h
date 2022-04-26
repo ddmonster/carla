@@ -34,11 +34,14 @@
 #include "EgoVehicle.generated.h"
 
 class ADReyeVRLevel;
+class ADReyeVRPawn;
 
 UCLASS()
 class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 {
     GENERATED_BODY()
+
+    friend class ADReyeVRPawn;
 
   public:
     // Sets default values for this pawn's properties
@@ -47,10 +50,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void ReadConfigVariables();
 
     virtual void Tick(float DeltaTime) override;
-    virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
+    // virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
 
     // Setters from external classes
     void SetLevel(ADReyeVRLevel *Level);
+    void AssignFirstPersonCam(ADReyeVRPawn *Pawn);
     void SetVolume(const float VolumeIn);
 
     // Getters
@@ -96,7 +100,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
     FVector CameraLocnInVehicle{21.0f, -40.0f, 120.0f}; // depends on vehicle mesh (units in cm)
-    float FieldOfView = 90.f;                           // in degrees
 
     ////////////////:SENSOR:////////////////
     void ReplayTick();
@@ -186,11 +189,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void CameraRight();
     void CameraUp();
     void CameraDown();
-
-    void PressResetCamera();
-    void ReleaseResetCamera();
-    void ResetCamera();
-    bool bCanResetCamera = true;
 
     // Vehicle parameters
     float ScaleSteeringInput;

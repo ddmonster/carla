@@ -3,6 +3,7 @@
 #include "Carla/Actor/ActorRegistry.h"              // Register
 #include "Carla/Game/CarlaStatics.h"                // GetEpisode
 #include "Carla/Vehicle/CarlaWheeledVehicleState.h" // ECarlaWheeledVehicleState
+#include "DReyeVRPawn.h"                            // ADReyeVRPawn
 #include "DrawDebugHelpers.h"                       // Debug Line/Sphere
 #include "Engine/EngineTypes.h"                     // EBlendMode
 #include "Engine/World.h"                           // GetWorld
@@ -80,8 +81,6 @@ void AEgoVehicle::ReadConfigVariables()
     ReadConfigValue("SteeringWheel", "MaxSteerAngleDeg", MaxSteerAngleDeg);
     ReadConfigValue("SteeringWheel", "MaxSteerVelocity", MaxSteerVelocity);
     ReadConfigValue("SteeringWheel", "SteeringScale", SteeringAnimScale);
-    // camera
-    ReadConfigValue("EgoVehicle", "FieldOfView", FieldOfView);
     // other/cosmetic
     ReadConfigValue("EgoVehicle", "ActorRegistryID", EgoVehicleID);
     ReadConfigValue("EgoVehicle", "DrawDebugEditor", bDrawDebugEditor);
@@ -217,14 +216,28 @@ void AEgoVehicle::ConstructCamera()
     VRCameraRoot = CreateDefaultSubobject<USceneComponent>(TEXT("VRCameraRoot"));
     VRCameraRoot->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
 
-    // Create a camera and attach to root component
-    FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
-    FirstPersonCam->SetupAttachment(VRCameraRoot);
-    FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
-    FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
-    FirstPersonCam->FieldOfView = FieldOfView;       // editable
+    // First, set the root of the camera to the driver's seat head pos
+    VRCameraRoot->SetRelativeLocation(CameraLocnInVehicle);
+}
 
-    ResetCamera();
+void AEgoVehicle::AssignFirstPersonCam(ADReyeVRPawn *Pawn)
+{
+    ensure(VRCameraRoot != nullptr);
+    this->FirstPersonCam = Pawn->GetFirstPersonCam();
+    ensure(FirstPersonCam != nullptr);
+    FAttachmentTransformRules F(EAttachmentRule::KeepRelative, false);
+    Pawn->AttachToComponent(VRCameraRoot, F);
+    Pawn->GetFirstPersonCam()->AttachToComponent(VRCameraRoot, F);
+    // Then set the actual camera to be at its origin (attached to VRCameraRoot)
+    FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
+    FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
+
+    // if (FirstPersonCam != nullptr && VRCameraRoot != nullptr)
+    // {
+    //     FirstPersonCam->SetupAttachment(VRCameraRoot);
+    // }
+    // else
+    //     UE_LOG(LogTemp, Warning, TEXT("No first person cam in vehicle!"));
 }
 
 bool AEgoVehicle::EnableCleanRoom()
