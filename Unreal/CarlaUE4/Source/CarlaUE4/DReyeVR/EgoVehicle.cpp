@@ -99,9 +99,6 @@ void AEgoVehicle::ReadConfigVariables()
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
     ReadConfigValue("VehicleInputs", "ScaleMouseY", ScaleMouseY);
     ReadConfigValue("VehicleInputs", "ScaleMouseX", ScaleMouseX);
-    // wheel hardware
-    ReadConfigValue("Hardware", "DeviceIdx", WheelDeviceIdx);
-    ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
 }
 
 void AEgoVehicle::BeginPlay()
@@ -126,9 +123,6 @@ void AEgoVehicle::BeginPlay()
     // Enable VR spectator screen & eye reticle
     InitSpectator();
 
-    // Initialize logitech steering wheel
-    InitLogiWheel();
-
     // Bug-workaround for initial delay on throttle; see https://github.com/carla-simulator/carla/issues/1640
     this->GetVehicleMovementComponent()->SetTargetGear(1, true);
 
@@ -145,9 +139,6 @@ void AEgoVehicle::BeginDestroy()
     // destroy all spawned entities
     if (EgoSensor)
         EgoSensor->Destroy();
-
-    if (bIsLogiConnected)
-        DestroyLogiWheel(false);
 }
 
 // Called every frame
@@ -184,9 +175,6 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 
     // Play sound that requires constant ticking
     TickSounds();
-
-    // Tick the logitech wheel
-    TickLogiWheel();
 }
 
 /// ========================================== ///

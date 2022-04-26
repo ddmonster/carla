@@ -5,6 +5,18 @@
 #include "Engine/Scene.h"           // FPostProcessSettings
 #include "GameFramework/Pawn.h"     // CreatePlayerInputComponent
 
+// #define USE_LOGITECH_PLUGIN true // handled in .Build.cs file
+
+#ifndef _WIN32
+// can only use LogitechWheel plugin on Windows! :(
+#undef USE_LOGITECH_PLUGIN
+#define USE_LOGITECH_PLUGIN false
+#endif
+
+#if USE_LOGITECH_PLUGIN
+#include "LogitechSteeringWheelLib.h" // LogitechWheel plugin for hardware integration & force feedback
+#endif
+
 #include "DReyeVRPawn.generated.h"
 
 UCLASS()
@@ -32,6 +44,8 @@ class ADReyeVRPawn : public APawn
 
   protected:
     virtual void BeginPlay() override;
+    virtual void BeginDestroy() override;
+
 
   private:
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -42,6 +56,7 @@ class ADReyeVRPawn : public APawn
     float FieldOfView = 90.f; // in degrees
 
     FPostProcessSettings PostProcessingInit();
+    void ReadConfigVariables();
 
     // inputs
     /// TODO: refactor so they are only defined here, not in EgoVehicle!
@@ -70,4 +85,22 @@ class ADReyeVRPawn : public APawn
     void CameraRight();
     void CameraUp();
     void CameraDown();
+
+    UWorld *World = nullptr;
+
+    // logi
+
+    void InitLogiWheel();
+    void TickLogiWheel();
+    void DestroyLogiWheel(bool DestroyModule);
+    bool bLogLogitechWheel = false;
+    int WheelDeviceIdx = 0; // usually leaving as 0 is fine, only use 1 if 0 is taken
+#if USE_LOGITECH_PLUGIN
+    struct DIJOYSTATE2 *Old = nullptr; // global "old" struct for the last state
+    void LogLogitechPluginStruct(const struct DIJOYSTATE2 *Now);
+    void LogitechWheelUpdate();      // for logitech wheel integration
+    void ApplyForceFeedback() const; // for logitech wheel integration
+#endif
+    bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
+
 };

@@ -19,18 +19,6 @@
 #include <stdio.h>
 #include <vector>
 
-// #define USE_LOGITECH_PLUGIN true // handled in .Build.cs file
-
-#ifndef _WIN32
-// can only use LogitechWheel plugin on Windows! :(
-#undef USE_LOGITECH_PLUGIN
-#define USE_LOGITECH_PLUGIN false
-#endif
-
-#if USE_LOGITECH_PLUGIN
-#include "LogitechSteeringWheelLib.h" // LogitechWheel plugin for hardware integration & force feedback
-#endif
-
 #include "EgoVehicle.generated.h"
 
 class ADReyeVRLevel;
@@ -154,6 +142,12 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void SetBrakeKbd(const float BrakeInput);
     bool bReverse;
 
+    // default logi plugin behaviour is to set things to 0.5 for some reason
+    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
+    // https://github.com/HARPLab/LogitechWheelPlugin
+    bool bPedalsDefaulting = true;
+    bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
+    
     // "button presses" should have both a "Press" and "Release" function
     // And, if using the logitech plugin, should also have an "is rising edge" bool so they can only
     // be pressed after being released (cant double press w/ no release)
@@ -197,23 +191,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     bool InvertMouseY;
     float ScaleMouseY;
     float ScaleMouseX;
-
-    // default logi plugin behaviour is to set things to 0.5 for some reason
-    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
-    // https://github.com/HARPLab/LogitechWheelPlugin
-    bool bPedalsDefaulting = true;
-
-    void InitLogiWheel();
-    void TickLogiWheel();
-    void DestroyLogiWheel(bool DestroyModule);
-    bool bLogLogitechWheel = false;
-    int WheelDeviceIdx = 0; // usually leaving as 0 is fine, only use 1 if 0 is taken
-#if USE_LOGITECH_PLUGIN
-    struct DIJOYSTATE2 *Old = nullptr; // global "old" struct for the last state
-    void LogLogitechPluginStruct(const struct DIJOYSTATE2 *Now);
-    void LogitechWheelUpdate();      // for logitech wheel integration
-    void ApplyForceFeedback() const; // for logitech wheel integration
-#endif
 
     ////////////////:SOUNDS:////////////////
     void ConstructEgoSounds(); // needs to be called in the constructor
@@ -284,6 +261,5 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     // Other
     void DebugLines() const;
     bool bIsHMDConnected = false;  // checks for HMD connection on BeginPlay
-    bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
     bool bDrawDebugEditor = false;
 };
