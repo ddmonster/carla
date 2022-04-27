@@ -37,7 +37,12 @@ class ADReyeVRPawn : public APawn
         FirstPersonCam->RegisterComponentWithWorld(World);
     }
 
-    UCameraComponent *GetFirstPersonCam()
+    UCameraComponent *GetCamera()
+    {
+        return FirstPersonCam;
+    }
+
+    const UCameraComponent *GetCamera() const
     {
         return FirstPersonCam;
     }
@@ -45,7 +50,6 @@ class ADReyeVRPawn : public APawn
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
-
 
   private:
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -62,6 +66,9 @@ class ADReyeVRPawn : public APawn
     /// TODO: refactor so they are only defined here, not in EgoVehicle!
     void MouseLookUp(const float mY_Input);
     void MouseTurn(const float mX_Input);
+    bool InvertMouseY;
+    float ScaleMouseY;
+    float ScaleMouseX;
 
     void SetBrakeKbd(const float in);
     void SetSteeringKbd(const float in);
@@ -102,5 +109,4 @@ class ADReyeVRPawn : public APawn
     void ApplyForceFeedback() const; // for logitech wheel integration
 #endif
     bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
-
 };

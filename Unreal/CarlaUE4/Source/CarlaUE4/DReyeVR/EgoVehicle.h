@@ -147,7 +147,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     // https://github.com/HARPLab/LogitechWheelPlugin
     bool bPedalsDefaulting = true;
     bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
-    
+
     // "button presses" should have both a "Press" and "Release" function
     // And, if using the logitech plugin, should also have an "is rising edge" bool so they can only
     // be pressed after being released (cant double press w/ no release)
@@ -188,9 +188,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float ScaleSteeringInput;
     float ScaleThrottleInput;
     float ScaleBrakeInput;
-    bool InvertMouseY;
-    float ScaleMouseY;
-    float ScaleMouseX;
 
     ////////////////:SOUNDS:////////////////
     void ConstructEgoSounds(); // needs to be called in the constructor
@@ -260,6 +257,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     // Other
     void DebugLines() const;
-    bool bIsHMDConnected = false;  // checks for HMD connection on BeginPlay
+    bool bIsHMDConnected = false; // checks for HMD connection on BeginPlay
     bool bDrawDebugEditor = false;
 };

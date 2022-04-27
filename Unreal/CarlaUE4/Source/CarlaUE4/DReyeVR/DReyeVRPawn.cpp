@@ -26,6 +26,11 @@ void ADReyeVRPawn::ReadConfigVariables()
     // wheel hardware
     ReadConfigValue("Hardware", "DeviceIdx", WheelDeviceIdx);
     ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
+
+    // input scaling
+    ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
+    ReadConfigValue("VehicleInputs", "ScaleMouseY", ScaleMouseY);
+    ReadConfigValue("VehicleInputs", "ScaleMouseX", ScaleMouseX);
 }
 
 void ADReyeVRPawn::BeginPlay()
@@ -151,16 +156,6 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
     }
 }
 
-void ADReyeVRPawn::MouseLookUp(const float mY_Input)
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->MouseLookUp(mY_Input))
-}
-
-void ADReyeVRPawn::MouseTurn(const float mX_Input)
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->MouseTurn(mX_Input))
-}
-
 void ADReyeVRPawn::PressReverse()
 {
     CHECK_EGO_VEHICLE(EgoVehicle->PressReverse())
@@ -231,6 +226,50 @@ void ADReyeVRPawn::CameraDown()
     CHECK_EGO_VEHICLE(EgoVehicle->CameraDown())
 }
 
+/// ========================================== ///
+/// -----------------:MOUSE:------------------ ///
+/// ========================================== ///
+
+/// NOTE: in UE4 rotators are of the form: {Pitch, Yaw, Roll} (stored in degrees)
+/// We are basing the limits off of "Cervical Spine Functional Anatomy ad the Biomechanics of Injury":
+// "The cervical spine's range of motion is approximately 80 deg to 90 deg of flexion, 70 deg of extension,
+// 20 deg to 45 deg of lateral flexion, and up to 90 deg of rotation to both sides."
+// (www.ncbi.nlm.nih.gov/pmc/articles/PMC1250253/)
+/// NOTE: flexion = looking down to chest, extension = looking up , lateral = roll
+/// ALSO: These functions are only used in non-VR mode, in VR you can move freely
+
+void ADReyeVRPawn::MouseLookUp(const float mY_Input)
+{
+    if (mY_Input != 0.f)
+    {
+        const float ScaleY = (this->InvertMouseY ? 1 : -1) * this->ScaleMouseY; // negative Y is "normal" controls
+        FRotator UpDir = this->GetCamera()->GetRelativeRotation() + FRotator(ScaleY * mY_Input, 0.f, 0.f);
+        // get the limits of a human neck (only clamping pitch)
+        const float MinFlexion = -85.f;
+        const float MaxExtension = 70.f;
+        UpDir.Pitch = FMath::Clamp(UpDir.Pitch, MinFlexion, MaxExtension);
+        this->GetCamera()->SetRelativeRotation(UpDir);
+    }
+}
+
+void ADReyeVRPawn::MouseTurn(const float mX_Input)
+{
+    if (mX_Input != 0.f)
+    {
+        const float ScaleX = this->ScaleMouseX;
+        FRotator CurrentDir = this->GetCamera()->GetRelativeRotation();
+        FRotator TurnDir = CurrentDir + FRotator(0.f, ScaleX * mX_Input, 0.f);
+        // get the limits of a human neck (only clamping pitch)
+        const float MinLeft = -90.f;
+        const float MaxRight = 90.f; // may consider increasing to allow users to look through the back window
+        TurnDir.Yaw = FMath::Clamp(TurnDir.Yaw, MinLeft, MaxRight);
+        this->GetCamera()->SetRelativeRotation(TurnDir);
+    }
+}
+
+/// ========================================== ///
+/// ---------------:LOGITECH:----------------- ///
+/// ========================================== ///
 
 void ADReyeVRPawn::InitLogiWheel()
 {
@@ -286,7 +325,7 @@ void ADReyeVRPawn::TickLogiWheel()
 {
 #if USE_LOGITECH_PLUGIN
     bIsLogiConnected = LogiIsConnected(WheelDeviceIdx); // get status of connected device
-    EgoVehicle->bIsLogiConnected = bIsLogiConnected; // TODO: cleanup
+    EgoVehicle->bIsLogiConnected = bIsLogiConnected;    // TODO: cleanup
     if (bIsLogiConnected)
     {
         // Taking logitech inputs for steering

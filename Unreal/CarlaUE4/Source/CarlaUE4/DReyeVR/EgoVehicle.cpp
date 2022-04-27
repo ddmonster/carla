@@ -96,9 +96,6 @@ void AEgoVehicle::ReadConfigVariables()
     ReadConfigValue("VehicleInputs", "ScaleSteeringDamping", ScaleSteeringInput);
     ReadConfigValue("VehicleInputs", "ScaleThrottleInput", ScaleThrottleInput);
     ReadConfigValue("VehicleInputs", "ScaleBrakeInput", ScaleBrakeInput);
-    ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
-    ReadConfigValue("VehicleInputs", "ScaleMouseY", ScaleMouseY);
-    ReadConfigValue("VehicleInputs", "ScaleMouseX", ScaleMouseX);
 }
 
 void AEgoVehicle::BeginPlay()
@@ -211,11 +208,11 @@ void AEgoVehicle::ConstructCamera()
 void AEgoVehicle::AssignFirstPersonCam(ADReyeVRPawn *Pawn)
 {
     ensure(VRCameraRoot != nullptr);
-    this->FirstPersonCam = Pawn->GetFirstPersonCam();
+    this->FirstPersonCam = Pawn->GetCamera();
     ensure(FirstPersonCam != nullptr);
     FAttachmentTransformRules F(EAttachmentRule::KeepRelative, false);
     Pawn->AttachToComponent(VRCameraRoot, F);
-    Pawn->GetFirstPersonCam()->AttachToComponent(VRCameraRoot, F);
+    Pawn->GetCamera()->AttachToComponent(VRCameraRoot, F);
     // Then set the actual camera to be at its origin (attached to VRCameraRoot)
     FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
     FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
