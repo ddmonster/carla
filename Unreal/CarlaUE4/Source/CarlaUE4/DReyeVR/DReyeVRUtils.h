@@ -258,8 +258,8 @@ static void GenerateCrosshairImage(TArray<FColor> &Src, const float Size, const 
     }
 }
 
-FVector2D ProjectGazeToScreen(const APlayerController *Player, const UCameraComponent *Camera, const FVector &InOrigin,
-                              const FVector &InDir, bool bPlayerViewportRelative = true)
+static FVector2D ProjectGazeToScreen(const APlayerController *Player, const UCameraComponent *Camera,
+                                     const FVector &InOrigin, const FVector &InDir, bool bPlayerViewportRelative = true)
 {
     if (Player == nullptr)
         return FVector2D::ZeroVector;

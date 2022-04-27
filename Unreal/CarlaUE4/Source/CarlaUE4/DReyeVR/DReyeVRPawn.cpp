@@ -343,7 +343,7 @@ void ADReyeVRPawn::TickLogiWheel()
         return;
 #if USE_LOGITECH_PLUGIN
     bIsLogiConnected = LogiIsConnected(WheelDeviceIdx); // get status of connected device
-    EgoVehicle->bIsLogiConnected = bIsLogiConnected;    // TODO: cleanup
+    bIsLogiConnected = bIsLogiConnected;                // TODO: cleanup
     if (bIsLogiConnected)
     {
         // Taking logitech inputs for steering
@@ -509,7 +509,7 @@ void ADReyeVRPawn::ApplyForceFeedback() const
     // only execute this in Windows, the Logitech plugin is incompatible with Linux
     const float Speed = EgoVehicle->GetVelocity().Size(); // get magnitude of self (AActor's) velocity
     /// TODO: move outside this function (in tick()) to avoid redundancy
-    if (EgoVehicle->bIsLogiConnected && LogiHasForceFeedback(WheelDeviceIdx))
+    if (bIsLogiConnected && LogiHasForceFeedback(WheelDeviceIdx))
     {
         const int OffsetPercentage = 0;      // "Specifies the center of the spring force effect"
         const int SaturationPercentage = 30; // "Level of saturation... comparable to a magnitude"
