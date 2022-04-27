@@ -1,4 +1,7 @@
 #include "DReyeVRPawn.h"
+#include "DReyeVRUtils.h"                      // ProjectGazeToScreen
+#include "HeadMountedDisplayFunctionLibrary.h" // SetTrackingOrigin, GetWorldToMetersScale
+#include "HeadMountedDisplayTypes.h"           // ESpectatorScreenMode
 
 ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -23,44 +26,24 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
 void ADReyeVRPawn::ReadConfigVariables()
 {
     ReadConfigValue("EgoVehicle", "FieldOfView", FieldOfView);
-    // wheel hardware
-    ReadConfigValue("Hardware", "DeviceIdx", WheelDeviceIdx);
-    ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
 
     // input scaling
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
     ReadConfigValue("VehicleInputs", "ScaleMouseY", ScaleMouseY);
     ReadConfigValue("VehicleInputs", "ScaleMouseX", ScaleMouseX);
-}
 
-void ADReyeVRPawn::BeginPlay()
-{
-    Super::BeginPlay();
+    // HUD
+    ReadConfigValue("EgoVehicleHUD", "HUDScaleVR", HUDScaleVR);
+    ReadConfigValue("EgoVehicleHUD", "DrawFPSCounter", bDrawFPSCounter);
+    ReadConfigValue("EgoVehicleHUD", "DrawFlatReticle", bDrawFlatReticle);
+    ReadConfigValue("EgoVehicleHUD", "ReticleSize", ReticleSize);
+    ReadConfigValue("EgoVehicleHUD", "DrawGaze", bDrawGaze);
+    ReadConfigValue("EgoVehicleHUD", "DrawSpectatorReticle", bDrawSpectatorReticle);
+    ReadConfigValue("EgoVehicleHUD", "EnableSpectatorScreen", bEnableSpectatorScreen);
 
-    World = GetWorld();
-    ensure(World != nullptr);
-
-    // Initialize logitech steering wheel
-    InitLogiWheel();
-}
-
-void ADReyeVRPawn::BeginDestroy()
-{
-    Super::BeginDestroy();
-
-    if (bIsLogiConnected)
-        DestroyLogiWheel(false);
-}
-
-void ADReyeVRPawn::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-
-    if (EgoVehicle != nullptr)
-    {
-        // Tick the logitech wheel
-        TickLogiWheel();
-    }
+    // wheel hardware
+    ReadConfigValue("Hardware", "DeviceIdx", WheelDeviceIdx);
+    ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
 }
 
 FPostProcessSettings ADReyeVRPawn::PostProcessingInit()
@@ -87,190 +70,216 @@ FPostProcessSettings ADReyeVRPawn::PostProcessingInit()
     return PP;
 }
 
-void ADReyeVRPawn::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
+void ADReyeVRPawn::BeginPlay()
 {
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
-    check(PlayerInputComponent);
+    Super::BeginPlay();
 
-    /// NOTE: an Action is a digital input, an Axis is an analog input
-    // steering and throttle analog inputs (axes)
-    PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &ADReyeVRPawn::SetSteeringKbd);
-    PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &ADReyeVRPawn::SetThrottleKbd);
-    PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &ADReyeVRPawn::SetBrakeKbd);
-    // // button actions (press & release)
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalL);
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalL);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressHandbrake);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseHandbrake);
-    // clean/empty room experiment
-    // PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::ToggleCleanRoom);
-    /// Mouse X and Y input for looking up and turning
-    PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &ADReyeVRPawn::MouseLookUp);
-    PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &ADReyeVRPawn::MouseTurn);
-    // Camera position adjustments
-    PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraFwd);
-    PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraBack);
-    PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraLeft);
-    PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraRight);
-    PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraUp);
-    PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraDown);
+    World = GetWorld();
+    ensure(World != nullptr);
+
+    // Initialize logitech steering wheel
+    InitLogiWheel();
+
+    // Get information about the VR headset & initialize SteamVR
+    InitSteamVR();
+
+    // Enable VR spectator screen & eye reticle
+    InitSpectator();
 }
 
-/// TODO: REFACTOR THIS
-#define CHECK_EGO_VEHICLE(FUNCTION)                                                                                    \
-    if (EgoVehicle)                                                                                                    \
-        FUNCTION;                                                                                                      \
-    else                                                                                                               \
-        UE_LOG(LogTemp, Warning, TEXT("No egovehicle!"));
-
-void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
+void ADReyeVRPawn::BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn)
 {
-    if (ThrottleInput != 0)
+    /// NOTE: this should be run very early!
+    // before anything that needs the EgoVehicle pointer (since this initializes it!)
+
+    EgoVehicle = Vehicle;
+    this->Player = PlayerIn;
+    ensure(this->Player != nullptr);
+
+    EgoVehicle->SetPawn(this);
+    FirstPersonCam->RegisterComponentWithWorld(World);
+
+    // Setup the HUD
+    InitFlatHUD(Player);
+}
+
+void ADReyeVRPawn::BeginDestroy()
+{
+    Super::BeginDestroy();
+
+    if (bIsLogiConnected)
+        DestroyLogiWheel(false);
+}
+
+void ADReyeVRPawn::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    // Tick the logitech wheel
+    TickLogiWheel();
+}
+
+/// ========================================== ///
+/// ----------------:FLATHUD:----------------- ///
+/// ========================================== ///
+
+void ADReyeVRPawn::InitFlatHUD(APlayerController *P)
+{
+    check(P);
+    AHUD *Raw_HUD = P->GetHUD();
+    FlatHUD = Cast<ADReyeVRHUD>(Raw_HUD);
+    if (FlatHUD)
+        FlatHUD->SetPlayer(P);
+    else
+        UE_LOG(LogTemp, Warning, TEXT("Unable to initialize DReyeVR HUD!"));
+    // make sure to disable the flat hud when in VR (not supported, only displays on half of one eye screen)
+    if (bIsHMDConnected)
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
+        bDrawFlatHud = false;
     }
 }
 
-void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
+void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir)
 {
-    if (BrakeInput != 0)
+    if (FlatHUD == nullptr || Player == nullptr || bDrawFlatHud == false)
+        return;
+
+    const FRotator WorldRot = GetCamera()->GetComponentRotation();
+    const float RayLengthScale = 10.f;
+    const FVector GazeEnd = GazeOrigin + RayLengthScale * WorldRot.RotateVector(GazeDir);
+
+    // calculate View size (of open window). Note this is not the same as resolution
+    FIntPoint ViewSize;
+    Player->GetViewportSize(ViewSize.X, ViewSize.Y);
+    // Get eye tracker variables
+
+    // Draw elements of the HUD
+    if (bDrawFlatReticle) // Draw reticle on flat-screen HUD
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
+        const float Diameter = ReticleSize;
+        const float Thickness = (ReticleSize / 2.f) / 10.f; // 10 % of radius
+        if (bRectangularReticle)
+        {
+            FlatHUD->DrawDynamicSquare(GazeEnd, Diameter, FColor(255, 0, 0, 255), Thickness);
+        }
+        else
+        {
+            FlatHUD->DrawDynamicCrosshair(GazeEnd, Diameter, FColor(255, 0, 0, 255), true, Thickness);
+        }
+    }
+    if (bDrawFPSCounter)
+    {
+        FlatHUD->DrawDynamicText(FString::FromInt(int(1.f / DeltaSeconds)), FVector2D(ViewSize.X - 100, 50),
+                                 FColor(0, 255, 0, 213), 2);
+    }
+    if (bDrawGaze)
+    {
+        // Draw line components in FlatHUD
+        FlatHUD->DrawDynamicLine(GazeOrigin, GazeEnd, FColor::Red, 3.0f);
     }
 }
 
-void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
+/// ========================================== ///
+/// ---------------:SPECTATOR:---------------- ///
+/// ========================================== ///
+
+void ADReyeVRPawn::InitReticleTexture()
 {
-    if (SteeringInput != 0)
+    if (bIsHMDConnected)
+        ReticleSize *= HUDScaleVR;
+
+    /// NOTE: need to create transient like this bc of a UE4 bug in release mode
+    // https://forums.unrealengine.com/development-discussion/rendering/1767838-fimageutils-createtexture2d-crashes-in-packaged-build
+    TArray<FColor> ReticleSrc; // pixel values array for eye reticle texture
+    if (bRectangularReticle)
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetSteering(SteeringInput))
+        GenerateSquareImage(ReticleSrc, ReticleSize, FColor(255, 0, 0, 128));
     }
     else
     {
-        // so the steering wheel does go to 0 when letting go
-        ensure(EgoVehicle != nullptr);
-        EgoVehicle->VehicleInputs.Steering = 0;
+        GenerateCrosshairImage(ReticleSrc, ReticleSize, FColor(255, 0, 0, 128));
+    }
+    ReticleTexture = UTexture2D::CreateTransient(ReticleSize, ReticleSize, PF_B8G8R8A8);
+    void *TextureData = ReticleTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+    FMemory::Memcpy(TextureData, ReticleSrc.GetData(), 4 * ReticleSize * ReticleSize);
+    ReticleTexture->PlatformData->Mips[0].BulkData.Unlock();
+    ReticleTexture->UpdateResource();
+    // ReticleTexture = FImageUtils::CreateTexture2D(ReticleSize, ReticleSize, ReticleSrc, GetWorld(),
+    //                                               "EyeReticleTexture", EObjectFlags::RF_Transient, params);
+
+    check(ReticleTexture);
+    check(ReticleTexture->Resource);
+}
+
+void ADReyeVRPawn::InitSpectator()
+{
+    if (bIsHMDConnected)
+    {
+        if (bEnableSpectatorScreen)
+        {
+            InitReticleTexture(); // generate array of pixel values
+            check(ReticleTexture);
+            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::TexturePlusEye);
+            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenTexture(ReticleTexture);
+        }
+        else
+        {
+            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::Disabled);
+        }
     }
 }
 
-void ADReyeVRPawn::PressReverse()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressReverse())
-}
-
-void ADReyeVRPawn::ReleaseReverse()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseReverse())
-}
-
-void ADReyeVRPawn::PressTurnSignalL()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalL())
-}
-
-void ADReyeVRPawn::ReleaseTurnSignalL()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalL())
-}
-
-void ADReyeVRPawn::PressTurnSignalR()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalR())
-}
-
-void ADReyeVRPawn::ReleaseTurnSignalR()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalR())
-}
-
-void ADReyeVRPawn::PressHandbrake()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressHandbrake())
-}
-
-void ADReyeVRPawn::ReleaseHandbrake()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseHandbrake())
-}
-
-void ADReyeVRPawn::CameraFwd()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraFwd())
-}
-
-void ADReyeVRPawn::CameraBack()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraBack())
-}
-
-void ADReyeVRPawn::CameraLeft()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraLeft())
-}
-
-void ADReyeVRPawn::CameraRight()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraRight())
-}
-
-void ADReyeVRPawn::CameraUp()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraUp())
-}
-
-void ADReyeVRPawn::CameraDown()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraDown())
-}
-
 /// ========================================== ///
-/// -----------------:MOUSE:------------------ ///
+/// ---------------:SPECTATOR:---------------- ///
 /// ========================================== ///
 
-/// NOTE: in UE4 rotators are of the form: {Pitch, Yaw, Roll} (stored in degrees)
-/// We are basing the limits off of "Cervical Spine Functional Anatomy ad the Biomechanics of Injury":
-// "The cervical spine's range of motion is approximately 80 deg to 90 deg of flexion, 70 deg of extension,
-// 20 deg to 45 deg of lateral flexion, and up to 90 deg of rotation to both sides."
-// (www.ncbi.nlm.nih.gov/pmc/articles/PMC1250253/)
-/// NOTE: flexion = looking down to chest, extension = looking up , lateral = roll
-/// ALSO: These functions are only used in non-VR mode, in VR you can move freely
-
-void ADReyeVRPawn::MouseLookUp(const float mY_Input)
+void ADReyeVRPawn::InitSteamVR()
 {
-    if (mY_Input != 0.f)
+    bIsHMDConnected = UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled();
+    if (bIsHMDConnected)
     {
-        const float ScaleY = (this->InvertMouseY ? 1 : -1) * this->ScaleMouseY; // negative Y is "normal" controls
-        FRotator UpDir = this->GetCamera()->GetRelativeRotation() + FRotator(ScaleY * mY_Input, 0.f, 0.f);
-        // get the limits of a human neck (only clamping pitch)
-        const float MinFlexion = -85.f;
-        const float MaxExtension = 70.f;
-        UpDir.Pitch = FMath::Clamp(UpDir.Pitch, MinFlexion, MaxExtension);
-        this->GetCamera()->SetRelativeRotation(UpDir);
+        FString HMD_Name = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName().ToString();
+        FString HMD_Version = UHeadMountedDisplayFunctionLibrary::GetVersionString();
+        UE_LOG(LogTemp, Log, TEXT("HMD detected: %s, version %s"), *HMD_Name, *HMD_Version);
+        // Now we'll begin with setting up the VR Origin logic
+        UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Eye); // Also have Floor & Stage Level
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No head mounted device detected!"));
     }
 }
 
-void ADReyeVRPawn::MouseTurn(const float mX_Input)
+void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir)
 {
-    if (mX_Input != 0.f)
+    if (!bEnableSpectatorScreen || Player == nullptr || !bIsHMDConnected)
+        return;
+
+    FVector2D ReticlePos = ProjectGazeToScreen(Player, GetCamera(), GazeOrigin, GazeDir);
+
+    /// NOTE: we like using this constant offset for visualization
+    ReticlePos += FVector2D(0.f, -0.5f * ReticleSize); // move reticle up by size/2 (texture in quadrant 4)
+
+    // calculate View size (of open window). Note this is not the same as resolution
+    FIntPoint ViewSize;
+    Player->GetViewportSize(ViewSize.X, ViewSize.Y);
+
+    /// TODO: draw other things on the spectator screen?
+    if (bDrawSpectatorReticle)
     {
-        const float ScaleX = this->ScaleMouseX;
-        FRotator CurrentDir = this->GetCamera()->GetRelativeRotation();
-        FRotator TurnDir = CurrentDir + FRotator(0.f, ScaleX * mX_Input, 0.f);
-        // get the limits of a human neck (only clamping pitch)
-        const float MinLeft = -90.f;
-        const float MaxRight = 90.f; // may consider increasing to allow users to look through the back window
-        TurnDir.Yaw = FMath::Clamp(TurnDir.Yaw, MinLeft, MaxRight);
-        this->GetCamera()->SetRelativeRotation(TurnDir);
+        /// NOTE: the SetSpectatorScreenModeTexturePlusEyeLayout expects normalized positions on the screen
+        // define min and max bounds (where the texture is actually drawn on screen)
+        const FVector2D TextureRectMin = ReticlePos / ViewSize;                 // top left
+        const FVector2D TextureRectMax = (ReticlePos + ReticleSize) / ViewSize; // bottom right
+        UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenModeTexturePlusEyeLayout(
+            FVector2D{0.f, 0.f}, // whole window (top left)
+            FVector2D{1.f, 1.f}, // whole window (top -> bottom right)
+            TextureRectMin,      // top left of texture
+            TextureRectMax,      // bottom right of texture
+            true,                // draw eye data as background
+            false,               // clear w/ black
+            true                 // use alpha
+        );
     }
 }
 
@@ -330,6 +339,8 @@ void ADReyeVRPawn::DestroyLogiWheel(bool DestroyModule)
 
 void ADReyeVRPawn::TickLogiWheel()
 {
+    if (EgoVehicle == nullptr)
+        return;
 #if USE_LOGITECH_PLUGIN
     bIsLogiConnected = LogiIsConnected(WheelDeviceIdx); // get status of connected device
     EgoVehicle->bIsLogiConnected = bIsLogiConnected;    // TODO: cleanup
@@ -418,11 +429,8 @@ void ADReyeVRPawn::LogLogitechPluginStruct(const struct DIJOYSTATE2 *Now)
 
 void ADReyeVRPawn::LogitechWheelUpdate()
 {
-    if (EgoVehicle == nullptr)
-    {
-        UE_LOG(LogTemp, Error, TEXT("No egovehicle!"));
-        return;
-    }
+    check(EgoVehicle);
+
     // only execute this in Windows, the Logitech plugin is incompatible with Linux
     if (LogiUpdate() == false) // update the logitech wheel
         UE_LOG(LogTemp, Warning, TEXT("Logitech wheel %d failed to update!"), WheelDeviceIdx);
@@ -451,10 +459,7 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     }
     else
     {
-        /// (NOTE: these function calls occur in the EgoVehicle::Tick, meaning other
-        // control calls could theoretically conflict/override them if called later. This is
-        // the case with the keyboard inputs which is why there are wrappers (suffixed with "Kbd")
-        // that always override logi inputs IF their values are nonzero
+        /// NOTE: directly calling the EgoVehicle functions
         EgoVehicle->SetSteering(WheelRotation);
         EgoVehicle->SetThrottle(AccelerationPedal);
         EgoVehicle->SetBrake(BrakePedal);
@@ -466,40 +471,41 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     // Button presses (turn signals, reverse)
     if (WheelState->rgbButtons[0] || WheelState->rgbButtons[1] || // Any of the 4 face pads
         WheelState->rgbButtons[2] || WheelState->rgbButtons[3])
-        EgoVehicle->PressReverse();
+        PressReverse();
     else
-        EgoVehicle->ReleaseReverse();
+        ReleaseReverse();
 
     if (WheelState->rgbButtons[4])
-        EgoVehicle->PressTurnSignalR();
+        PressTurnSignalR();
     else
-        EgoVehicle->ReleaseTurnSignalR();
+        ReleaseTurnSignalR();
 
     if (WheelState->rgbButtons[5])
-        EgoVehicle->PressTurnSignalL();
+        PressTurnSignalL();
     else
-        EgoVehicle->ReleaseTurnSignalL();
+        ReleaseTurnSignalL();
 
     // if (WheelState->rgbButtons[23]) // big red button on right side of g923
 
     // VRCamerRoot base position adjustment
     if (WheelState->rgdwPOV[0] == 0) // positive in X
-        EgoVehicle->CameraPositionAdjust(FVector(1.f, 0.f, 0.f));
+        CameraFwd();
     else if (WheelState->rgdwPOV[0] == 18000) // negative in X
-        EgoVehicle->CameraPositionAdjust(FVector(-1.f, 0.f, 0.f));
+        CameraBack();
     else if (WheelState->rgdwPOV[0] == 9000) // positive in Y
-        EgoVehicle->CameraPositionAdjust(FVector(0.f, 1.f, 0.f));
+        CameraRight();
     else if (WheelState->rgdwPOV[0] == 27000) // negative in Y
-        EgoVehicle->CameraPositionAdjust(FVector(0.f, -1.f, 0.f));
-    // VRCamerRoot base height adjustment
+        CameraLeft();
     else if (WheelState->rgbButtons[19]) // positive in Z
-        EgoVehicle->CameraPositionAdjust(FVector(0.f, 0.f, 1.f));
+        CameraUp();
     else if (WheelState->rgbButtons[20]) // negative in Z
-        EgoVehicle->CameraPositionAdjust(FVector(0.f, 0.f, -1.f));
+        CameraDown();
 }
 
 void ADReyeVRPawn::ApplyForceFeedback() const
 {
+    check(EgoVehicle);
+
     // only execute this in Windows, the Logitech plugin is incompatible with Linux
     const float Speed = EgoVehicle->GetVelocity().Size(); // get magnitude of self (AActor's) velocity
     /// TODO: move outside this function (in tick()) to avoid redundancy
@@ -527,3 +533,208 @@ void ADReyeVRPawn::ApplyForceFeedback() const
     */
 }
 #endif
+
+/// ========================================== ///
+/// --------------:INPUTRELAY:---------------- ///
+/// ========================================== ///
+
+// the whole reason to possess this Pawn instance is to relay these inputs
+// back to the EgoVehicle so that the EgoVehicle can still be controlled by an AI controller
+// and these inputs will not be blocked.
+// Else, (since only one AController can possess an actor) either the PlayerController
+// or AIController would be in control exclusively.
+
+void ADReyeVRPawn::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
+{
+    /// NOTE: this function gets called once the pawn is possessed
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    check(PlayerInputComponent);
+
+    /// TODO: use direct EgoVehicle calls
+
+    /// NOTE: an Action is a digital input, an Axis is an analog input
+    // steering and throttle analog inputs (axes)
+    PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &ADReyeVRPawn::SetSteeringKbd);
+    PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &ADReyeVRPawn::SetThrottleKbd);
+    PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &ADReyeVRPawn::SetBrakeKbd);
+    // // button actions (press & release)
+    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressReverse);
+    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalR);
+    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalL);
+    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseReverse);
+    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalR);
+    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalL);
+    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressHandbrake);
+    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseHandbrake);
+    // clean/empty room experiment
+    PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::ToggleCleanRoom);
+    /// Mouse X and Y input for looking up and turning
+    PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &ADReyeVRPawn::MouseLookUp);
+    PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &ADReyeVRPawn::MouseTurn);
+    // Camera position adjustments
+    PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraFwd);
+    PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraBack);
+    PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraLeft);
+    PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraRight);
+    PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraUp);
+    PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraDown);
+}
+
+#define CHECK_EGO_VEHICLE(FUNCTION)                                                                                    \
+    if (EgoVehicle)                                                                                                    \
+        FUNCTION;                                                                                                      \
+    else                                                                                                               \
+        UE_LOG(LogTemp, Error, TEXT("EgoVehicle is NULL!"));
+
+/// TODO: make the vehicle inputs additive to simplify combined control
+void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
+{
+    if (ThrottleInput != 0)
+    {
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
+    }
+}
+
+void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
+{
+    if (BrakeInput != 0)
+    {
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
+    }
+}
+
+void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
+{
+    if (SteeringInput != 0)
+    {
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetSteering(SteeringInput))
+    }
+    else
+    {
+        // so the steering wheel does go to 0 when letting go
+        ensure(EgoVehicle != nullptr);
+        EgoVehicle->VehicleInputs.Steering = 0;
+    }
+}
+
+void ADReyeVRPawn::PressReverse()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->PressReverse())
+}
+
+void ADReyeVRPawn::ReleaseReverse()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseReverse())
+}
+
+void ADReyeVRPawn::PressTurnSignalL()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalL())
+}
+
+void ADReyeVRPawn::ReleaseTurnSignalL()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalL())
+}
+
+void ADReyeVRPawn::PressTurnSignalR()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalR())
+}
+
+void ADReyeVRPawn::ReleaseTurnSignalR()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalR())
+}
+
+void ADReyeVRPawn::PressHandbrake()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->PressHandbrake())
+}
+
+void ADReyeVRPawn::ReleaseHandbrake()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseHandbrake())
+}
+
+void ADReyeVRPawn::ToggleCleanRoom()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->ToggleCleanRoom())
+}
+
+void ADReyeVRPawn::CameraFwd()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraFwd())
+}
+
+void ADReyeVRPawn::CameraBack()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraBack())
+}
+
+void ADReyeVRPawn::CameraLeft()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraLeft())
+}
+
+void ADReyeVRPawn::CameraRight()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraRight())
+}
+
+void ADReyeVRPawn::CameraUp()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraUp())
+}
+
+void ADReyeVRPawn::CameraDown()
+{
+    CHECK_EGO_VEHICLE(EgoVehicle->CameraDown())
+}
+
+/// ========================================== ///
+/// -----------------:MOUSE:------------------ ///
+/// ========================================== ///
+
+/// NOTE: in UE4 rotators are of the form: {Pitch, Yaw, Roll} (stored in degrees)
+/// We are basing the limits off of "Cervical Spine Functional Anatomy ad the Biomechanics of Injury":
+// "The cervical spine's range of motion is approximately 80 deg to 90 deg of flexion, 70 deg of extension,
+// 20 deg to 45 deg of lateral flexion, and up to 90 deg of rotation to both sides."
+// (www.ncbi.nlm.nih.gov/pmc/articles/PMC1250253/)
+/// NOTE: flexion = looking down to chest, extension = looking up , lateral = roll
+/// ALSO: These functions are only used in non-VR mode, in VR you can move freely
+
+void ADReyeVRPawn::MouseLookUp(const float mY_Input)
+{
+    if (mY_Input != 0.f)
+    {
+        const float ScaleY = (this->InvertMouseY ? 1 : -1) * this->ScaleMouseY; // negative Y is "normal" controls
+        FRotator UpDir = this->GetCamera()->GetRelativeRotation() + FRotator(ScaleY * mY_Input, 0.f, 0.f);
+        // get the limits of a human neck (only clamping pitch)
+        const float MinFlexion = -85.f;
+        const float MaxExtension = 70.f;
+        UpDir.Pitch = FMath::Clamp(UpDir.Pitch, MinFlexion, MaxExtension);
+        this->GetCamera()->SetRelativeRotation(UpDir);
+    }
+}
+
+void ADReyeVRPawn::MouseTurn(const float mX_Input)
+{
+    if (mX_Input != 0.f)
+    {
+        const float ScaleX = this->ScaleMouseX;
+        FRotator CurrentDir = this->GetCamera()->GetRelativeRotation();
+        FRotator TurnDir = CurrentDir + FRotator(0.f, ScaleX * mX_Input, 0.f);
+        // get the limits of a human neck (only clamping pitch)
+        const float MinLeft = -90.f;
+        const float MaxRight = 90.f; // may consider increasing to allow users to look through the back window
+        TurnDir.Yaw = FMath::Clamp(TurnDir.Yaw, MinLeft, MaxRight);
+        this->GetCamera()->SetRelativeRotation(TurnDir);
+    }
+}

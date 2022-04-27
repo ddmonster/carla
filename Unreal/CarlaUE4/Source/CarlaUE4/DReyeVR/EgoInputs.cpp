@@ -1,8 +1,6 @@
 #include "EgoVehicle.h"
-#include "HeadMountedDisplayFunctionLibrary.h" // SetTrackingOrigin, GetWorldToMetersScale
-#include "HeadMountedDisplayTypes.h"           // EOrientPositionSelector
-#include "Math/NumericLimits.h"                // TNumericLimits<float>::Max
-#include <string>                              // std::string, std::wstring
+#include "Math/NumericLimits.h" // TNumericLimits<float>::Max
+#include <string>               // std::string, std::wstring
 
 ////////////////:INPUTS:////////////////
 /// NOTE: Here we define all the Input functions for the EgoVehicle just to keep them

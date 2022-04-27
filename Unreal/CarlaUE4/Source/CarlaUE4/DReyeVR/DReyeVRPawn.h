@@ -30,15 +30,7 @@ class ADReyeVRPawn : public APawn
     virtual void SetupPlayerInputComponent(UInputComponent *PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
 
-    void AttachToEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn)
-    {
-        EgoVehicle = Vehicle;
-        this->Player = PlayerIn;
-        ensure(this->Player != nullptr);
-
-        EgoVehicle->SetPawn(this);
-        FirstPersonCam->RegisterComponentWithWorld(World);
-    }
+    void BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn);
 
     APlayerController *GetPlayer()
     {
@@ -60,6 +52,9 @@ class ADReyeVRPawn : public APawn
         return bIsLogiConnected;
     }
 
+    void DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir);
+    void DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir);
+
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
@@ -77,6 +72,14 @@ class ADReyeVRPawn : public APawn
     FPostProcessSettings PostProcessingInit();
     void ReadConfigVariables();
 
+    void InitSteamVR(); // Initialize the Head Mounted Display
+    void InitSpectator();
+
+    ////////////////:SPECTATOR:////////////////
+    void InitReticleTexture();  // initializes the spectator-reticle texture
+    UTexture2D *ReticleTexture; // UE4 texture for eye reticle
+    float HUDScaleVR;           // How much to scale the HUD in VR
+
     // inputs
     /// TODO: refactor so they are only defined here, not in EgoVehicle!
     void MouseLookUp(const float mY_Input);
@@ -84,6 +87,21 @@ class ADReyeVRPawn : public APawn
     bool InvertMouseY;
     float ScaleMouseY;
     float ScaleMouseX;
+
+    ////////////////:FLATHUD:////////////////
+    // (Flat) HUD (NOTE: ONLY FOR NON VR)
+    void InitFlatHUD(APlayerController *P);
+    UPROPERTY(Category = HUD, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    class ADReyeVRHUD *FlatHUD;
+    FVector2D ReticlePos;                // 2D reticle position from eye gaze
+    int ReticleSize = 100;               // diameter of reticle (line thickness is 10% of this)
+    bool bDrawFlatHud = true;            // whether to draw the flat hud at all (default true, but false in VR)
+    bool bDrawFPSCounter = true;         // draw FPS counter in top left corner
+    bool bDrawGaze = false;              // whether or not to draw a line for gaze-ray on HUD
+    bool bDrawSpectatorReticle = true;   // Reticle used in the VR-spectator mode
+    bool bDrawFlatReticle = true;        // Reticle used in the flat mode (uses HUD) (ONLY in non-vr mode)
+    bool bEnableSpectatorScreen = false; // don't spent time rendering the spectator screen
+    bool bRectangularReticle = false;    // draw the reticle texture on the HUD & Spectator (NOT RECOMMENDED)
 
     // keyboard mechanisms to access Axis vehicle control (steering, throttle, brake)
     void SetBrakeKbd(const float in);
@@ -109,6 +127,9 @@ class ADReyeVRPawn : public APawn
     void CameraUp();
     void CameraDown();
 
+    // clean room
+    void ToggleCleanRoom();
+
     UWorld *World = nullptr;
 
     // default logi plugin behaviour is to set things to 0.5 for some reason
@@ -130,4 +151,5 @@ class ADReyeVRPawn : public APawn
     void ApplyForceFeedback() const; // for logitech wheel integration
 #endif
     bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
+    bool bIsHMDConnected = false;  // checks for HMD connection on BeginPlay
 };

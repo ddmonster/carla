@@ -101,7 +101,7 @@ bool ADReyeVRLevel::FindEgoVehicle()
         if (DReyeVR_Pawn)
         {
             Player->Possess(DReyeVR_Pawn);
-            DReyeVR_Pawn->AttachToEgoVehicle(EgoVehiclePtr, GetWorld(), Player);
+            DReyeVR_Pawn->BeginEgoVehicle(EgoVehiclePtr, GetWorld(), Player);
             UE_LOG(LogTemp, Log, TEXT("Created DReyeVR controller pawn"));
         }
         /// TODO: handle multiple ego-vehcles? (we should only ever have one!)

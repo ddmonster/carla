@@ -38,7 +38,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void ReadConfigVariables();
 
     virtual void Tick(float DeltaTime) override;
-    // virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
 
     // Setters from external classes
     void SetLevel(ADReyeVRLevel *Level);
@@ -53,7 +52,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     const UCameraComponent *GetCamera() const;
     UCameraComponent *GetCamera();
     const DReyeVR::UserInputs &GetVehicleInputs() const;
-    FVector2D ProjectGazeToScreen(const FVector &Origin, const FVector &Dir, bool bPlayerViewportRelative = true) const;
 
     // "clean/empty" camera room in a closed box in Town04 which removes the cognitive load of driving
     bool EnableCleanRoom();  // enable teleport to clean/empty room
@@ -71,14 +69,12 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     // World variables
     class UWorld *World;
-    class APlayerController *Player;
 
   private:
     void Register(); // function to register the AEgoVehicle with Carla's ActorRegistry
 
     ////////////////:CAMERA:////////////////
     void ConstructCameraRoot(); // needs to be called in the constructor
-    void InitSteamVR();         // Initialize the Head Mounted Display
     void ToggleCleanRoom();     // Triggered by ToggleCleanRoom_DReyeVR input for enabling/disabling clean room
     void TickCleanRoom();       // teleport to empty box in Town04
     bool bCleanRoomActive = false;
@@ -164,9 +160,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void PressHandbrake();
     void ReleaseHandbrake();
     bool bCanPressHandbrake = true;
-    // mouse controls
-    void MouseLookUp(const float mY_Input);
-    void MouseTurn(const float mX_Input);
 
     // Camera control functions (offset by some amount)
     void CameraPositionAdjust(const FVector &displacement);
@@ -192,29 +185,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     ////////////////:LEVEL:////////////////
     void TickLevel(float DeltaSeconds);
     class ADReyeVRLevel *DReyeVRLevel;
-
-    ////////////////:SPECTATOR:////////////////
-    void InitSpectator();
-    void InitReticleTexture();  // initializes the spectator-reticle texture
-    void DrawSpectatorScreen(); // called on every tick
-    UTexture2D *ReticleTexture; // UE4 texture for eye reticle
-    float HUDScaleVR;           // How much to scale the HUD in VR
-
-    ////////////////:FLATHUD:////////////////
-    // (Flat) HUD (NOTE: ONLY FOR NON VR)
-    void InitFlatHUD();
-    UPROPERTY(Category = HUD, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    class ADReyeVRHUD *FlatHUD;
-    void DrawFlatHUD(float DeltaSeconds);
-    FVector2D ReticlePos;                // 2D reticle position from eye gaze
-    int ReticleSize = 100;               // diameter of reticle (line thickness is 10% of this)
-    bool bDrawFlatHud = true;            // whether to draw the flat hud at all (default true, but false in VR)
-    bool bDrawFPSCounter = true;         // draw FPS counter in top left corner
-    bool bDrawGaze = false;              // whether or not to draw a line for gaze-ray on HUD
-    bool bDrawSpectatorReticle = true;   // Reticle used in the VR-spectator mode
-    bool bDrawFlatReticle = true;        // Reticle used in the flat mode (uses HUD) (ONLY in non-vr mode)
-    bool bEnableSpectatorScreen = false; // don't spent time rendering the spectator screen
-    bool bRectangularReticle = false;    // draw the reticle texture on the HUD & Spectator (NOT RECOMMENDED)
 
     ////////////////:DASH:////////////////
     // Text Render components (Like the HUD but part of the mesh and works in VR)
@@ -250,6 +220,5 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     // Other
     void DebugLines() const;
-    bool bIsHMDConnected = false; // checks for HMD connection on BeginPlay
     bool bDrawDebugEditor = false;
 };
