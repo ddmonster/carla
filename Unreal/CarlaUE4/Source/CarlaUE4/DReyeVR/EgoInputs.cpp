@@ -62,26 +62,12 @@ void AEgoVehicle::ToggleCleanRoom()
     }
 }
 
-void AEgoVehicle::SetSteeringKbd(const float SteeringInput)
-{
-    if (SteeringInput == 0.f && bIsLogiConnected && !bPedalsDefaulting)
-        return;
-    SetSteering(SteeringInput);
-}
-
 void AEgoVehicle::SetSteering(const float SteeringInput)
 {
     float ScaledSteeringInput = this->ScaleSteeringInput * SteeringInput;
     this->GetVehicleMovementComponent()->SetSteeringInput(ScaledSteeringInput); // UE4 control
     // assign to input struct
     VehicleInputs.Steering = ScaledSteeringInput;
-}
-
-void AEgoVehicle::SetThrottleKbd(const float ThrottleInput)
-{
-    if (ThrottleInput == 0.f && bIsLogiConnected && !bPedalsDefaulting)
-        return;
-    SetThrottle(ThrottleInput);
 }
 
 void AEgoVehicle::SetThrottle(const float ThrottleInput)
@@ -97,13 +83,6 @@ void AEgoVehicle::SetThrottle(const float ThrottleInput)
 
     // assign to input struct
     VehicleInputs.Throttle = ScaledThrottleInput;
-}
-
-void AEgoVehicle::SetBrakeKbd(const float BrakeInput)
-{
-    if (BrakeInput == 0.f && bIsLogiConnected && !bPedalsDefaulting)
-        return;
-    SetBrake(BrakeInput);
 }
 
 void AEgoVehicle::SetBrake(const float BrakeInput)

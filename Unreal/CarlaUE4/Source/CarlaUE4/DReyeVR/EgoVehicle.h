@@ -42,7 +42,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     // Setters from external classes
     void SetLevel(ADReyeVRLevel *Level);
-    void AssignFirstPersonCam(ADReyeVRPawn *Pawn);
+    void SetPawn(ADReyeVRPawn *Pawn);
     void SetVolume(const float VolumeIn);
 
     // Getters
@@ -77,10 +77,10 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void Register(); // function to register the AEgoVehicle with Carla's ActorRegistry
 
     ////////////////:CAMERA:////////////////
-    void ConstructCamera(); // needs to be called in the constructor
-    void InitSteamVR();     // Initialize the Head Mounted Display
-    void ToggleCleanRoom(); // Triggered by ToggleCleanRoom_DReyeVR input for enabling/disabling clean room
-    void TickCleanRoom();   // teleport to empty box in Town04
+    void ConstructCameraRoot(); // needs to be called in the constructor
+    void InitSteamVR();         // Initialize the Head Mounted Display
+    void ToggleCleanRoom();     // Triggered by ToggleCleanRoom_DReyeVR input for enabling/disabling clean room
+    void TickCleanRoom();       // teleport to empty box in Town04
     bool bCleanRoomActive = false;
     FVector CleanRoomCameraLocation;
     UPROPERTY(Category = Camera, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -97,6 +97,9 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     FVector CombinedGaze, CombinedOrigin;
     FVector LeftGaze, LeftOrigin;
     FVector RightGaze, RightOrigin;
+
+    ///////////////:DREYEVRPAWN://///////////
+    class ADReyeVRPawn *Pawn = nullptr;
 
     ////////////////:MIRRORS:////////////////
     void ConstructMirrors();
@@ -136,17 +139,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void SetSteering(const float SteeringInput);
     void SetThrottle(const float ThrottleInput);
     void SetBrake(const float BrakeInput);
-    // keyboard mechanisms to access Axis vehicle control (steering, throttle, brake)
-    void SetSteeringKbd(const float SteeringInput);
-    void SetThrottleKbd(const float ThrottleInput);
-    void SetBrakeKbd(const float BrakeInput);
     bool bReverse;
-
-    // default logi plugin behaviour is to set things to 0.5 for some reason
-    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
-    // https://github.com/HARPLab/LogitechWheelPlugin
-    bool bPedalsDefaulting = true;
-    bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
 
     // "button presses" should have both a "Press" and "Release" function
     // And, if using the logitech plugin, should also have an "is rising edge" bool so they can only

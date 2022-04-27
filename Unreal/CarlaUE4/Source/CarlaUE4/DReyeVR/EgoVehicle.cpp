@@ -26,14 +26,11 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickGroup = TG_PostPhysics;
 
-    // Set this pawn to be controlled by first (only) player
-    AutoPossessPlayer = EAutoReceiveInput::Player0;
-
     // Set up the root position to be the this mesh
     SetRootComponent(GetMesh());
 
     // Initialize the camera components
-    ConstructCamera();
+    ConstructCameraRoot();
 
     // Initialize audio components
     ConstructEgoSounds();
@@ -105,7 +102,6 @@ void AEgoVehicle::BeginPlay()
 
     // Get information about the world
     World = GetWorld();
-    Player = UGameplayStatics::GetPlayerController(World, 0); // main player (0) controller
     Episode = UCarlaStatics::GetCurrentEpisode(World);
 
     // Get information about the VR headset & initialize SteamVR
@@ -195,7 +191,7 @@ void AEgoVehicle::InitSteamVR()
     }
 }
 
-void AEgoVehicle::ConstructCamera()
+void AEgoVehicle::ConstructCameraRoot()
 {
     // Spawn the RootComponent and Camera for the VR camera
     VRCameraRoot = CreateDefaultSubobject<USceneComponent>(TEXT("VRCameraRoot"));
@@ -205,10 +201,13 @@ void AEgoVehicle::ConstructCamera()
     VRCameraRoot->SetRelativeLocation(CameraLocnInVehicle);
 }
 
-void AEgoVehicle::AssignFirstPersonCam(ADReyeVRPawn *Pawn)
+void AEgoVehicle::SetPawn(ADReyeVRPawn *PawnIn)
 {
     ensure(VRCameraRoot != nullptr);
+    this->Pawn = PawnIn;
+    ensure(Pawn != nullptr);
     this->FirstPersonCam = Pawn->GetCamera();
+    this->Player = Pawn->GetPlayer();
     ensure(FirstPersonCam != nullptr);
     FAttachmentTransformRules F(EAttachmentRule::KeepRelative, false);
     Pawn->AttachToComponent(VRCameraRoot, F);
@@ -216,13 +215,6 @@ void AEgoVehicle::AssignFirstPersonCam(ADReyeVRPawn *Pawn)
     // Then set the actual camera to be at its origin (attached to VRCameraRoot)
     FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
     FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
-
-    // if (FirstPersonCam != nullptr && VRCameraRoot != nullptr)
-    // {
-    //     FirstPersonCam->SetupAttachment(VRCameraRoot);
-    // }
-    // else
-    //     UE_LOG(LogTemp, Warning, TEXT("No first person cam in vehicle!"));
 }
 
 bool AEgoVehicle::EnableCleanRoom()
@@ -824,7 +816,7 @@ void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
     const float RawSteering = GetVehicleInputs().Steering; // this is scaled in SetSteering
     const float TargetAngle = (RawSteering / ScaleSteeringInput) * SteeringAnimScale;
     FRotator NewRotation = CurrentRotation;
-    if (bIsLogiConnected)
+    if (Pawn && Pawn->GetIsLogiConnected())
     {
         NewRotation.Roll = TargetAngle;
     }

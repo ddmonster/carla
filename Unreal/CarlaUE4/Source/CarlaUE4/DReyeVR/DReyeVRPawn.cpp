@@ -119,6 +119,7 @@ void ADReyeVRPawn::SetupPlayerInputComponent(UInputComponent *PlayerInputCompone
     PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraUp);
     PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraDown);
 }
+
 /// TODO: REFACTOR THIS
 #define CHECK_EGO_VEHICLE(FUNCTION)                                                                                    \
     if (EgoVehicle)                                                                                                    \
@@ -130,7 +131,9 @@ void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
 {
     if (ThrottleInput != 0)
     {
-        CHECK_EGO_VEHICLE(EgoVehicle->SetThrottleKbd(ThrottleInput))
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
     }
 }
 
@@ -138,7 +141,9 @@ void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
 {
     if (BrakeInput != 0)
     {
-        CHECK_EGO_VEHICLE(EgoVehicle->SetBrakeKbd(BrakeInput))
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
     }
 }
 
@@ -146,7 +151,9 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
 {
     if (SteeringInput != 0)
     {
-        CHECK_EGO_VEHICLE(EgoVehicle->SetSteeringKbd(SteeringInput))
+        if (bIsLogiConnected && !bPedalsDefaulting)
+            return;
+        CHECK_EGO_VEHICLE(EgoVehicle->SetSteering(SteeringInput))
     }
     else
     {
@@ -434,12 +441,12 @@ void ADReyeVRPawn::LogitechWheelUpdate()
 
     // weird behaviour: "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input"
     // as per https://github.com/HARPLab/LogitechWheelPlugin
-    if (EgoVehicle->bPedalsDefaulting)
+    if (bPedalsDefaulting)
     {
         if (!(FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) && FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) &&
               FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f)))
         {
-            EgoVehicle->bPedalsDefaulting = false;
+            bPedalsDefaulting = false;
         }
     }
     else

@@ -30,11 +30,19 @@ class ADReyeVRPawn : public APawn
     virtual void SetupPlayerInputComponent(UInputComponent *PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
 
-    void AttachToEgoVehicle(AEgoVehicle *Vehicle, UWorld *World)
+    void AttachToEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn)
     {
         EgoVehicle = Vehicle;
-        EgoVehicle->AssignFirstPersonCam(this);
+        this->Player = PlayerIn;
+        ensure(this->Player != nullptr);
+
+        EgoVehicle->SetPawn(this);
         FirstPersonCam->RegisterComponentWithWorld(World);
+    }
+
+    APlayerController *GetPlayer()
+    {
+        return Player;
     }
 
     UCameraComponent *GetCamera()
@@ -47,6 +55,11 @@ class ADReyeVRPawn : public APawn
         return FirstPersonCam;
     }
 
+    bool GetIsLogiConnected() const
+    {
+        return bIsLogiConnected;
+    }
+
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
@@ -56,6 +69,8 @@ class ADReyeVRPawn : public APawn
     class UCameraComponent *FirstPersonCam;
 
     class AEgoVehicle *EgoVehicle;
+
+    APlayerController *Player = nullptr;
 
     float FieldOfView = 90.f; // in degrees
 
@@ -70,6 +85,7 @@ class ADReyeVRPawn : public APawn
     float ScaleMouseY;
     float ScaleMouseX;
 
+    // keyboard mechanisms to access Axis vehicle control (steering, throttle, brake)
     void SetBrakeKbd(const float in);
     void SetSteeringKbd(const float in);
     void SetThrottleKbd(const float in);
@@ -94,6 +110,11 @@ class ADReyeVRPawn : public APawn
     void CameraDown();
 
     UWorld *World = nullptr;
+
+    // default logi plugin behaviour is to set things to 0.5 for some reason
+    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
+    // https://github.com/HARPLab/LogitechWheelPlugin
+    bool bPedalsDefaulting = true;
 
     // logi
 
