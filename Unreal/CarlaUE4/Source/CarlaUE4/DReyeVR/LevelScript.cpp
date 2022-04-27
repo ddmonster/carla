@@ -78,6 +78,9 @@ void ADReyeVRLevel::StartDReyeVRPawn()
 {
     FActorSpawnParameters S;
     DReyeVR_Pawn = GetWorld()->SpawnActor<ADReyeVRPawn>(FVector::ZeroVector, FRotator::ZeroRotator, S);
+    /// NOTE: the pawn is automatically possessed by player0
+    // as the constructor has the AutoPossessPlayer != disabled
+    // if you want to manually possess then you can do Player->Possess(DReyeVR_Pawn);
     ensure(DReyeVR_Pawn != nullptr);
 }
 
@@ -100,7 +103,7 @@ bool ADReyeVRLevel::FindEgoVehicle()
         }
         if (DReyeVR_Pawn)
         {
-            Player->Possess(DReyeVR_Pawn);
+            // need to assign ego vehicle before possess!
             DReyeVR_Pawn->BeginEgoVehicle(EgoVehiclePtr, GetWorld(), Player);
             UE_LOG(LogTemp, Log, TEXT("Created DReyeVR controller pawn"));
         }

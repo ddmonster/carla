@@ -9,18 +9,13 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
     auto *RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("DReyeVR_RootComponent"));
     SetRootComponent(RootComponent);
 
-    // auto possess player 0
+    // auto possess player 0 (this automatically calls Possess, which calls SetupInputComponent)
     AutoPossessPlayer = EAutoReceiveInput::Player0;
 
+    // read params
     ReadConfigVariables();
 
-    // Create a camera and attach to root component
-    FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
-    FirstPersonCam->PostProcessSettings = PostProcessingInit();
-    FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
-    FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
-    FirstPersonCam->FieldOfView = FieldOfView;       // editable
-    FirstPersonCam->SetupAttachment(RootComponent);
+    ConstructCamera();
 }
 
 void ADReyeVRPawn::ReadConfigVariables()
@@ -46,7 +41,18 @@ void ADReyeVRPawn::ReadConfigVariables()
     ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
 }
 
-FPostProcessSettings ADReyeVRPawn::PostProcessingInit()
+void ADReyeVRPawn::ConstructCamera()
+{
+    // Create a camera and attach to root component
+    FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
+    FirstPersonCam->PostProcessSettings = CreatePostProcessingParams();
+    FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
+    FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
+    FirstPersonCam->FieldOfView = FieldOfView;       // editable
+    FirstPersonCam->SetupAttachment(RootComponent);
+}
+
+FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
 {
     // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
     FPostProcessSettings PP;
@@ -93,10 +99,16 @@ void ADReyeVRPawn::BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerC
     // before anything that needs the EgoVehicle pointer (since this initializes it!)
 
     EgoVehicle = Vehicle;
-    this->Player = PlayerIn;
-    ensure(this->Player != nullptr);
-
+    ensure(EgoVehicle != nullptr);
     EgoVehicle->SetPawn(this);
+
+    Player = PlayerIn;
+    ensure(Player != nullptr);
+
+    // register inputs that require EgoVehicle
+    ensure(InputComponent != nullptr);
+    SetupEgoVehicleInputComponent(InputComponent, EgoVehicle);
+
     FirstPersonCam->RegisterComponentWithWorld(World);
 
     // Setup the HUD
@@ -548,36 +560,43 @@ void ADReyeVRPawn::SetupPlayerInputComponent(UInputComponent *PlayerInputCompone
 {
     /// NOTE: this function gets called once the pawn is possessed
     Super::SetupPlayerInputComponent(PlayerInputComponent);
-    check(PlayerInputComponent);
-
-    /// TODO: use direct EgoVehicle calls
+    this->InputComponent = PlayerInputComponent; // keep track of this
+    check(InputComponent);
 
     /// NOTE: an Action is a digital input, an Axis is an analog input
     // steering and throttle analog inputs (axes)
     PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &ADReyeVRPawn::SetSteeringKbd);
     PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &ADReyeVRPawn::SetThrottleKbd);
     PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &ADReyeVRPawn::SetBrakeKbd);
-    // // button actions (press & release)
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressTurnSignalL);
-    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseReverse);
-    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalR);
-    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseTurnSignalL);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PressHandbrake);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, this, &ADReyeVRPawn::ReleaseHandbrake);
-    // clean/empty room experiment
-    PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::ToggleCleanRoom);
     /// Mouse X and Y input for looking up and turning
     PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &ADReyeVRPawn::MouseLookUp);
     PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &ADReyeVRPawn::MouseTurn);
+}
+
+void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputComponent, AEgoVehicle *EV)
+{
+    UE_LOG(LogTemp, Log, TEXT("Initializing EgoVehicle relay mechanisms"));
+    // this function sets up the direct relay mechanisms to call EgoVehicle input functions
+    check(PlayerInputComponent != nullptr);
+    check(EV != nullptr);
+    // button actions (press & release)
+    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressReverse);
+    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressTurnSignalR);
+    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressTurnSignalL);
+    PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseReverse);
+    PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseTurnSignalR);
+    PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseTurnSignalL);
+    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressHandbrake);
+    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseHandbrake);
+    // clean/empty room experiment
+    PlayerInputComponent->BindAction("ToggleCleanRoom_DReyeVR", IE_Pressed, EV, &AEgoVehicle::ToggleCleanRoom);
     // Camera position adjustments
-    PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraFwd);
-    PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraBack);
-    PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraLeft);
-    PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraRight);
-    PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraUp);
-    PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::CameraDown);
+    PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraFwd);
+    PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraBack);
+    PlayerInputComponent->BindAction("CameraLeft_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraLeft);
+    PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraRight);
+    PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraUp);
+    PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraDown);
 }
 
 #define CHECK_EGO_VEHICLE(FUNCTION)                                                                                    \
@@ -621,81 +640,6 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
         ensure(EgoVehicle != nullptr);
         EgoVehicle->VehicleInputs.Steering = 0;
     }
-}
-
-void ADReyeVRPawn::PressReverse()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressReverse())
-}
-
-void ADReyeVRPawn::ReleaseReverse()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseReverse())
-}
-
-void ADReyeVRPawn::PressTurnSignalL()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalL())
-}
-
-void ADReyeVRPawn::ReleaseTurnSignalL()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalL())
-}
-
-void ADReyeVRPawn::PressTurnSignalR()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressTurnSignalR())
-}
-
-void ADReyeVRPawn::ReleaseTurnSignalR()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseTurnSignalR())
-}
-
-void ADReyeVRPawn::PressHandbrake()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->PressHandbrake())
-}
-
-void ADReyeVRPawn::ReleaseHandbrake()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ReleaseHandbrake())
-}
-
-void ADReyeVRPawn::ToggleCleanRoom()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->ToggleCleanRoom())
-}
-
-void ADReyeVRPawn::CameraFwd()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraFwd())
-}
-
-void ADReyeVRPawn::CameraBack()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraBack())
-}
-
-void ADReyeVRPawn::CameraLeft()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraLeft())
-}
-
-void ADReyeVRPawn::CameraRight()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraRight())
-}
-
-void ADReyeVRPawn::CameraUp()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraUp())
-}
-
-void ADReyeVRPawn::CameraDown()
-{
-    CHECK_EGO_VEHICLE(EgoVehicle->CameraDown())
 }
 
 /// ========================================== ///

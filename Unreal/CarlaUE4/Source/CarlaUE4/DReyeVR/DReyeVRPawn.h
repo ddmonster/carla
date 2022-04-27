@@ -59,34 +59,28 @@ class ADReyeVRPawn : public APawn
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
 
+    class UWorld *World = nullptr;
+
   private:
+    ////////////////:CAMERA:////////////////
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
+    void ConstructCamera();
+    FPostProcessSettings CreatePostProcessingParams() const;
+    float FieldOfView = 90.f; // in degrees
 
     class AEgoVehicle *EgoVehicle;
 
-    APlayerController *Player = nullptr;
-
-    float FieldOfView = 90.f; // in degrees
-
-    FPostProcessSettings PostProcessingInit();
     void ReadConfigVariables();
 
+    ////////////////:STEAMVR:////////////////
     void InitSteamVR(); // Initialize the Head Mounted Display
-    void InitSpectator();
 
     ////////////////:SPECTATOR:////////////////
+    void InitSpectator();
     void InitReticleTexture();  // initializes the spectator-reticle texture
     UTexture2D *ReticleTexture; // UE4 texture for eye reticle
     float HUDScaleVR;           // How much to scale the HUD in VR
-
-    // inputs
-    /// TODO: refactor so they are only defined here, not in EgoVehicle!
-    void MouseLookUp(const float mY_Input);
-    void MouseTurn(const float mX_Input);
-    bool InvertMouseY;
-    float ScaleMouseY;
-    float ScaleMouseX;
 
     ////////////////:FLATHUD:////////////////
     // (Flat) HUD (NOTE: ONLY FOR NON VR)
@@ -103,42 +97,23 @@ class ADReyeVRPawn : public APawn
     bool bEnableSpectatorScreen = false; // don't spent time rendering the spectator screen
     bool bRectangularReticle = false;    // draw the reticle texture on the HUD & Spectator (NOT RECOMMENDED)
 
+    ////////////////:INPUTS:////////////////
+    void MouseLookUp(const float mY_Input);
+    void MouseTurn(const float mX_Input);
+    bool InvertMouseY;
+    float ScaleMouseY;
+    float ScaleMouseX;
+
     // keyboard mechanisms to access Axis vehicle control (steering, throttle, brake)
     void SetBrakeKbd(const float in);
     void SetSteeringKbd(const float in);
     void SetThrottleKbd(const float in);
 
-    void PressReverse();
-    void ReleaseReverse();
+    void SetupEgoVehicleInputComponent(UInputComponent *PlayerInputComponent, AEgoVehicle *EV);
+    UInputComponent *InputComponent = nullptr;
+    APlayerController *Player = nullptr;
 
-    void PressTurnSignalL();
-    void ReleaseTurnSignalL();
-
-    void PressTurnSignalR();
-    void ReleaseTurnSignalR();
-
-    void PressHandbrake();
-    void ReleaseHandbrake();
-
-    void CameraFwd();
-    void CameraBack();
-    void CameraLeft();
-    void CameraRight();
-    void CameraUp();
-    void CameraDown();
-
-    // clean room
-    void ToggleCleanRoom();
-
-    UWorld *World = nullptr;
-
-    // default logi plugin behaviour is to set things to 0.5 for some reason
-    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
-    // https://github.com/HARPLab/LogitechWheelPlugin
-    bool bPedalsDefaulting = true;
-
-    // logi
-
+    ////////////////:LOGI:////////////////
     void InitLogiWheel();
     void TickLogiWheel();
     void DestroyLogiWheel(bool DestroyModule);
@@ -152,4 +127,8 @@ class ADReyeVRPawn : public APawn
 #endif
     bool bIsLogiConnected = false; // check if Logi device is connected (on BeginPlay)
     bool bIsHMDConnected = false;  // checks for HMD connection on BeginPlay
+    // default logi plugin behaviour is to set things to 0.5 for some reason
+    // "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input."
+    // https://github.com/HARPLab/LogitechWheelPlugin
+    bool bPedalsDefaulting = true;
 };
