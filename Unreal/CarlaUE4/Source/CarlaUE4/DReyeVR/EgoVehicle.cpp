@@ -19,8 +19,8 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 {
     ReadConfigVariables();
 
-    // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-    PrimaryActorTick.bCanEverTick = true;
+    // this actor is not ticking by itself, instead the ADReyeVRPawn calls this tick
+    PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.TickGroup = TG_PostPhysics;
 
     // Set up the root position to be the this mesh
@@ -118,7 +118,11 @@ void AEgoVehicle::BeginDestroy()
 void AEgoVehicle::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+}
 
+// called by DReyeVR pawn
+void AEgoVehicle::ManualTick(float DeltaSeconds)
+{
     // Update the positions based off replay data
     ReplayTick();
 

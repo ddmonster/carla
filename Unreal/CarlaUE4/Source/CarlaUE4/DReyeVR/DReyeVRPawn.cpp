@@ -6,6 +6,8 @@
 ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickGroup = TG_PostPhysics;
+
     auto *RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("DReyeVR_RootComponent"));
     SetRootComponent(RootComponent);
 
@@ -50,6 +52,23 @@ void ADReyeVRPawn::ConstructCamera()
     FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
     FirstPersonCam->FieldOfView = FieldOfView;       // editable
     FirstPersonCam->SetupAttachment(RootComponent);
+}
+
+void ADReyeVRPawn::InitSteamVR()
+{
+    bIsHMDConnected = UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled();
+    if (bIsHMDConnected)
+    {
+        FString HMD_Name = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName().ToString();
+        FString HMD_Version = UHeadMountedDisplayFunctionLibrary::GetVersionString();
+        UE_LOG(LogTemp, Log, TEXT("HMD detected: %s, version %s"), *HMD_Name, *HMD_Version);
+        // Now we'll begin with setting up the VR Origin logic
+        UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Eye); // Also have Floor & Stage Level
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No head mounted device detected!"));
+    }
 }
 
 FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
@@ -129,6 +148,12 @@ void ADReyeVRPawn::Tick(float DeltaTime)
 
     // Tick the logitech wheel
     TickLogiWheel();
+
+    if (EgoVehicle)
+    {
+        // directly call the tick here to preserve the order of relative functions
+        EgoVehicle->ManualTick(DeltaTime);
+    }
 }
 
 /// ========================================== ///
@@ -241,27 +266,6 @@ void ADReyeVRPawn::InitSpectator()
     }
 }
 
-/// ========================================== ///
-/// ---------------:SPECTATOR:---------------- ///
-/// ========================================== ///
-
-void ADReyeVRPawn::InitSteamVR()
-{
-    bIsHMDConnected = UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled();
-    if (bIsHMDConnected)
-    {
-        FString HMD_Name = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName().ToString();
-        FString HMD_Version = UHeadMountedDisplayFunctionLibrary::GetVersionString();
-        UE_LOG(LogTemp, Log, TEXT("HMD detected: %s, version %s"), *HMD_Name, *HMD_Version);
-        // Now we'll begin with setting up the VR Origin logic
-        UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Eye); // Also have Floor & Stage Level
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No head mounted device detected!"));
-    }
-}
-
 void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir)
 {
     if (!bEnableSpectatorScreen || Player == nullptr || !bIsHMDConnected)
@@ -355,8 +359,7 @@ void ADReyeVRPawn::TickLogiWheel()
         return;
 #if USE_LOGITECH_PLUGIN
     bIsLogiConnected = LogiIsConnected(WheelDeviceIdx); // get status of connected device
-    bIsLogiConnected = bIsLogiConnected;                // TODO: cleanup
-    if (bIsLogiConnected)
+    if (bIsLogiConnected && bOverrideInputsWithKbd == false)
     {
         // Taking logitech inputs for steering
         LogitechWheelUpdate();
@@ -442,6 +445,7 @@ void ADReyeVRPawn::LogLogitechPluginStruct(const struct DIJOYSTATE2 *Now)
 void ADReyeVRPawn::LogitechWheelUpdate()
 {
     check(EgoVehicle);
+    ensure(bOverrideInputsWithKbd == false); // kbd inputs should be false
 
     // only execute this in Windows, the Logitech plugin is incompatible with Linux
     if (LogiUpdate() == false) // update the logitech wheel
@@ -463,8 +467,11 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     // as per https://github.com/HARPLab/LogitechWheelPlugin
     if (bPedalsDefaulting)
     {
-        if (!(FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) && FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) &&
-              FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f)))
+        // this bPedalsDefaulting flag is initially set to not send inputs when the pedals are "defaulting", once the
+        // pedals/wheel is used (pressed/turned) once then this flag is ignored (false) for the remainder of the game
+        if (!FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) ||      // wheel is not at 0 (rest)
+            !FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) || // accel pedal is pressed
+            !FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f))          // brake pedal is pressed
         {
             bPedalsDefaulting = false;
         }
@@ -477,41 +484,38 @@ void ADReyeVRPawn::LogitechWheelUpdate()
         EgoVehicle->SetBrake(BrakePedal);
     }
 
-    //    UE_LOG(LogTemp, Log, TEXT("Dpad value %f"), Dpad);
-    //    if (WheelState->rgdwPOV[0] == 0) // should work now
-
     // Button presses (turn signals, reverse)
     if (WheelState->rgbButtons[0] || WheelState->rgbButtons[1] || // Any of the 4 face pads
         WheelState->rgbButtons[2] || WheelState->rgbButtons[3])
-        PressReverse();
+        EgoVehicle->PressReverse();
     else
-        ReleaseReverse();
+        EgoVehicle->ReleaseReverse();
 
     if (WheelState->rgbButtons[4])
-        PressTurnSignalR();
+        EgoVehicle->PressTurnSignalR();
     else
-        ReleaseTurnSignalR();
+        EgoVehicle->ReleaseTurnSignalR();
 
     if (WheelState->rgbButtons[5])
-        PressTurnSignalL();
+        EgoVehicle->PressTurnSignalL();
     else
-        ReleaseTurnSignalL();
+        EgoVehicle->ReleaseTurnSignalL();
 
     // if (WheelState->rgbButtons[23]) // big red button on right side of g923
 
-    // VRCamerRoot base position adjustment
+    // EgoVehicle VRCamerRoot base position adjustment
     if (WheelState->rgdwPOV[0] == 0) // positive in X
-        CameraFwd();
+        EgoVehicle->CameraFwd();
     else if (WheelState->rgdwPOV[0] == 18000) // negative in X
-        CameraBack();
+        EgoVehicle->CameraBack();
     else if (WheelState->rgdwPOV[0] == 9000) // positive in Y
-        CameraRight();
+        EgoVehicle->CameraRight();
     else if (WheelState->rgdwPOV[0] == 27000) // negative in Y
-        CameraLeft();
+        EgoVehicle->CameraLeft();
     else if (WheelState->rgbButtons[19]) // positive in Z
-        CameraUp();
+        EgoVehicle->CameraUp();
     else if (WheelState->rgbButtons[20]) // negative in Z
-        CameraDown();
+        EgoVehicle->CameraDown();
 }
 
 void ADReyeVRPawn::ApplyForceFeedback() const
@@ -605,14 +609,16 @@ void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputCom
     else                                                                                                               \
         UE_LOG(LogTemp, Error, TEXT("EgoVehicle is NULL!"));
 
-/// TODO: make the vehicle inputs additive to simplify combined control
 void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
 {
     if (ThrottleInput != 0)
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
+        bOverrideInputsWithKbd = true;
         CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
+    }
+    else
+    {
+        bOverrideInputsWithKbd = false;
     }
 }
 
@@ -620,9 +626,12 @@ void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
 {
     if (BrakeInput != 0)
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
+        bOverrideInputsWithKbd = true;
         CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
+    }
+    else
+    {
+        bOverrideInputsWithKbd = false;
     }
 }
 
@@ -630,8 +639,7 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
 {
     if (SteeringInput != 0)
     {
-        if (bIsLogiConnected && !bPedalsDefaulting)
-            return;
+        bOverrideInputsWithKbd = true;
         CHECK_EGO_VEHICLE(EgoVehicle->SetSteering(SteeringInput))
     }
     else
@@ -639,6 +647,7 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
         // so the steering wheel does go to 0 when letting go
         ensure(EgoVehicle != nullptr);
         EgoVehicle->VehicleInputs.Steering = 0;
+        bOverrideInputsWithKbd = false;
     }
 }
 

@@ -5,8 +5,6 @@
 #include "Engine/Scene.h"           // FPostProcessSettings
 #include "GameFramework/Pawn.h"     // CreatePlayerInputComponent
 
-// #define USE_LOGITECH_PLUGIN true // handled in .Build.cs file
-
 #ifndef _WIN32
 // can only use LogitechWheel plugin on Windows! :(
 #undef USE_LOGITECH_PLUGIN
@@ -58,23 +56,19 @@ class ADReyeVRPawn : public APawn
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
+    void ReadConfigVariables();
 
     class UWorld *World = nullptr;
+    class AEgoVehicle *EgoVehicle = nullptr;
 
   private:
     ////////////////:CAMERA:////////////////
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
     void ConstructCamera();
+    void InitSteamVR(); // Initialize the Head Mounted Display
     FPostProcessSettings CreatePostProcessingParams() const;
     float FieldOfView = 90.f; // in degrees
-
-    class AEgoVehicle *EgoVehicle;
-
-    void ReadConfigVariables();
-
-    ////////////////:STEAMVR:////////////////
-    void InitSteamVR(); // Initialize the Head Mounted Display
 
     ////////////////:SPECTATOR:////////////////
     void InitSpectator();
@@ -108,6 +102,9 @@ class ADReyeVRPawn : public APawn
     void SetBrakeKbd(const float in);
     void SetSteeringKbd(const float in);
     void SetThrottleKbd(const float in);
+    // most of the time, the participant will use the logi for inputs, but if needed the experimenter
+    // can use the keyboard to reposition/takeover without input conflict
+    bool bOverrideInputsWithKbd = true; // keyboard > logi priority for inputs
 
     void SetupEgoVehicleInputComponent(UInputComponent *PlayerInputComponent, AEgoVehicle *EV);
     UInputComponent *InputComponent = nullptr;
