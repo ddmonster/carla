@@ -58,20 +58,7 @@ void ADReyeVRLevel::BeginPlay()
     PS.Initialize(GetWorld());
 
     // Initialize control mode
-    /// TODO: read in initial control mode from .ini
     ControlMode = DRIVER::HUMAN;
-    switch (ControlMode)
-    {
-    case (DRIVER::HUMAN):
-        PossessEgoVehicle();
-        break;
-    case (DRIVER::SPECTATOR):
-        PossessSpectator();
-        break;
-    case (DRIVER::AI):
-        HandoffDriverToAI();
-        break;
-    }
 }
 
 void ADReyeVRLevel::StartDReyeVRPawn()
@@ -88,6 +75,7 @@ bool ADReyeVRLevel::FindEgoVehicle()
 {
     if (EgoVehiclePtr != nullptr)
         return true;
+    ensure(DReyeVR_Pawn);
     TArray<AActor *> FoundEgoVehicles;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEgoVehicle::StaticClass(), FoundEgoVehicles);
     for (AActor *Vehicle : FoundEgoVehicles)
@@ -95,12 +83,6 @@ bool ADReyeVRLevel::FindEgoVehicle()
         UE_LOG(LogTemp, Log, TEXT("Found EgoVehicle in world: %s"), *(Vehicle->GetName()));
         EgoVehiclePtr = CastChecked<AEgoVehicle>(Vehicle);
         EgoVehiclePtr->SetLevel(this);
-        if (!AI_Player)
-        {
-            AI_Player = Cast<AWheeledVehicleAIController>(EgoVehiclePtr->GetController());
-            ensure(AI_Player != nullptr);
-            UE_LOG(LogTemp, Log, TEXT("Found DReyeVR AI controller"));
-        }
         if (DReyeVR_Pawn)
         {
             // need to assign ego vehicle before possess!
@@ -194,11 +176,17 @@ void ADReyeVRLevel::SetupPlayerInputComponent()
 void ADReyeVRLevel::PossessEgoVehicle()
 {
     if (Player->GetPawn() != DReyeVR_Pawn)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Possessing DReyeVR EgoVehicle"));
         Player->Possess(DReyeVR_Pawn);
-    ensure(AI_Player != nullptr);
-    if (AI_Player)
-        AI_Player->SetAutopilot(false);
-    UE_LOG(LogTemp, Log, TEXT("Possessing DReyeVR EgoVehicle"));
+    }
+    ensure(EgoVehiclePtr != nullptr);
+    if (EgoVehiclePtr)
+    {
+        EgoVehiclePtr->SetAutopilot(false);
+        UE_LOG(LogTemp, Log, TEXT("Disabling EgoVehicle Autopilot"));
+        this->ControlMode = DRIVER::AI;
+    }
     this->ControlMode = DRIVER::HUMAN;
 }
 
@@ -231,16 +219,12 @@ void ADReyeVRLevel::PossessSpectator()
 
 void ADReyeVRLevel::HandoffDriverToAI()
 {
-    ensure(AI_Player != nullptr);
-    if (AI_Player)
+    ensure(EgoVehiclePtr != nullptr);
+    if (EgoVehiclePtr)
     {
-        AI_Player->SetAutopilot(true);
-        UE_LOG(LogTemp, Log, TEXT("Handoff to AI driver"));
+        EgoVehiclePtr->SetAutopilot(true);
+        UE_LOG(LogTemp, Log, TEXT("Enabling EgoVehicle Autopilot"));
         this->ControlMode = DRIVER::AI;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No AI controller!"));
     }
 }
 

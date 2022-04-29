@@ -96,6 +96,9 @@ void AEgoVehicle::BeginPlay()
     // Spawn and attach the EgoSensor
     InitSensor();
 
+    // initialize
+    InitAIPlayer();
+
     // Bug-workaround for initial delay on throttle; see https://github.com/carla-simulator/carla/issues/1640
     this->GetVehicleMovementComponent()->SetTargetGear(1, true);
 
@@ -207,6 +210,22 @@ FVector AEgoVehicle::GetNextCameraPosn(const float DeltaSeconds) const
 FRotator AEgoVehicle::GetCameraRot() const
 {
     return GetCamera()->GetComponentRotation();
+}
+
+/// ========================================== ///
+/// ---------------:AIPLAYER:----------------- ///
+/// ========================================== ///
+
+void AEgoVehicle::InitAIPlayer()
+{
+    AI_Player = Cast<AWheeledVehicleAIController>(this->GetController());
+    ensure(AI_Player != nullptr);
+}
+
+void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
+{
+    AI_Player->SetAutopilot(AutopilotOn);
+    AI_Player->SetStickyControl(AutopilotOn);
 }
 
 /// ========================================== ///

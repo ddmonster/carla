@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Carla/Vehicle/WheeledVehicleAIController.h" // AWheeledVehicleAIController
-#include "Engine/LevelScriptActor.h"                  // ALevelScriptActor
-#include "Periph.h"                                   // PeriphSystem
+#include "Engine/LevelScriptActor.h" // ALevelScriptActor
+#include "Periph.h"                  // PeriphSystem
 
 #include "LevelScript.generated.h"
 
@@ -63,7 +62,6 @@ class ADReyeVRLevel : public ALevelScriptActor
   private:
     // for handling inputs and possessions
     APlayerController *Player = nullptr;
-    AWheeledVehicleAIController *AI_Player = nullptr;
     void StartDReyeVRPawn();
     ADReyeVRPawn *DReyeVR_Pawn = nullptr;
 
