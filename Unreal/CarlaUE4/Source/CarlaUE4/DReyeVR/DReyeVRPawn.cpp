@@ -1,7 +1,10 @@
 #include "DReyeVRPawn.h"
-#include "DReyeVRUtils.h"                      // ProjectGazeToScreen
+#include "DReyeVRUtils.h" // ProjectGazeToScreen
+
+#if USE_STEAMVR_PLUGIN
 #include "HeadMountedDisplayFunctionLibrary.h" // SetTrackingOrigin, GetWorldToMetersScale
 #include "HeadMountedDisplayTypes.h"           // ESpectatorScreenMode
+#endif
 
 ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -58,6 +61,7 @@ void ADReyeVRPawn::ConstructCamera()
 
 void ADReyeVRPawn::InitSteamVR()
 {
+#if USE_STEAMVR_PLUGIN
     bIsHMDConnected = UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled();
     if (bIsHMDConnected)
     {
@@ -71,6 +75,9 @@ void ADReyeVRPawn::InitSteamVR()
     {
         UE_LOG(LogTemp, Warning, TEXT("No head mounted device detected!"));
     }
+#else
+    UE_LOG(LogTemp, Warning, TEXT("SteamVR disabled"));
+#endif
 }
 
 FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
@@ -246,6 +253,7 @@ void ADReyeVRPawn::InitReticleTexture()
 
 void ADReyeVRPawn::InitSpectator()
 {
+#if USE_STEAMVR_PLUGIN
     if (bIsHMDConnected)
     {
         if (bEnableSpectatorScreen)
@@ -260,10 +268,12 @@ void ADReyeVRPawn::InitSpectator()
             UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::Disabled);
         }
     }
+#endif
 }
 
 void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir)
 {
+#if USE_STEAMVR_PLUGIN
     if (!bEnableSpectatorScreen || Player == nullptr || !bIsHMDConnected)
         return;
 
@@ -293,6 +303,7 @@ void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector 
             true                 // use alpha
         );
     }
+#endif
 }
 
 /// ========================================== ///

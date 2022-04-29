@@ -25,9 +25,6 @@ public class CarlaUE4 : ModuleRules
 			PublicDefinitions.Add("NO_DREYEVR_EXCEPTIONS");
 		}
 
-		// Add module for SteamVR support with UE4
-		PublicDependencyModuleNames.AddRange(new string[] { "HeadMountedDisplay" });
-
 		if (IsWindows(Target))
 		{ 
 			bEnableExceptions = true; // enable unwind semantics for C++-style exceptions
@@ -37,6 +34,7 @@ public class CarlaUE4 : ModuleRules
 		// Edit these variables to enable/disable features of DReyeVR
 		bool UseSRanipalPlugin = true;
 		bool UseLogitechPlugin = true;
+		bool UseSteamVRPlugin = true;
 		bool UseFoveatedRender = false; // not ready for production yet!
 		////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,9 +46,12 @@ public class CarlaUE4 : ModuleRules
 			UseFoveatedRender = false; // Vive VRS plugin requires engine fork
 		}
 
+		UseSRanipalPlugin &= UseSteamVRPlugin; // should only have SRanipal if using SteamVR
+
 		// Add these preprocessor definitions to code
 		PublicDefinitions.Add("USE_SRANIPAL_PLUGIN=" + (UseSRanipalPlugin ? "true" : "false"));
 		PublicDefinitions.Add("USE_LOGITECH_PLUGIN=" + (UseLogitechPlugin ? "true" : "false"));
+		PublicDefinitions.Add("USE_STEAMVR_PLUGIN=" + (UseSteamVRPlugin ? "true" : "false"));
 		PublicDefinitions.Add("USE_FOVEATED_RENDER=" + (UseFoveatedRender ? "true" : "false"));
 
 		// Add plugin dependencies 
@@ -63,6 +64,12 @@ public class CarlaUE4 : ModuleRules
 		if (UseLogitechPlugin)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] { "LogitechWheelPlugin" });
+		}
+
+		if (UseSteamVRPlugin)
+		{
+			// Add module for SteamVR support with UE4
+			PublicDependencyModuleNames.AddRange(new string[] { "HeadMountedDisplay" });
 		}
 
 		if (UseFoveatedRender)
