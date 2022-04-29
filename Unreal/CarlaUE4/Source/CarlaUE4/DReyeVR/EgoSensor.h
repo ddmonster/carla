@@ -104,7 +104,6 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
 
     ////////////////:REPLAY:////////////////
     class ADReyeVRLevel *DReyeVRLevel = nullptr;
-    bool bUsingLegacyPeriphFile = false;
 
     ////////////////:OTHER:////////////////
     int EgoSensorID;

@@ -7,7 +7,6 @@
 #include "EgoVehicle.h"                        // AEgoVehicle
 #include "HeadMountedDisplayFunctionLibrary.h" // IsHeadMountedDisplayAvailable
 #include "Kismet/GameplayStatics.h"            // GetPlayerController
-#include "Periph.h"                            // PeriphSystem
 #include "UObject/UObjectIterator.h"           // TObjectInterator
 
 ADReyeVRLevel::ADReyeVRLevel(FObjectInitializer const &FO) : Super(FO)
@@ -19,7 +18,6 @@ ADReyeVRLevel::ADReyeVRLevel(FObjectInitializer const &FO) : Super(FO)
     ReadConfigValue("Level", "EgoVolumePercent", EgoVolumePercent);
     ReadConfigValue("Level", "NonEgoVolumePercent", NonEgoVolumePercent);
     ReadConfigValue("Level", "AmbientVolumePercent", AmbientVolumePercent);
-    ReadConfigValue("PeripheralTarget", "RotationOffset", PeriphRotationOffset);
 
     // Recorder/replayer
     ReadConfigValue("Replayer", "RunSyncReplay", bReplaySync);
@@ -53,9 +51,6 @@ void ADReyeVRLevel::BeginPlay()
 
     // Initialize DReyeVR spectator
     SetupSpectator();
-
-    // Initialize periph stimuli system
-    PS.Initialize(GetWorld());
 
     // Initialize control mode
     ControlMode = DRIVER::HUMAN;
@@ -147,10 +142,6 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
     {
         // Initialize recorder/replayer
         SetupReplayer(); // once this is successfully run, it no longer gets executed
-    }
-    if (EgoVehiclePtr)
-    {
-        PS.Tick(DeltaSeconds, ADReyeVRSensor::bIsReplaying, EgoVehiclePtr->IsInCleanRoom(), EgoVehiclePtr->GetCamera());
     }
 }
 
@@ -270,34 +261,6 @@ void ADReyeVRLevel::SetupReplayer()
     {
         UCarlaStatics::GetRecorder(GetWorld())->GetReplayer()->SetSyncMode(bReplaySync);
         bRecorderInitiated = true;
-    }
-}
-
-void ADReyeVRLevel::LegacyReplayPeriph(const DReyeVR::AggregateData &RecorderData, const double Per)
-{
-    // treat the periph ball target as a CustomActor
-    // visibility triggers spawning/destroying the actor
-    const DReyeVR::LegacyPeriphDataStruct &LegacyData = RecorderData.GetLegacyPeriphData();
-    const std::string Name = "Legacy_PeriphBall";
-    if (LegacyData.Visible)
-    {
-        DReyeVR::CustomActorData PeriphBall;
-        PeriphBall.Name = FString(UTF8_TO_TCHAR(Name.c_str()));
-        const FRotator PeriphRotation{LegacyData.head2target_pitch, LegacyData.head2target_yaw, 0.f};
-        const FVector RotVecDirection =
-            RecorderData.GetCameraRotationAbs().RotateVector((PeriphRotationOffset + PeriphRotation).Vector());
-        PeriphBall.Location = LegacyData.WorldPos + RotVecDirection * 3.f * 100.f;
-        PeriphBall.Scale3D = 0.05f * FVector::OneVector;
-
-        float Emissive;
-        ReadConfigValue("PeripheralTarget", "EmissionFactor", Emissive);
-        PeriphBall.MaterialParams.Emissive = Emissive * FLinearColor::Red;
-        this->ReplayCustomActor(PeriphBall, Per);
-    }
-    else
-    {
-        if (ADReyeVRCustomActor::ActiveCustomActors.find(Name) != ADReyeVRCustomActor::ActiveCustomActors.end())
-            ADReyeVRCustomActor::ActiveCustomActors[Name]->Deactivate();
     }
 }
 

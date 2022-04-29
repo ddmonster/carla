@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Engine/LevelScriptActor.h" // ALevelScriptActor
-#include "Periph.h"                  // PeriphSystem
+#include "Carla/Sensor/DReyeVRData.h" // DReyeVR::
+#include "Engine/LevelScriptActor.h"  // ALevelScriptActor
 
 #include "LevelScript.generated.h"
 
@@ -56,9 +56,6 @@ class ADReyeVRLevel : public ALevelScriptActor
     // Custom actors
     void ReplayCustomActor(const DReyeVR::CustomActorData &RecorderData, const double Per);
 
-    // periph stimuli
-    void LegacyReplayPeriph(const DReyeVR::AggregateData &RecorderData, const double Per);
-
   private:
     // for handling inputs and possessions
     APlayerController *Player = nullptr;
@@ -78,8 +75,4 @@ class ADReyeVRLevel : public ALevelScriptActor
     // for recorder/replayer params
     bool bReplaySync = false;        // false allows for interpolation
     bool bRecorderInitiated = false; // allows tick-wise checking for replayer/recorder
-
-    // for the periph stimuli
-    PeriphSystem PS;
-    FRotator PeriphRotationOffset;
 };
