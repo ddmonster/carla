@@ -24,7 +24,15 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
 
 void ADReyeVRPawn::ReadConfigVariables()
 {
-    ReadConfigValue("EgoVehicle", "FieldOfView", FieldOfView);
+    // camera
+    ReadConfigValue("Camera", "FieldOfView", FieldOfView);
+    ReadConfigValue("Camera", "ScreenPercentage", ScreenPercentage);
+    ReadConfigValue("Camera", "VignetteIntensity", VignetteIntensity);
+    ReadConfigValue("Camera", "BloomIntensity", BloomIntensity);
+    ReadConfigValue("Camera", "SceneFringeIntensity", SceneFringeIntensity);
+    ReadConfigValue("Camera", "LensFlareIntensity", LensFlareIntensity);
+    ReadConfigValue("Camera", "GrainIntensity", GrainIntensity);
+    ReadConfigValue("Camera", "MotionBlurIntensity", MotionBlurIntensity);
 
     // input scaling
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
@@ -78,22 +86,25 @@ FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
     // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
     FPostProcessSettings PP;
     PP.bOverride_VignetteIntensity = true;
-    PP.VignetteIntensity = 0.f;
+    PP.VignetteIntensity = VignetteIntensity;
 
-    PP.ScreenPercentage = 100.f;
+    PP.bOverride_ScreenPercentage = true;
+    PP.ScreenPercentage = ScreenPercentage;
 
     PP.bOverride_BloomIntensity = true;
-    PP.BloomIntensity = 0.f;
+    PP.BloomIntensity = BloomIntensity;
 
     PP.bOverride_SceneFringeIntensity = true;
-    PP.SceneFringeIntensity = 0.f;
+    PP.SceneFringeIntensity = SceneFringeIntensity;
 
     PP.bOverride_LensFlareIntensity = true;
-    PP.LensFlareIntensity = 0.f;
+    PP.LensFlareIntensity = LensFlareIntensity;
 
     PP.bOverride_GrainIntensity = true;
-    PP.GrainIntensity = 0.f;
-    // PP.MotionBlurAmount = 0.f;
+    PP.GrainIntensity = GrainIntensity;
+
+    PP.bOverride_MotionBlurAmount = true;
+    PP.MotionBlurAmount = MotionBlurIntensity;
     return PP;
 }
 

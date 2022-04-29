@@ -69,6 +69,13 @@ class ADReyeVRPawn : public APawn
     void InitSteamVR(); // Initialize the Head Mounted Display
     FPostProcessSettings CreatePostProcessingParams() const;
     float FieldOfView = 90.f; // in degrees
+    float ScreenPercentage = 100.f;
+    float VignetteIntensity = 0.f;
+    float BloomIntensity = 0.f;
+    float SceneFringeIntensity = 0.f;
+    float LensFlareIntensity = 0.f;
+    float GrainIntensity = 0.f;
+    float MotionBlurIntensity = 0.f;
 
     ////////////////:SPECTATOR:////////////////
     void InitSpectator();
