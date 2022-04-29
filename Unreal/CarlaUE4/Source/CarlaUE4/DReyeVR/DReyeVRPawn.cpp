@@ -191,8 +191,8 @@ void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, co
     const FVector &WorldPos = GetCamera()->GetComponentLocation();
     const FRotator &WorldRot = GetCamera()->GetComponentRotation();
     const float RayLengthScale = 10.f * 100.f; // 10m ray length
-    const FVector GazeEnd =
-        WorldPos + WorldRot.RotateVector(GazeOrigin) + RayLengthScale * WorldRot.RotateVector(GazeDir);
+    const FVector TargetStart = WorldPos + WorldRot.RotateVector(GazeOrigin);
+    const FVector TargetEnd = TargetStart + RayLengthScale * WorldRot.RotateVector(GazeDir);
 
     // calculate View size (of open window). Note this is not the same as resolution
     FIntPoint ViewSize;
@@ -205,7 +205,7 @@ void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, co
         const float Diameter = ReticleSize;
         const float Thickness = (ReticleSize / 2.f) / 10.f; // 10 % of radius
         // FlatHUD->DrawDynamicSquare(GazeEnd, Diameter, FColor(255, 0, 0, 255), Thickness);
-        FlatHUD->DrawDynamicCrosshair(GazeEnd, Diameter, FColor(255, 0, 0, 255), true, Thickness);
+        FlatHUD->DrawDynamicCrosshair(TargetEnd, Diameter, FColor(255, 0, 0, 255), true, Thickness);
     }
     if (bDrawFPSCounter)
     {
@@ -215,7 +215,7 @@ void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, co
     if (bDrawGaze)
     {
         // Draw line components in FlatHUD
-        FlatHUD->DrawDynamicLine(GazeOrigin, GazeEnd, FColor::Red, 3.0f);
+        FlatHUD->DrawDynamicLine(TargetStart, TargetEnd, FColor::Red, 3.0f);
     }
 }
 
