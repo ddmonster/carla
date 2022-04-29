@@ -143,6 +143,8 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
         // Initialize recorder/replayer
         SetupReplayer(); // once this is successfully run, it no longer gets executed
     }
+
+    DrawBBoxes();
 }
 
 void ADReyeVRLevel::SetupPlayerInputComponent()
@@ -262,6 +264,52 @@ void ADReyeVRLevel::SetupReplayer()
         UCarlaStatics::GetRecorder(GetWorld())->GetReplayer()->SetSyncMode(bReplaySync);
         bRecorderInitiated = true;
     }
+}
+
+void ADReyeVRLevel::DrawBBoxes()
+{
+#if 0
+    TArray<AActor *> FoundActors;
+    if (GetWorld() != nullptr)
+    {
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundActors);
+    }
+    for (AActor *A : FoundActors)
+    {
+        std::string name = TCHAR_TO_UTF8(*A->GetName());
+        if (A->GetName().Contains("DReyeVR"))
+            continue; // skip drawing a bbox over the EgoVehicle
+        if (BBoxes.find(name) == BBoxes.end())
+        {
+            BBoxes[name] = ADReyeVRCustomActor::CreateNew(SM_CUBE, MAT_TRANSLUCENT, GetWorld(), "BBox" + A->GetName());
+        }
+        const float DistThresh = 20.f; // meters before nearby bounding boxes become red
+        ADReyeVRCustomActor *BBox = BBoxes[name];
+        ensure(BBox != nullptr);
+        if (BBox != nullptr)
+        {
+            BBox->Activate();
+            BBox->MaterialParams.Opacity = 0.1f;
+            FLinearColor Col = FLinearColor::Green;
+            if (FVector::Distance(EgoVehiclePtr->GetActorLocation(), A->GetActorLocation()) < DistThresh * 100.f)
+            {
+                Col = FLinearColor::Red;
+            }
+            BBox->MaterialParams.BaseColor = Col;
+            BBox->MaterialParams.Emissive = 0.1 * Col;
+
+            FVector Origin;
+            FVector BoxExtent;
+            A->GetActorBounds(true, Origin, BoxExtent, false);
+            // UE_LOG(LogTemp, Log, TEXT("Origin: %s Extent %s"), *Origin.ToString(), *BoxExtent.ToString());
+            // divide by 100 to get from m to cm, multiply by 2 bc the cube is scaled in both X and Y
+            BBox->SetActorScale3D(2 * BoxExtent / 100.f);
+            BBox->SetActorLocation(Origin);
+            // extent already covers the rotation aspect since the bbox is dynamic and axis aligned
+            // BBox->SetActorRotation(A->GetActorRotation());
+        }
+    }
+#endif
 }
 
 void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderData, const double Per)

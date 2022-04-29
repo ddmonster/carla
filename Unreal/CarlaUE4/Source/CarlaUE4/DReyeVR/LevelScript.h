@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Carla/Sensor/DReyeVRData.h" // DReyeVR::
-#include "Engine/LevelScriptActor.h"  // ALevelScriptActor
+#include "Carla/Actor/DReyeVRCustomActor.h" // ADReyeVRCustomActor
+#include "Carla/Sensor/DReyeVRData.h"       // DReyeVR::
+#include "Engine/LevelScriptActor.h"        // ALevelScriptActor
+#include <unordered_map>                    // std::unordered_map
 
 #include "LevelScript.generated.h"
 
@@ -55,6 +57,8 @@ class ADReyeVRLevel : public ALevelScriptActor
 
     // Custom actors
     void ReplayCustomActor(const DReyeVR::CustomActorData &RecorderData, const double Per);
+    void DrawBBoxes();
+    std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;
 
   private:
     // for handling inputs and possessions
