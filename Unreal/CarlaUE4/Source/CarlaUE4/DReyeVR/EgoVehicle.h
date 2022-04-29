@@ -61,6 +61,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     // autopilot API
     void SetAutopilot(const bool AutopilotOn);
+    bool GetAutopilotStatus() const;
     /// TODO: add custom routes for autopilot
 
     // Play sounds
@@ -136,6 +137,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     ////////////////:AICONTROLLER:////////////////
     class AWheeledVehicleAIController *AI_Player = nullptr;
     void InitAIPlayer();
+    bool bAutopilotEnabled = false;
 
     ////////////////:INPUTS:////////////////
     /// NOTE: since there are so many functions here, they are defined in EgoInputs.cpp

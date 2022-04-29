@@ -224,8 +224,14 @@ void AEgoVehicle::InitAIPlayer()
 
 void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
 {
-    AI_Player->SetAutopilot(AutopilotOn);
-    AI_Player->SetStickyControl(AutopilotOn);
+    bAutopilotEnabled = AutopilotOn;
+    AI_Player->SetAutopilot(bAutopilotEnabled);
+    AI_Player->SetStickyControl(bAutopilotEnabled);
+}
+
+bool AEgoVehicle::GetAutopilotStatus() const
+{
+    return bAutopilotEnabled;
 }
 
 /// ========================================== ///

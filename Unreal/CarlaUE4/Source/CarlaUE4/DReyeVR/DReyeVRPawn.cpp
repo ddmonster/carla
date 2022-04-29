@@ -471,15 +471,17 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     // -1 = not pressed. 0 = Top. 0.25 = Right. 0.5 = Bottom. 0.75 = Left.
     const float Dpad = fabs(((WheelState->rgdwPOV[0] - 32767.0f) / (65535.0f)));
 
+    const float LogiThresh = 0.01f; // threshold for analog input "equality"
+
     // weird behaviour: "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input"
     // as per https://github.com/HARPLab/LogitechWheelPlugin
     if (bPedalsDefaulting)
     {
         // this bPedalsDefaulting flag is initially set to not send inputs when the pedals are "defaulting", once the
         // pedals/wheel is used (pressed/turned) once then this flag is ignored (false) for the remainder of the game
-        if (!FMath::IsNearlyEqual(WheelRotation, 0.f, 0.01f) ||      // wheel is not at 0 (rest)
-            !FMath::IsNearlyEqual(AccelerationPedal, 0.5f, 0.01f) || // accel pedal is pressed
-            !FMath::IsNearlyEqual(BrakePedal, 0.5f, 0.01f))          // brake pedal is pressed
+        if (!FMath::IsNearlyEqual(WheelRotation, 0.f, LogiThresh) ||      // wheel is not at 0 (rest)
+            !FMath::IsNearlyEqual(AccelerationPedal, 0.5f, LogiThresh) || // accel pedal is pressed
+            !FMath::IsNearlyEqual(BrakePedal, 0.5f, LogiThresh))          // brake pedal is pressed
         {
             bPedalsDefaulting = false;
         }
@@ -487,10 +489,25 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     else
     {
         /// NOTE: directly calling the EgoVehicle functions
-        EgoVehicle->SetSteering(WheelRotation);
-        EgoVehicle->SetThrottle(AccelerationPedal);
-        EgoVehicle->SetBrake(BrakePedal);
+        if (EgoVehicle->GetAutopilotStatus() && (
+            FMath::IsNearlyEqual(WheelRotation, WheelRotationLast, LogiThresh) && 
+            FMath::IsNearlyEqual(AccelerationPedal, AccelerationPedalLast, LogiThresh) && 
+            FMath::IsNearlyEqual(BrakePedal, BrakePedalLast, LogiThresh)))
+        {
+            // let the autopilot drive if the user is not putting significant inputs
+        }
+        else
+        {
+            // take over the vehicle control completely
+            EgoVehicle->SetSteering(WheelRotation);
+            EgoVehicle->SetThrottle(AccelerationPedal);
+            EgoVehicle->SetBrake(BrakePedal);
+        }
     }
+    // save the last values for the wheel & pedals
+    WheelRotationLast = WheelRotation;
+    AccelerationPedalLast = AccelerationPedal;
+    BrakePedalLast = BrakePedal;
 
     // Button presses (turn signals, reverse)
     if (WheelState->rgbButtons[0] || WheelState->rgbButtons[1] || // Any of the 4 face pads
