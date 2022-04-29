@@ -188,9 +188,11 @@ void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, co
     if (FlatHUD == nullptr || Player == nullptr || bDrawFlatHud == false)
         return;
 
-    const FRotator WorldRot = GetCamera()->GetComponentRotation();
-    const float RayLengthScale = 10.f;
-    const FVector GazeEnd = GazeOrigin + RayLengthScale * WorldRot.RotateVector(GazeDir);
+    const FVector &WorldPos = GetCamera()->GetComponentLocation();
+    const FRotator &WorldRot = GetCamera()->GetComponentRotation();
+    const float RayLengthScale = 10.f * 100.f; // 10m ray length
+    const FVector GazeEnd =
+        WorldPos + WorldRot.RotateVector(GazeOrigin) + RayLengthScale * WorldRot.RotateVector(GazeDir);
 
     // calculate View size (of open window). Note this is not the same as resolution
     FIntPoint ViewSize;
@@ -202,14 +204,8 @@ void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, co
     {
         const float Diameter = ReticleSize;
         const float Thickness = (ReticleSize / 2.f) / 10.f; // 10 % of radius
-        if (bRectangularReticle)
-        {
-            FlatHUD->DrawDynamicSquare(GazeEnd, Diameter, FColor(255, 0, 0, 255), Thickness);
-        }
-        else
-        {
-            FlatHUD->DrawDynamicCrosshair(GazeEnd, Diameter, FColor(255, 0, 0, 255), true, Thickness);
-        }
+        // FlatHUD->DrawDynamicSquare(GazeEnd, Diameter, FColor(255, 0, 0, 255), Thickness);
+        FlatHUD->DrawDynamicCrosshair(GazeEnd, Diameter, FColor(255, 0, 0, 255), true, Thickness);
     }
     if (bDrawFPSCounter)
     {
