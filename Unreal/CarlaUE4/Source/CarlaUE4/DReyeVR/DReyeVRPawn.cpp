@@ -489,10 +489,10 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     else
     {
         /// NOTE: directly calling the EgoVehicle functions
-        if (EgoVehicle->GetAutopilotStatus() && (
-            FMath::IsNearlyEqual(WheelRotation, WheelRotationLast, LogiThresh) && 
-            FMath::IsNearlyEqual(AccelerationPedal, AccelerationPedalLast, LogiThresh) && 
-            FMath::IsNearlyEqual(BrakePedal, BrakePedalLast, LogiThresh)))
+        if (EgoVehicle->GetAutopilotStatus() &&
+            (FMath::IsNearlyEqual(WheelRotation, WheelRotationLast, LogiThresh) &&
+             FMath::IsNearlyEqual(AccelerationPedal, AccelerationPedalLast, LogiThresh) &&
+             FMath::IsNearlyEqual(BrakePedal, BrakePedalLast, LogiThresh)))
         {
             // let the autopilot drive if the user is not putting significant inputs
         }
