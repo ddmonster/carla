@@ -49,7 +49,6 @@ void AEgoVehicle::ReadConfigVariables()
     ReadConfigValue("EgoVehicle", "SpeedometerInMPH", bUseMPH);
     ReadConfigValue("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
     ReadConfigValue("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
-    ReadConfigValue("EgoVehicle", "CleanRoomCameraLocation", CleanRoomCameraLocation);
     // mirrors
     auto InitMirrorParams = [](const FString &Name, struct MirrorParams &Params) {
         Params.Name = Name;
@@ -133,9 +132,6 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 
     // Render EgoVehicle dashboard
     UpdateDash();
-
-    // Tick clean/empty room (only applies in Map4 currently, need to press "N")
-    TickCleanRoom();
 
     // Update the steering wheel to be responsive to user input
     TickSteeringWheel(DeltaSeconds);
@@ -232,62 +228,6 @@ void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
 bool AEgoVehicle::GetAutopilotStatus() const
 {
     return bAutopilotEnabled;
-}
-
-/// ========================================== ///
-/// ---------------:CLEANROOM:---------------- ///
-/// ========================================== ///
-
-bool AEgoVehicle::EnableCleanRoom()
-{
-    if (World)
-    {
-        // check town is Town04
-        const FString WorldName = World->GetMapName();
-        UE_LOG(LogTemp, Log, TEXT("Currently in world: \"%s\""), *WorldName);
-        if (WorldName.Contains("Town04"))
-        {
-            UE_LOG(LogTemp, Log, TEXT("Enabling clean room mode"));
-            bCleanRoomActive = true;
-        }
-        else
-        {
-            UE_LOG(LogTemp, Log, TEXT("Need to switch to Town04 to enable clean room mode"));
-            bCleanRoomActive = false;
-        }
-    }
-    return bCleanRoomActive; // true if sucessfull, false otherwise
-}
-
-void AEgoVehicle::DisableCleanRoom()
-{
-    UE_LOG(LogTemp, Log, TEXT("Disabling clean slate calibration"));
-    bCleanRoomActive = false;
-    // teleport camera back to original location (vehicle + initial offset)
-    const FTransform InitPosCamera(this->GetActorRotation() + FRotator::ZeroRotator, // FRotator (Rotation)
-                                   this->GetActorLocation() + CameraLocnInVehicle,   // FVector (Location)
-                                   FVector::OneVector);                              // FVector (Scale3D)
-    VRCameraRoot->SetWorldTransform(InitPosCamera, false, nullptr, ETeleportType::None);
-}
-
-bool AEgoVehicle::IsInCleanRoom() const
-{
-    return bCleanRoomActive;
-}
-
-void AEgoVehicle::TickCleanRoom()
-{
-    if (GetMesh())
-        GetMesh()->SetSimulatePhysics(!bCleanRoomActive); // disable physics when in clean-room
-    if (bCleanRoomActive)
-    {
-        // kinda hacky, just teleports camera to clean room and keeps the vehicle stationary
-        this->SetBrake(1);                                      // tries to make the vehicle not move
-        const FTransform InitPosCamera(FRotator::ZeroRotator,   // FRotator (Rotation)
-                                       CleanRoomCameraLocation, // FVector (Location)
-                                       FVector::OneVector);     // FVector (Scale3D)
-        VRCameraRoot->SetWorldTransform(InitPosCamera, false, nullptr, ETeleportType::None);
-    }
 }
 
 /// ========================================== ///

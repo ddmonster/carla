@@ -47,19 +47,6 @@ void AEgoVehicle::CameraPositionAdjust(const FVector &displacement)
     VRCameraRoot->SetRelativeLocation(CurrentRelLocation + displacement);
 }
 
-void AEgoVehicle::ToggleCleanRoom()
-{
-    // for the experimenter to toggle the clean room experiment built into DReyeVR
-    if (!bCleanRoomActive)
-    {
-        EnableCleanRoom();
-    }
-    else
-    {
-        DisableCleanRoom();
-    }
-}
-
 void AEgoVehicle::SetSteering(const float SteeringInput)
 {
     float ScaledSteeringInput = this->ScaleSteeringInput * SteeringInput;

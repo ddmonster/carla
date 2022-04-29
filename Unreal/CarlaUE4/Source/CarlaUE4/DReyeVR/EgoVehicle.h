@@ -54,11 +54,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     UCameraComponent *GetCamera();
     const DReyeVR::UserInputs &GetVehicleInputs() const;
 
-    // "clean/empty" camera room in a closed box in Town04 which removes the cognitive load of driving
-    bool EnableCleanRoom();  // enable teleport to clean/empty room
-    void DisableCleanRoom(); // return back to normal vehicle operations
-    bool IsInCleanRoom() const;
-
     // autopilot API
     void SetAutopilot(const bool AutopilotOn);
     bool GetAutopilotStatus() const;
@@ -81,10 +76,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     ////////////////:CAMERA:////////////////
     void ConstructCameraRoot(); // needs to be called in the constructor
-    void ToggleCleanRoom();     // Triggered by ToggleCleanRoom_DReyeVR input for enabling/disabling clean room
-    void TickCleanRoom();       // teleport to empty box in Town04
-    bool bCleanRoomActive = false;
-    FVector CleanRoomCameraLocation;
     UPROPERTY(Category = Camera, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
