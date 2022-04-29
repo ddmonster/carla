@@ -38,7 +38,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void ReadConfigVariables();
 
     virtual void Tick(float DeltaTime) override; // called automatically
-    void ManualTick(float DeltaTime);            // called by DReyeVR pawn
 
     // Setters from external classes
     void SetLevel(ADReyeVRLevel *Level);

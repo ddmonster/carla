@@ -5,8 +5,9 @@
 
 ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
+    // this actor (pawn) ticks BEFORE the physics simulation, hence before EgoVehicle tick
     PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.TickGroup = TG_PostPhysics;
+    PrimaryActorTick.TickGroup = TG_PrePhysics;
 
     auto *RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("DReyeVR_RootComponent"));
     SetRootComponent(RootComponent);
@@ -17,6 +18,7 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
     // read params
     ReadConfigVariables();
 
+    // spawn and construct the first person camera
     ConstructCamera();
 }
 
@@ -148,12 +150,6 @@ void ADReyeVRPawn::Tick(float DeltaTime)
 
     // Tick the logitech wheel
     TickLogiWheel();
-
-    if (EgoVehicle)
-    {
-        // directly call the tick here to preserve the order of relative functions
-        EgoVehicle->ManualTick(DeltaTime);
-    }
 }
 
 /// ========================================== ///
@@ -367,6 +363,7 @@ void ADReyeVRPawn::TickLogiWheel()
         // Add Force Feedback to the hardware steering wheel when a LogitechWheel is used
         ApplyForceFeedback();
     }
+    bOverrideInputsWithKbd = false; // disable for the next tick (unless held, which will set to true)
 #endif
 }
 
@@ -616,10 +613,6 @@ void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
         bOverrideInputsWithKbd = true;
         CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
     }
-    else
-    {
-        bOverrideInputsWithKbd = false;
-    }
 }
 
 void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
@@ -628,10 +621,6 @@ void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
     {
         bOverrideInputsWithKbd = true;
         CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
-    }
-    else
-    {
-        bOverrideInputsWithKbd = false;
     }
 }
 
@@ -647,7 +636,6 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
         // so the steering wheel does go to 0 when letting go
         ensure(EgoVehicle != nullptr);
         EgoVehicle->VehicleInputs.Steering = 0;
-        bOverrideInputsWithKbd = false;
     }
 }
 
