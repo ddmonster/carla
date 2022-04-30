@@ -71,13 +71,15 @@ void ADReyeVRPawn::InitSteamVR()
     {
         FString HMD_Name = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName().ToString();
         FString HMD_Version = UHeadMountedDisplayFunctionLibrary::GetVersionString();
-        UE_LOG(LogTemp, Log, TEXT("HMD detected: %s, version %s"), *HMD_Name, *HMD_Version);
+        UE_LOG(LogTemp, Log, TEXT("HMD enabled: %s, version %s"), *HMD_Name, *HMD_Version);
         // Now we'll begin with setting up the VR Origin logic
+        // this tracking origin is what moves the HMD camera to the right position
         UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Eye); // Also have Floor & Stage Level
+        InitSpectator();
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("No head mounted device detected!"));
+        UE_LOG(LogTemp, Warning, TEXT("No head mounted device enabled!"));
     }
 }
 
@@ -117,6 +119,16 @@ void ADReyeVRPawn::BeginPlay()
 
     // Initialize logitech steering wheel
     InitLogiWheel();
+
+    // detect whether or not a VR HMD is currently enabled
+    if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+    {
+        UE_LOG(LogTemp, Log, TEXT("HMD detected"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No HMD detected"));
+    }
 }
 
 void ADReyeVRPawn::BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn)
@@ -155,6 +167,12 @@ void ADReyeVRPawn::Tick(float DeltaTime)
 
     // Tick the logitech wheel
     TickLogiWheel();
+
+    if (!bIsHMDConnected && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayConnected())
+    {
+        // try reinitializing steamvr if the headset is connected but not active
+        InitSteamVR();
+    }
 }
 
 /// ========================================== ///
@@ -265,16 +283,7 @@ void ADReyeVRPawn::InitSpectator()
 
 void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir)
 {
-    if (!bEnableSpectatorScreen || Player == nullptr)
-        return;
-
-    if (!bIsHMDConnected && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayConnected())
-    {
-        // try reinitializing steamvr if the headset is connected but not active
-        InitSteamVR();
-        InitSpectator();
-    }
-    if (!bIsHMDConnected)
+    if (!bEnableSpectatorScreen || Player == nullptr || !bIsHMDConnected)
         return;
 
     FVector2D ReticlePos = ProjectGazeToScreen(Player, GetCamera(), GazeOrigin, GazeDir);
