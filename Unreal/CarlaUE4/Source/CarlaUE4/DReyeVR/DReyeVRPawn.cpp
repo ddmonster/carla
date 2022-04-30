@@ -117,12 +117,6 @@ void ADReyeVRPawn::BeginPlay()
 
     // Initialize logitech steering wheel
     InitLogiWheel();
-
-    // Get information about the VR headset & initialize SteamVR
-    InitSteamVR();
-
-    // Enable VR spectator screen & eye reticle
-    InitSpectator();
 }
 
 void ADReyeVRPawn::BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerController *PlayerIn)
@@ -185,7 +179,7 @@ void ADReyeVRPawn::InitFlatHUD(APlayerController *P)
 
 void ADReyeVRPawn::DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir)
 {
-    if (FlatHUD == nullptr || Player == nullptr || bDrawFlatHud == false)
+    if (FlatHUD == nullptr || Player == nullptr || bDrawFlatHud == false || bIsHMDConnected == true)
         return;
 
     const FVector &WorldPos = GetCamera()->GetComponentLocation();
@@ -271,7 +265,16 @@ void ADReyeVRPawn::InitSpectator()
 
 void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir)
 {
-    if (!bEnableSpectatorScreen || Player == nullptr || !bIsHMDConnected)
+    if (!bEnableSpectatorScreen || Player == nullptr)
+        return;
+
+    if (!bIsHMDConnected && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayConnected())
+    {
+        // try reinitializing steamvr if the headset is connected but not active
+        InitSteamVR();
+        InitSpectator();
+    }
+    if (!bIsHMDConnected)
         return;
 
     FVector2D ReticlePos = ProjectGazeToScreen(Player, GetCamera(), GazeOrigin, GazeDir);
