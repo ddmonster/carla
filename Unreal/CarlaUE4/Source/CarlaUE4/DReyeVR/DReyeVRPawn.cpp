@@ -28,15 +28,15 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
 void ADReyeVRPawn::ReadConfigVariables()
 {
     // camera
-    ReadConfigValue("Camera", "FieldOfView", FieldOfView);
-    ReadConfigValue("Camera", "ScreenPercentage", ScreenPercentage);
-    ReadConfigValue("Camera", "VignetteIntensity", VignetteIntensity);
-    ReadConfigValue("Camera", "BloomIntensity", BloomIntensity);
-    ReadConfigValue("Camera", "SceneFringeIntensity", SceneFringeIntensity);
-    ReadConfigValue("Camera", "LensFlareIntensity", LensFlareIntensity);
-    ReadConfigValue("Camera", "GrainIntensity", GrainIntensity);
-    ReadConfigValue("Camera", "MotionBlurIntensity", MotionBlurIntensity);
-    ReadConfigValue("Camera", "EnableSemanticSegmentation", bEnableSemanticSegmentation);
+    ReadConfigValue("CameraParams", "FieldOfView", FieldOfView);
+    ReadConfigValue("CameraParams", "ScreenPercentage", ScreenPercentage);
+    ReadConfigValue("CameraParams", "VignetteIntensity", VignetteIntensity);
+    ReadConfigValue("CameraParams", "BloomIntensity", BloomIntensity);
+    ReadConfigValue("CameraParams", "SceneFringeIntensity", SceneFringeIntensity);
+    ReadConfigValue("CameraParams", "LensFlareIntensity", LensFlareIntensity);
+    ReadConfigValue("CameraParams", "GrainIntensity", GrainIntensity);
+    ReadConfigValue("CameraParams", "MotionBlurIntensity", MotionBlurIntensity);
+    ReadConfigValue("CameraParams", "EnableSemanticSegmentation", bEnableSemanticSegmentation);
 
     // input scaling
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);

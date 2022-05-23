@@ -44,7 +44,8 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 
 void AEgoVehicle::ReadConfigVariables()
 {
-    ReadConfigValue("EgoVehicle", "CameraInit", CameraLocnInVehicle);
+    ReadConfigValue("CameraPose", "DriversSeatLoc", CameraLocnRelativeToVehicle);
+    ReadConfigValue("CameraPose", "DriversSeatRot", CameraRotnRelativeToVehicle);
     ReadConfigValue("EgoVehicle", "DashLocation", DashboardLocnInVehicle);
     ReadConfigValue("EgoVehicle", "SpeedometerInMPH", bUseMPH);
     ReadConfigValue("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
@@ -163,8 +164,38 @@ void AEgoVehicle::ConstructCameraRoot()
     VRCameraRoot = CreateDefaultSubobject<USceneComponent>(TEXT("VRCameraRoot"));
     VRCameraRoot->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
 
+    SetCameraRootPose(CameraPose::DriversSeat);
+}
+
+void AEgoVehicle::SetCameraRootPose(const CameraPose PoseType)
+{
+    FString CameraPoseType;
+    /// NOTE: we assume the CameraPose variable names follow the convention:
+    // location --> ${name}Loc
+    // rotation --> ${name}Rot
+    switch (PoseType)
+    {
+    case (CameraPose::DriversSeat):
+        CameraPoseType = "DriversSeat";
+        break;
+    case (CameraPose::Front):
+        CameraPoseType = "Front";
+        break;
+    case (CameraPose::BirdsEyeView):
+        CameraPoseType = "BirdsEyeView";
+        break;
+    case (CameraPose::ThirdPerson):
+        CameraPoseType = "ThirdPerson";
+        break;
+    default:
+        return;
+    }
+    ReadConfigValue("CameraPose", CameraPoseType + "Loc", CameraLocnRelativeToVehicle);
+    ReadConfigValue("CameraPose", CameraPoseType + "Rot", CameraRotnRelativeToVehicle);
+
     // First, set the root of the camera to the driver's seat head pos
-    VRCameraRoot->SetRelativeLocation(CameraLocnInVehicle);
+    VRCameraRoot->SetRelativeLocation(CameraLocnRelativeToVehicle);
+    VRCameraRoot->SetRelativeRotation(CameraRotnRelativeToVehicle);
 }
 
 void AEgoVehicle::SetPawn(ADReyeVRPawn *PawnIn)

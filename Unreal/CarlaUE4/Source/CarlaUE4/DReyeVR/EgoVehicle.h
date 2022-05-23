@@ -63,6 +63,17 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void PlayGearShiftSound(const float DelayBeforePlay = 0.f) const;
     void PlayTurnSignalSound(const float DelayBeforePlay = 0.f) const;
 
+    enum CameraPose
+    {
+        // camera pose (rotation & location) type relative to vehicle.
+        // used to query DReyeVRConfig.ini from [CameraPose]
+        DriversSeat = 0,
+        Front,
+        BirdsEyeView,
+        ThirdPerson,
+    };
+    void SetCameraRootPose(const CameraPose PoseType);
+
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
     virtual void BeginPlay() override;
@@ -80,7 +91,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
-    FVector CameraLocnInVehicle{21.0f, -40.0f, 120.0f}; // depends on vehicle mesh (units in cm)
+    FVector CameraLocnRelativeToVehicle{21.0f, -40.0f, 120.0f}; // (units in cm)
+    FRotator CameraRotnRelativeToVehicle{0, 0, 0};              // (units in degrees)
 
     ////////////////:SENSOR:////////////////
     void ReplayTick();
