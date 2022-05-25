@@ -54,6 +54,9 @@ class ADReyeVRPawn : public APawn
     void DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir);
     void DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir);
 
+    // shaders (for replay)
+    std::vector<FPostProcessSettings> PostProcessingEffects;
+
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
@@ -76,7 +79,9 @@ class ADReyeVRPawn : public APawn
     float LensFlareIntensity = 0.f;
     float GrainIntensity = 0.f;
     float MotionBlurIntensity = 0.f;
-    bool bEnableSemanticSegmentation = false;
+    void NextShader();
+    void PrevShader();
+    size_t CurrentShaderIdx = 0; // 0th shader is rgb (camera)
 
     ////////////////:STEAMVR:////////////////
     void InitSteamVR();         // Initialize the Head Mounted Display

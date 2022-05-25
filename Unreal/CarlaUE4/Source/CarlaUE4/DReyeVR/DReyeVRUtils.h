@@ -370,7 +370,7 @@ static UMaterialInstanceDynamic *InitSemanticSegmentationShader(class UObject *P
     // update the tagger-colour matrix param so all the sampled colours are from the CITYSCAPES_PALETTE_MAP
     // defined in LibCarla/source/carla/image/CityScapesPalette.h
     SemanticSegmentationMaterial->SetTextureParameterValue("TagColours", TagColourTexture);
-
+    SemanticSegmentationMaterial->AddToRoot(); // prevent GC
     return SemanticSegmentationMaterial;
 }
 
@@ -381,6 +381,7 @@ static UMaterialInstanceDynamic *InitDepthShader(class UObject *Parent)
     check(MaterialFound != nullptr);
     UMaterialInstanceDynamic *DepthMaterial =
         UMaterialInstanceDynamic::Create(MaterialFound, Parent, FName(TEXT("DReyeVR_DepthShader")));
+    DepthMaterial->AddToRoot(); // prevent GC
     return DepthMaterial;
 }
 

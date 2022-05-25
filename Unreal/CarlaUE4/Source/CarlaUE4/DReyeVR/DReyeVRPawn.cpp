@@ -35,7 +35,6 @@ void ADReyeVRPawn::ReadConfigVariables()
     ReadConfigValue("CameraParams", "LensFlareIntensity", LensFlareIntensity);
     ReadConfigValue("CameraParams", "GrainIntensity", GrainIntensity);
     ReadConfigValue("CameraParams", "MotionBlurIntensity", MotionBlurIntensity);
-    ReadConfigValue("CameraParams", "EnableSemanticSegmentation", bEnableSemanticSegmentation);
 
     // input scaling
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
@@ -60,15 +59,17 @@ void ADReyeVRPawn::ConstructCamera()
 {
     // Create a camera and attach to root component
     FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
-    std::vector<FSensorShader> Shaders = {};
-    if (bEnableSemanticSegmentation)
-    {
-        Shaders.push_back({InitDepthShader(this), 1.f});
-    }
-    FirstPersonCam->PostProcessSettings = CreatePostProcessingParams(Shaders);
-    FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
-    FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
-    FirstPersonCam->FieldOfView = FieldOfView;       // editable
+    PostProcessingEffects = {
+        CreatePostProcessingParams({}), // rgb (no additional shaders)
+        CreatePostProcessingParams({{InitSemanticSegmentationShader(this), 1.f}}),
+        CreatePostProcessingParams({{InitDepthShader(this), 1.f}}),
+    };
+
+    check(PostProcessingEffects.size() > 0);
+    FirstPersonCam->PostProcessSettings = PostProcessingEffects[0]; // default is RGB
+    FirstPersonCam->bUsePawnControlRotation = false;                // free for VR movement
+    FirstPersonCam->bLockToHmd = true;                              // lock orientation and position to HMD
+    FirstPersonCam->FieldOfView = FieldOfView;                      // editable
     FirstPersonCam->SetupAttachment(RootComponent);
 }
 
@@ -100,6 +101,7 @@ FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams(const std::vector<
     // append shaders to this postprocess effect
     for (const FSensorShader &ShaderInfo : Shaders)
     {
+        ensure(ShaderInfo.PostProcessMaterial != nullptr);
         PP.AddBlendable(ShaderInfo.PostProcessMaterial, ShaderInfo.Weight);
     }
 
@@ -641,6 +643,9 @@ void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputCom
     PlayerInputComponent->BindAction("NextCameraView_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseNextCameraView);
     PlayerInputComponent->BindAction("PrevCameraView_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressPrevCameraView);
     PlayerInputComponent->BindAction("PrevCameraView_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleasePrevCameraView);
+    // camera shader adjustments
+    PlayerInputComponent->BindAction("NextShader_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::NextShader);
+    PlayerInputComponent->BindAction("PrevShader_DReyeVR", IE_Pressed, this, &ADReyeVRPawn::PrevShader);
     // camera position adjustments
     PlayerInputComponent->BindAction("CameraFwd_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraFwd);
     PlayerInputComponent->BindAction("CameraBack_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraBack);
@@ -687,6 +692,36 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
         ensure(EgoVehicle != nullptr);
         EgoVehicle->VehicleInputs.Steering = 0;
     }
+}
+
+/// ========================================== ///
+/// -----------------:INPUT:------------------ ///
+/// ========================================== ///
+
+void ADReyeVRPawn::NextShader()
+{
+    CurrentShaderIdx = (CurrentShaderIdx + 1) % PostProcessingEffects.size();
+    if (PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array.Num() > 0)
+    {
+        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object != nullptr);
+        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object->IsValidLowLevel());
+    }
+    FirstPersonCam->PostProcessSettings = PostProcessingEffects[CurrentShaderIdx];
+}
+
+void ADReyeVRPawn::PrevShader()
+{
+    if (CurrentShaderIdx == 0)
+        CurrentShaderIdx = PostProcessingEffects.size() - 1;
+    else
+        CurrentShaderIdx--;
+
+    if (PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array.Num() > 0)
+    {
+        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object != nullptr);
+        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object->IsValidLowLevel());
+    }
+    FirstPersonCam->PostProcessSettings = PostProcessingEffects[CurrentShaderIdx];
 }
 
 /// ========================================== ///
