@@ -61,18 +61,16 @@ void ADReyeVRPawn::ConstructCamera()
 {
     // Create a camera and attach to root component
     FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
-    FirstPersonCam->PostProcessSettings = CreatePostProcessingParams();
+    std::vector<FSensorShader> Shaders = {};
+    if (bEnableSemanticSegmentation)
+    {
+        Shaders.push_back({InitSemanticSegmentationShader(), 1.f});
+    }
+    FirstPersonCam->PostProcessSettings = CreatePostProcessingParams(Shaders);
     FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
     FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
     FirstPersonCam->FieldOfView = FieldOfView;       // editable
     FirstPersonCam->SetupAttachment(RootComponent);
-
-    if (bEnableSemanticSegmentation)
-    {
-        auto Shader = InitSemanticSegmentationShader();
-        // add this post-processing effect to the given camera
-        FirstPersonCam->PostProcessSettings.AddBlendable(Shader, 1.0);
-    }
 }
 
 UMaterialInstanceDynamic *ADReyeVRPawn::InitSemanticSegmentationShader()
@@ -108,7 +106,7 @@ UMaterialInstanceDynamic *ADReyeVRPawn::InitSemanticSegmentationShader()
     return SemanticSegmentationMaterial;
 }
 
-FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
+FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const
 {
     // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
     FPostProcessSettings PP;
@@ -132,6 +130,13 @@ FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams() const
 
     PP.bOverride_MotionBlurAmount = true;
     PP.MotionBlurAmount = MotionBlurIntensity;
+
+    // append shaders to this postprocess effect
+    for (const FSensorShader &ShaderInfo : Shaders)
+    {
+        PP.AddBlendable(ShaderInfo.PostProcessMaterial, ShaderInfo.Weight);
+    }
+
     return PP;
 }
 

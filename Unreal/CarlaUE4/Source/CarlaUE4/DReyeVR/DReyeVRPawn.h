@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Camera/CameraComponent.h" // UCameraComponent
-#include "EgoVehicle.h"             // AEgoVehicle
-#include "Engine/Scene.h"           // FPostProcessSettings
-#include "GameFramework/Pawn.h"     // CreatePlayerInputComponent
+#include "Camera/CameraComponent.h"         // UCameraComponent
+#include "Carla/Sensor/ShaderBasedSensor.h" // FSensorShader
+#include "EgoVehicle.h"                     // AEgoVehicle
+#include "Engine/Scene.h"                   // FPostProcessSettings
+#include "GameFramework/Pawn.h"             // CreatePlayerInputComponent
 
 #ifndef _WIN32
 // can only use LogitechWheel plugin on Windows! :(
@@ -66,7 +67,7 @@ class ADReyeVRPawn : public APawn
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
     void ConstructCamera();
-    FPostProcessSettings CreatePostProcessingParams() const;
+    FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const;
     UMaterialInstanceDynamic *InitSemanticSegmentationShader();
     float FieldOfView = 90.f; // in degrees
     float ScreenPercentage = 100.f;

@@ -88,11 +88,10 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
-    FTransform CameraPose;
-    FTransform CameraPoseOffset;
-    bool bCameraFollowHMD = true;
+    FTransform CameraPose, CameraPoseOffset;                      // camera pose (location & rotation) and manual offset
     std::vector<std::pair<FString, FTransform>> CameraTransforms; // collection of named transforms from params
     size_t CurrentCameraTransformIdx = 0;
+    bool bCameraFollowHMD = true; // disable this (in params) to replay without following the player's HMD (replay-only)
 
     ////////////////:SENSOR:////////////////
     void ReplayTick();

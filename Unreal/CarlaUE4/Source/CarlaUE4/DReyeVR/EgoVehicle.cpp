@@ -167,7 +167,12 @@ void AEgoVehicle::ConstructCameraRoot()
     VRCameraRoot->SetRelativeRotation(FRotator::ZeroRotator);
 
     // taking this names directly from the [CameraPose] params in DReyeVRConfig.ini
-    std::vector<FString> CameraPoses = {"DriversSeat", "Front", "BirdsEyeView", "ThirdPerson"};
+    std::vector<FString> CameraPoses = {
+        "DriversSeat",  // 1st
+        "ThirdPerson",  // 2nd
+        "BirdsEyeView", // 3rd
+        "Front",        // 4th
+    };
     for (FString &Key : CameraPoses)
     {
         FVector Location;
@@ -334,6 +339,12 @@ void AEgoVehicle::ReplayTick()
                                                   Replay->GetCameraLocationAbs(), // FVector (Location)
                                                   FVector::OneVector);            // FVector (Scale3D)
             FirstPersonCam->SetWorldTransform(ReplayCameraTransAbs, false, nullptr, ETeleportType::TeleportPhysics);
+        }
+        else
+        {
+            // reset to forward view
+            FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
+            FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
         }
 
         // overwrite vehicle inputs to use the replay data

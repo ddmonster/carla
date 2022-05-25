@@ -18,32 +18,38 @@ const FTransform &AEgoVehicle::GetCameraRootPose() const
 
 void AEgoVehicle::CameraFwd()
 {
-    CameraPositionAdjust(FVector(1.f, 0.f, 0.f));
+    // move by (1, 0, 0)
+    CameraPositionAdjust(FVector::ForwardVector);
 }
 
 void AEgoVehicle::CameraBack()
 {
-    CameraPositionAdjust(FVector(-1.f, 0.f, 0.f));
+    // move by (-1, 0, 0)
+    CameraPositionAdjust(FVector::BackwardVector);
 }
 
 void AEgoVehicle::CameraLeft()
 {
-    CameraPositionAdjust(FVector(0.f, -1.f, 0.f));
+    // move by (0, -1, 0)
+    CameraPositionAdjust(FVector::LeftVector);
 }
 
 void AEgoVehicle::CameraRight()
 {
-    CameraPositionAdjust(FVector(0.f, 1.f, 0.f));
+    // move by (0, 1, 0)
+    CameraPositionAdjust(FVector::RightVector);
 }
 
 void AEgoVehicle::CameraUp()
 {
-    CameraPositionAdjust(FVector(0.f, 0.f, 1.f));
+    // move by (0, 0, 1)
+    CameraPositionAdjust(FVector::UpVector);
 }
 
 void AEgoVehicle::CameraDown()
 {
-    CameraPositionAdjust(FVector(0.f, 0.f, -1.f));
+    // move by (0, 0, -1)
+    CameraPositionAdjust(FVector::DownVector);
 }
 
 void AEgoVehicle::CameraPositionAdjust(const FVector &Disp)
@@ -81,6 +87,8 @@ void AEgoVehicle::ReleasePrevCameraView()
 void AEgoVehicle::NextCameraView()
 {
     CurrentCameraTransformIdx = (CurrentCameraTransformIdx + 1) % (CameraTransforms.size());
+    UE_LOG(LogTemp, Log, TEXT("Switching to next camera view: \"%s\""),
+           *CameraTransforms[CurrentCameraTransformIdx].first);
     SetCameraRootPose(CurrentCameraTransformIdx);
 }
 
@@ -90,7 +98,8 @@ void AEgoVehicle::PrevCameraView()
         CurrentCameraTransformIdx = CameraTransforms.size() - 1;
     else
         CurrentCameraTransformIdx--;
-    // move the camera
+    UE_LOG(LogTemp, Log, TEXT("Switching to prev camera view: \"%s\""),
+           *CameraTransforms[CurrentCameraTransformIdx].first);
     SetCameraRootPose(CurrentCameraTransformIdx);
 }
 
