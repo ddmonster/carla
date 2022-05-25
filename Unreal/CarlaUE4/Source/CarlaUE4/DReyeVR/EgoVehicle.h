@@ -63,16 +63,13 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void PlayGearShiftSound(const float DelayBeforePlay = 0.f) const;
     void PlayTurnSignalSound(const float DelayBeforePlay = 0.f) const;
 
-    enum CameraPose
-    {
-        // camera pose (rotation & location) type relative to vehicle.
-        // used to query DReyeVRConfig.ini from [CameraPose]
-        DriversSeat = 0,
-        Front,
-        BirdsEyeView,
-        ThirdPerson,
-    };
-    void SetCameraRootPose(const CameraPose PoseType);
+    // Camera view
+    void SetCameraRootPose(const FTransform &Pose);  // give arbitrary FTransform
+    void SetCameraRootPose(const FString &PoseName); // index into named FTransform
+    void SetCameraRootPose(size_t PoseIdx);          // index into ordered FTransform
+    const FTransform &GetCameraRootPose() const;
+    void NextCameraView();
+    void PrevCameraView();
 
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
@@ -91,8 +88,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
-    FVector CameraLocnRelativeToVehicle{21.0f, -40.0f, 120.0f}; // (units in cm)
-    FRotator CameraRotnRelativeToVehicle{0, 0, 0};              // (units in degrees)
+    FTransform CameraPose;
+    FTransform CameraPoseOffset;
+    bool bCameraFollowHMD = true;
+    std::vector<std::pair<FString, FTransform>> CameraTransforms; // collection of named transforms from params
+    size_t CurrentCameraTransformIdx = 0;
 
     ////////////////:SENSOR:////////////////
     void ReplayTick();
@@ -176,13 +176,21 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     bool bCanPressHandbrake = true;
 
     // Camera control functions (offset by some amount)
-    void CameraPositionAdjust(const FVector &displacement);
+    void CameraPositionAdjust(const FVector &Disp);
     void CameraFwd();
     void CameraBack();
     void CameraLeft();
     void CameraRight();
     void CameraUp();
     void CameraDown();
+
+    // changing camera views
+    void PressNextCameraView();
+    void ReleaseNextCameraView();
+    bool bCanPressNextCameraView = true;
+    void PressPrevCameraView();
+    void ReleasePrevCameraView();
+    bool bCanPressPrevCameraView = true;
 
     // Vehicle parameters
     float ScaleSteeringInput;
