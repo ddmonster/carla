@@ -2,12 +2,13 @@
 #define DREYEVR_UTIL
 
 #include "CoreMinimal.h"
-#include "Engine/Texture2D.h"  // UTexture2D
-#include "HighResScreenshot.h" // FHighResScreenshotConfig
-#include "ImageWriteQueue.h"   // TImagePixelData
-#include "ImageWriteTask.h"    // FImageWriteTask
-#include <fstream>             // std::ifstream
-#include <sstream>             // std::istringstream
+#include "Engine/Texture2D.h"              // UTexture2D
+#include "HighResScreenshot.h"             // FHighResScreenshotConfig
+#include "ImageWriteQueue.h"               // TImagePixelData
+#include "ImageWriteTask.h"                // FImageWriteTask
+#include <carla/image/CityScapesPalette.h> // CityScapesPalette
+#include <fstream>                         // std::ifstream
+#include <sstream>                         // std::istringstream
 #include <string>
 #include <unordered_map>
 
@@ -337,6 +338,50 @@ static UTexture2D *CreateTexture2DFromArray(const TArray<FColor> &Contents)
     Texture->UpdateResource();
     check(Texture);
     return Texture;
+}
+
+static UMaterialInstanceDynamic *InitSemanticSegmentationShader(class UObject *Parent)
+{
+    const FString Path =
+        "Material'/Carla/PostProcessingMaterials/DReyeVR_SemanticSegmentation.DReyeVR_SemanticSegmentation'";
+    UMaterial *MaterialFound = LoadObject<UMaterial>(nullptr, *Path);
+    check(MaterialFound != nullptr);
+    UMaterialInstanceDynamic *SemanticSegmentationMaterial =
+        UMaterialInstanceDynamic::Create(MaterialFound, Parent, FName(TEXT("DReyeVR_SemanticSegmentationShader")));
+
+    // create the array used for tag-colour segmentation
+    TArray<FColor> TextureSrc;
+    const size_t NumTags = carla::image::CityScapesPalette::GetNumberOfTags();
+    const int TexSize = 256; // making this array a 16x16=256 length 2d array that holds the raw colours
+    TextureSrc.Reserve(TexSize);
+    for (int i = 0; i < TexSize; i++)
+    {
+        if (i < NumTags) // fill the first n (NumTags) with the tags directly
+        {
+            auto Colour = carla::image::CityScapesPalette::GetColor(i);
+            TextureSrc.Add(FColor(Colour[0], Colour[1], Colour[2], 255));
+        }
+        else // fill the overflow with black
+            TextureSrc.Add(FColor::Black);
+    }
+
+    UTexture2D *TagColourTexture = CreateTexture2DFromArray(TextureSrc);
+
+    // update the tagger-colour matrix param so all the sampled colours are from the CITYSCAPES_PALETTE_MAP
+    // defined in LibCarla/source/carla/image/CityScapesPalette.h
+    SemanticSegmentationMaterial->SetTextureParameterValue("TagColours", TagColourTexture);
+
+    return SemanticSegmentationMaterial;
+}
+
+static UMaterialInstanceDynamic *InitDepthShader(class UObject *Parent)
+{
+    const FString Path = "Material'/Carla/PostProcessingMaterials/DReyeVR_DepthEffect.DReyeVR_DepthEffect'";
+    UMaterial *MaterialFound = LoadObject<UMaterial>(nullptr, *Path);
+    check(MaterialFound != nullptr);
+    UMaterialInstanceDynamic *DepthMaterial =
+        UMaterialInstanceDynamic::Create(MaterialFound, Parent, FName(TEXT("DReyeVR_DepthShader")));
+    return DepthMaterial;
 }
 
 #endif

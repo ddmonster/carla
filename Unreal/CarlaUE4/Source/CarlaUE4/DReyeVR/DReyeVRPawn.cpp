@@ -1,10 +1,9 @@
 #include "DReyeVRPawn.h"
-#include "DReyeVRUtils.h"                      // ProjectGazeToScreen
+#include "DReyeVRUtils.h"                      // ProjectGazeToScreen, InitXShader
 #include "HeadMountedDisplayFunctionLibrary.h" // SetTrackingOrigin, GetWorldToMetersScale
 #include "HeadMountedDisplayTypes.h"           // ESpectatorScreenMode
 #include "Materials/MaterialInstanceDynamic.h" // UMaterialInstanceDynamic
 #include "UObject/UObjectGlobals.h"            // LoadObject, NewObject
-#include <carla/image/CityScapesPalette.h>     // CityScapesPalette
 
 ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -64,46 +63,13 @@ void ADReyeVRPawn::ConstructCamera()
     std::vector<FSensorShader> Shaders = {};
     if (bEnableSemanticSegmentation)
     {
-        Shaders.push_back({InitSemanticSegmentationShader(), 1.f});
+        Shaders.push_back({InitDepthShader(this), 1.f});
     }
     FirstPersonCam->PostProcessSettings = CreatePostProcessingParams(Shaders);
     FirstPersonCam->bUsePawnControlRotation = false; // free for VR movement
     FirstPersonCam->bLockToHmd = true;               // lock orientation and position to HMD
     FirstPersonCam->FieldOfView = FieldOfView;       // editable
     FirstPersonCam->SetupAttachment(RootComponent);
-}
-
-UMaterialInstanceDynamic *ADReyeVRPawn::InitSemanticSegmentationShader()
-{
-    const FString Path =
-        "Material'/Carla/PostProcessingMaterials/DReyeVR_SemanticSegmentation.DReyeVR_SemanticSegmentation'";
-    UMaterial *MaterialFound = LoadObject<UMaterial>(nullptr, *Path);
-    check(MaterialFound != nullptr);
-    UMaterialInstanceDynamic *SemanticSegmentationMaterial =
-        UMaterialInstanceDynamic::Create(MaterialFound, this, FName(TEXT("DReyeVR_SemanticSegmentation")));
-
-    TArray<FColor> TextureSrc;
-    const size_t NumTags = carla::image::CityScapesPalette::GetNumberOfTags();
-    const int TexSize = 256; // making this array a 16x16=256 length 2d array that holds the raw colours
-    TextureSrc.Reserve(TexSize);
-    for (int i = 0; i < TexSize; i++)
-    {
-        if (i < NumTags) // fill the first n (NumTags) with the tags directly
-        {
-            auto Colour = carla::image::CityScapesPalette::GetColor(i);
-            TextureSrc.Add(FColor(Colour[0], Colour[1], Colour[2], 255));
-        }
-        else // fill the overflow with black
-            TextureSrc.Add(FColor::Black);
-    }
-
-    UTexture2D *TagColourTexture = CreateTexture2DFromArray(TextureSrc);
-
-    // update the tagger-colour matrix param so all the sampled colours are from the CITYSCAPES_PALETTE_MAP
-    // defined in LibCarla/source/carla/image/CityScapesPalette.h
-    SemanticSegmentationMaterial->SetTextureParameterValue("TagColours", TagColourTexture);
-
-    return SemanticSegmentationMaterial;
 }
 
 FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const

@@ -68,7 +68,6 @@ class ADReyeVRPawn : public APawn
     class UCameraComponent *FirstPersonCam;
     void ConstructCamera();
     FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const;
-    UMaterialInstanceDynamic *InitSemanticSegmentationShader();
     float FieldOfView = 90.f; // in degrees
     float ScreenPercentage = 100.f;
     float VignetteIntensity = 0.f;
