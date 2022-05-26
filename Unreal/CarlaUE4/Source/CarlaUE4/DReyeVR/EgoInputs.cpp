@@ -95,9 +95,8 @@ void AEgoVehicle::NextCameraView()
 void AEgoVehicle::PrevCameraView()
 {
     if (CurrentCameraTransformIdx == 0)
-        CurrentCameraTransformIdx = CameraTransforms.size() - 1;
-    else
-        CurrentCameraTransformIdx--;
+        CurrentCameraTransformIdx = CameraTransforms.size();
+    CurrentCameraTransformIdx--;
     UE_LOG(LogTemp, Log, TEXT("Switching to prev camera view: \"%s\""),
            *CameraTransforms[CurrentCameraTransformIdx].first);
     SetCameraRootPose(CurrentCameraTransformIdx);

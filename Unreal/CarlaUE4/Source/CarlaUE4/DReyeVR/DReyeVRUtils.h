@@ -1,6 +1,7 @@
 #ifndef DREYEVR_UTIL
 #define DREYEVR_UTIL
 
+#include "Carla/Sensor/ShaderBasedSensor.h" // FSensorShader
 #include "CoreMinimal.h"
 #include "Engine/Texture2D.h"              // UTexture2D
 #include "HighResScreenshot.h"             // FHighResScreenshotConfig
@@ -340,7 +341,7 @@ static UTexture2D *CreateTexture2DFromArray(const TArray<FColor> &Contents)
     return Texture;
 }
 
-static UMaterialInstanceDynamic *InitSemanticSegmentationShader(class UObject *Parent)
+static FSensorShader InitSemanticSegmentationShader(class UObject *Parent)
 {
     const FString Path =
         "Material'/Carla/PostProcessingMaterials/DReyeVR_SemanticSegmentation.DReyeVR_SemanticSegmentation'";
@@ -370,19 +371,17 @@ static UMaterialInstanceDynamic *InitSemanticSegmentationShader(class UObject *P
     // update the tagger-colour matrix param so all the sampled colours are from the CITYSCAPES_PALETTE_MAP
     // defined in LibCarla/source/carla/image/CityScapesPalette.h
     SemanticSegmentationMaterial->SetTextureParameterValue("TagColours", TagColourTexture);
-    SemanticSegmentationMaterial->AddToRoot(); // prevent GC
-    return SemanticSegmentationMaterial;
+    return FSensorShader{SemanticSegmentationMaterial, 1.f};
 }
 
-static UMaterialInstanceDynamic *InitDepthShader(class UObject *Parent)
+static FSensorShader InitDepthShader(class UObject *Parent)
 {
     const FString Path = "Material'/Carla/PostProcessingMaterials/DReyeVR_DepthEffect.DReyeVR_DepthEffect'";
     UMaterial *MaterialFound = LoadObject<UMaterial>(nullptr, *Path);
     check(MaterialFound != nullptr);
     UMaterialInstanceDynamic *DepthMaterial =
         UMaterialInstanceDynamic::Create(MaterialFound, Parent, FName(TEXT("DReyeVR_DepthShader")));
-    DepthMaterial->AddToRoot(); // prevent GC
-    return DepthMaterial;
+    return FSensorShader{DepthMaterial, 1.f};
 }
 
 #endif

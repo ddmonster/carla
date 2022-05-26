@@ -55,7 +55,8 @@ class ADReyeVRPawn : public APawn
     void DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir);
 
     // shaders (for replay)
-    std::vector<FPostProcessSettings> PostProcessingEffects;
+    size_t GetNumberOfShaders() const;
+    FPostProcessSettings CreatePostProcessingEffect(size_t idx);
 
   protected:
     virtual void BeginPlay() override;
@@ -70,7 +71,6 @@ class ADReyeVRPawn : public APawn
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
     void ConstructCamera();
-    FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const;
     float FieldOfView = 90.f; // in degrees
     float ScreenPercentage = 100.f;
     float VignetteIntensity = 0.f;
@@ -81,6 +81,9 @@ class ADReyeVRPawn : public APawn
     float MotionBlurIntensity = 0.f;
     void NextShader();
     void PrevShader();
+    // collection of shader factory functions so shaders can be easily regenerated at runtime (useful when GC'd)
+    std::vector<std::function<FPostProcessSettings(class UObject *Object)>> ShaderFactory;
+    FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const;
     size_t CurrentShaderIdx = 0; // 0th shader is rgb (camera)
 
     ////////////////:STEAMVR:////////////////

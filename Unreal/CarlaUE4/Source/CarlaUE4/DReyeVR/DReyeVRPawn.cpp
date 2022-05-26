@@ -59,17 +59,25 @@ void ADReyeVRPawn::ConstructCamera()
 {
     // Create a camera and attach to root component
     FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
-    PostProcessingEffects = {
-        CreatePostProcessingParams({}), // rgb (no additional shaders)
-        CreatePostProcessingParams({{InitSemanticSegmentationShader(this), 1.f}}),
-        CreatePostProcessingParams({{InitDepthShader(this), 1.f}}),
-    };
 
-    check(PostProcessingEffects.size() > 0);
-    FirstPersonCam->PostProcessSettings = PostProcessingEffects[0]; // default is RGB
-    FirstPersonCam->bUsePawnControlRotation = false;                // free for VR movement
-    FirstPersonCam->bLockToHmd = true;                              // lock orientation and position to HMD
-    FirstPersonCam->FieldOfView = FieldOfView;                      // editable
+    // denote the order of the shaders that we will use as lambdas to create their shader
+    ShaderFactory = {};
+// helper lambda #define to reduce boilerplate code
+#define SHADER_LAMBDA(x) [this](class UObject *Parent) { return CreatePostProcessingParams(x); }
+    // rgb shader (no additional postprocessing)
+    ShaderFactory.push_back(SHADER_LAMBDA({}));                                       // rgb
+    ShaderFactory.push_back(SHADER_LAMBDA({InitSemanticSegmentationShader(Parent)})); // semantics
+    ShaderFactory.push_back(SHADER_LAMBDA({InitDepthShader(Parent)}));                // depth
+
+    /// TODO: add more shaders here
+    /// TODO: use enum for shaders
+
+    // the default shader behaviour will be to use RGB (no shader)
+    check(ShaderFactory.size() > 0);
+    FirstPersonCam->PostProcessSettings = ShaderFactory[0](this); // default (0) is RGB
+    FirstPersonCam->bUsePawnControlRotation = false;              // free for VR movement
+    FirstPersonCam->bLockToHmd = true;                            // lock orientation and position to HMD
+    FirstPersonCam->FieldOfView = FieldOfView;                    // editable
     FirstPersonCam->SetupAttachment(RootComponent);
 }
 
@@ -106,6 +114,20 @@ FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams(const std::vector<
     }
 
     return PP;
+}
+
+size_t ADReyeVRPawn::GetNumberOfShaders() const
+{
+    return ShaderFactory.size();
+}
+
+FPostProcessSettings ADReyeVRPawn::CreatePostProcessingEffect(size_t Idx)
+{
+    // check the index is valid, and call the shader factory function to be used immediately
+    Idx = std::min(Idx, ShaderFactory.size() - 1);
+    /// NOTE: this can be slow (as it needs to load objects (shaders) from disk and potentially recompile them),
+    // so be wary of using this in a performance-critical section
+    return ShaderFactory[Idx](this);
 }
 
 void ADReyeVRPawn::BeginPlay()
@@ -700,28 +722,18 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
 
 void ADReyeVRPawn::NextShader()
 {
-    CurrentShaderIdx = (CurrentShaderIdx + 1) % PostProcessingEffects.size();
-    if (PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array.Num() > 0)
-    {
-        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object != nullptr);
-        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object->IsValidLowLevel());
-    }
-    FirstPersonCam->PostProcessSettings = PostProcessingEffects[CurrentShaderIdx];
+    CurrentShaderIdx = (CurrentShaderIdx + 1) % GetNumberOfShaders();
+    // update the camera's postprocessing effects
+    FirstPersonCam->PostProcessSettings = CreatePostProcessingEffect(CurrentShaderIdx);
 }
 
 void ADReyeVRPawn::PrevShader()
 {
     if (CurrentShaderIdx == 0)
-        CurrentShaderIdx = PostProcessingEffects.size() - 1;
-    else
-        CurrentShaderIdx--;
-
-    if (PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array.Num() > 0)
-    {
-        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object != nullptr);
-        ensure(PostProcessingEffects[CurrentShaderIdx].WeightedBlendables.Array[0].Object->IsValidLowLevel());
-    }
-    FirstPersonCam->PostProcessSettings = PostProcessingEffects[CurrentShaderIdx];
+        CurrentShaderIdx = GetNumberOfShaders();
+    CurrentShaderIdx--;
+    // update the camera's postprocessing effects
+    FirstPersonCam->PostProcessSettings = CreatePostProcessingEffect(CurrentShaderIdx);
 }
 
 /// ========================================== ///
