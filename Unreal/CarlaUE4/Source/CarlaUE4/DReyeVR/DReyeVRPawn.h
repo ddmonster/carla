@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Camera/CameraComponent.h"         // UCameraComponent
-#include "Carla/Sensor/ShaderBasedSensor.h" // FSensorShader
-#include "EgoVehicle.h"                     // AEgoVehicle
-#include "Engine/Scene.h"                   // FPostProcessSettings
-#include "GameFramework/Pawn.h"             // CreatePlayerInputComponent
+#include "Camera/CameraComponent.h" // UCameraComponent
+#include "EgoVehicle.h"             // AEgoVehicle
+#include "Engine/Scene.h"           // FPostProcessSettings
+#include "GameFramework/Pawn.h"     // CreatePlayerInputComponent
 
 #ifndef _WIN32
 // can only use LogitechWheel plugin on Windows! :(
@@ -83,7 +82,6 @@ class ADReyeVRPawn : public APawn
     void PrevShader();
     // collection of shader factory functions so shaders can be easily regenerated at runtime (useful when GC'd)
     std::vector<std::function<FPostProcessSettings(class UObject *Object)>> ShaderFactory;
-    FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const;
     size_t CurrentShaderIdx = 0; // 0th shader is rgb (camera)
 
     ////////////////:STEAMVR:////////////////

@@ -28,13 +28,7 @@ void ADReyeVRPawn::ReadConfigVariables()
 {
     // camera
     ReadConfigValue("CameraParams", "FieldOfView", FieldOfView);
-    ReadConfigValue("CameraParams", "ScreenPercentage", ScreenPercentage);
-    ReadConfigValue("CameraParams", "VignetteIntensity", VignetteIntensity);
-    ReadConfigValue("CameraParams", "BloomIntensity", BloomIntensity);
-    ReadConfigValue("CameraParams", "SceneFringeIntensity", SceneFringeIntensity);
-    ReadConfigValue("CameraParams", "LensFlareIntensity", LensFlareIntensity);
-    ReadConfigValue("CameraParams", "GrainIntensity", GrainIntensity);
-    ReadConfigValue("CameraParams", "MotionBlurIntensity", MotionBlurIntensity);
+    /// NOTE: all the postprocessing params are used in DReyeVRUtils::CreatePostProcessingParams
 
     // input scaling
     ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
@@ -79,41 +73,6 @@ void ADReyeVRPawn::ConstructCamera()
     FirstPersonCam->bLockToHmd = true;                            // lock orientation and position to HMD
     FirstPersonCam->FieldOfView = FieldOfView;                    // editable
     FirstPersonCam->SetupAttachment(RootComponent);
-}
-
-FPostProcessSettings ADReyeVRPawn::CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders) const
-{
-    // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
-    FPostProcessSettings PP;
-    PP.bOverride_VignetteIntensity = true;
-    PP.VignetteIntensity = VignetteIntensity;
-
-    PP.bOverride_ScreenPercentage = true;
-    PP.ScreenPercentage = ScreenPercentage;
-
-    PP.bOverride_BloomIntensity = true;
-    PP.BloomIntensity = BloomIntensity;
-
-    PP.bOverride_SceneFringeIntensity = true;
-    PP.SceneFringeIntensity = SceneFringeIntensity;
-
-    PP.bOverride_LensFlareIntensity = true;
-    PP.LensFlareIntensity = LensFlareIntensity;
-
-    PP.bOverride_GrainIntensity = true;
-    PP.GrainIntensity = GrainIntensity;
-
-    PP.bOverride_MotionBlurAmount = true;
-    PP.MotionBlurAmount = MotionBlurIntensity;
-
-    // append shaders to this postprocess effect
-    for (const FSensorShader &ShaderInfo : Shaders)
-    {
-        ensure(ShaderInfo.PostProcessMaterial != nullptr);
-        PP.AddBlendable(ShaderInfo.PostProcessMaterial, ShaderInfo.Weight);
-    }
-
-    return PP;
 }
 
 size_t ADReyeVRPawn::GetNumberOfShaders() const

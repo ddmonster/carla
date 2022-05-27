@@ -341,6 +341,49 @@ static UTexture2D *CreateTexture2DFromArray(const TArray<FColor> &Contents)
     return Texture;
 }
 
+static FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders)
+{
+    // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
+    float TmpParam;
+    FPostProcessSettings PP;
+    PP.bOverride_VignetteIntensity = true;
+    ReadConfigValue("CameraParams", "VignetteIntensity", TmpParam);
+    PP.VignetteIntensity = TmpParam;
+
+    PP.bOverride_ScreenPercentage = true;
+    ReadConfigValue("CameraParams", "ScreenPercentage", TmpParam);
+    PP.ScreenPercentage = TmpParam;
+
+    PP.bOverride_BloomIntensity = true;
+    ReadConfigValue("CameraParams", "BloomIntensity", TmpParam);
+    PP.BloomIntensity = TmpParam;
+
+    PP.bOverride_SceneFringeIntensity = true;
+    ReadConfigValue("CameraParams", "SceneFringeIntensity", TmpParam);
+    PP.SceneFringeIntensity = TmpParam;
+
+    PP.bOverride_LensFlareIntensity = true;
+    ReadConfigValue("CameraParams", "LensFlareIntensity", TmpParam);
+    PP.LensFlareIntensity = TmpParam;
+
+    PP.bOverride_GrainIntensity = true;
+    ReadConfigValue("CameraParams", "GrainIntensity", TmpParam);
+    PP.GrainIntensity = TmpParam;
+
+    PP.bOverride_MotionBlurAmount = true;
+    ReadConfigValue("CameraParams", "MotionBlurIntensity", TmpParam);
+    PP.MotionBlurAmount = TmpParam;
+
+    // append shaders to this postprocess effect
+    for (const FSensorShader &ShaderInfo : Shaders)
+    {
+        ensure(ShaderInfo.PostProcessMaterial != nullptr);
+        PP.AddBlendable(ShaderInfo.PostProcessMaterial, ShaderInfo.Weight);
+    }
+
+    return PP;
+}
+
 static FSensorShader InitSemanticSegmentationShader(class UObject *Parent)
 {
     const FString Path =
