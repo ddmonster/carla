@@ -53,10 +53,6 @@ class ADReyeVRPawn : public APawn
     void DrawSpectatorScreen(const FVector &GazeOrigin, const FVector &GazeDir);
     void DrawFlatHUD(float DeltaSeconds, const FVector &GazeOrigin, const FVector &GazeDir);
 
-    // shaders (for replay)
-    size_t GetNumberOfShaders() const;
-    FPostProcessSettings CreatePostProcessingEffect(size_t idx);
-
   protected:
     virtual void BeginPlay() override;
     virtual void BeginDestroy() override;
@@ -71,17 +67,8 @@ class ADReyeVRPawn : public APawn
     class UCameraComponent *FirstPersonCam;
     void ConstructCamera();
     float FieldOfView = 90.f; // in degrees
-    float ScreenPercentage = 100.f;
-    float VignetteIntensity = 0.f;
-    float BloomIntensity = 0.f;
-    float SceneFringeIntensity = 0.f;
-    float LensFlareIntensity = 0.f;
-    float GrainIntensity = 0.f;
-    float MotionBlurIntensity = 0.f;
     void NextShader();
     void PrevShader();
-    // collection of shader factory functions so shaders can be easily regenerated at runtime (useful when GC'd)
-    std::vector<std::function<FPostProcessSettings(class UObject *Object)>> ShaderFactory;
     size_t CurrentShaderIdx = 0; // 0th shader is rgb (camera)
 
     ////////////////:STEAMVR:////////////////

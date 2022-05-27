@@ -1,5 +1,5 @@
 #include "DReyeVRPawn.h"
-#include "DReyeVRUtils.h"                      // ProjectGazeToScreen, InitXShader
+#include "DReyeVRUtils.h"                      // ProjectGazeToScreen, CreatePostProcessingEffect
 #include "HeadMountedDisplayFunctionLibrary.h" // SetTrackingOrigin, GetWorldToMetersScale
 #include "HeadMountedDisplayTypes.h"           // ESpectatorScreenMode
 #include "Materials/MaterialInstanceDynamic.h" // UMaterialInstanceDynamic
@@ -54,39 +54,12 @@ void ADReyeVRPawn::ConstructCamera()
     // Create a camera and attach to root component
     FirstPersonCam = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCam"));
 
-    // denote the order of the shaders that we will use as lambdas to create their shader
-    ShaderFactory = {};
-// helper lambda #define to reduce boilerplate code
-#define SHADER_LAMBDA(x) [this](class UObject *Parent) { return CreatePostProcessingParams(x); }
-    // rgb shader (no additional postprocessing)
-    ShaderFactory.push_back(SHADER_LAMBDA({}));                                       // rgb
-    ShaderFactory.push_back(SHADER_LAMBDA({InitSemanticSegmentationShader(Parent)})); // semantics
-    ShaderFactory.push_back(SHADER_LAMBDA({InitDepthShader(Parent)}));                // depth
-
-    /// TODO: add more shaders here
-    /// TODO: use enum for shaders
-
     // the default shader behaviour will be to use RGB (no shader)
-    check(ShaderFactory.size() > 0);
-    FirstPersonCam->PostProcessSettings = ShaderFactory[0](this); // default (0) is RGB
-    FirstPersonCam->bUsePawnControlRotation = false;              // free for VR movement
-    FirstPersonCam->bLockToHmd = true;                            // lock orientation and position to HMD
-    FirstPersonCam->FieldOfView = FieldOfView;                    // editable
+    FirstPersonCam->PostProcessSettings = CreatePostProcessingEffect(0); // default (0) is RGB
+    FirstPersonCam->bUsePawnControlRotation = false;                     // free for VR movement
+    FirstPersonCam->bLockToHmd = true;                                   // lock orientation and position to HMD
+    FirstPersonCam->FieldOfView = FieldOfView;                           // editable
     FirstPersonCam->SetupAttachment(RootComponent);
-}
-
-size_t ADReyeVRPawn::GetNumberOfShaders() const
-{
-    return ShaderFactory.size();
-}
-
-FPostProcessSettings ADReyeVRPawn::CreatePostProcessingEffect(size_t Idx)
-{
-    // check the index is valid, and call the shader factory function to be used immediately
-    Idx = std::min(Idx, ShaderFactory.size() - 1);
-    /// NOTE: this can be slow (as it needs to load objects (shaders) from disk and potentially recompile them),
-    // so be wary of using this in a performance-critical section
-    return ShaderFactory[Idx](this);
 }
 
 void ADReyeVRPawn::BeginPlay()
@@ -681,6 +654,7 @@ void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
 
 void ADReyeVRPawn::NextShader()
 {
+    /// NOTE: the shader/postprocessing functions are defined in DReyeVRUtils.h
     CurrentShaderIdx = (CurrentShaderIdx + 1) % GetNumberOfShaders();
     // update the camera's postprocessing effects
     FirstPersonCam->PostProcessSettings = CreatePostProcessingEffect(CurrentShaderIdx);
@@ -688,6 +662,7 @@ void ADReyeVRPawn::NextShader()
 
 void ADReyeVRPawn::PrevShader()
 {
+    /// NOTE: the shader/postprocessing functions are defined in DReyeVRUtils.h
     if (CurrentShaderIdx == 0)
         CurrentShaderIdx = GetNumberOfShaders();
     CurrentShaderIdx--;
