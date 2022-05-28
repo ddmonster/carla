@@ -366,11 +366,7 @@ void AEgoSensor::ConstructFrameCapture()
         FrameCap->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
 
         // apply postprocessing effects
-        FPostProcessSettings Effects;
-        Effects.bOverride_ColorGamma = true;
-        const float TargetGamma = 1.2f; /// TODO: parametrize?
-        Effects.ColorGamma = TargetGamma * FVector4(1.f, 1.f, 1.f, 1.f);
-        FrameCap->PostProcessSettings = Effects;
+        FrameCap->PostProcessSettings = CreatePostProcessingEffect(0);
 
         FrameCap->Deactivate();
         FrameCap->TextureTarget = CaptureRenderTarget;
@@ -414,16 +410,19 @@ void AEgoSensor::TakeScreenshot()
 {
     if (bCaptureFrameData && FrameCap && Camera)
     {
-        FMinimalViewInfo DesiredView;
-        // using 5 digits to reach frame 99999 ~ 30m (assuming ~50fps frame capture)
-        const FString Suffix = FString::Printf(TEXT("%05d.png"), ScreenshotCount);
-        Camera->GetCameraView(0, DesiredView);
-        FrameCap->PostProcessSettings = Camera->PostProcessSettings;
-        FrameCap->SetCameraView(DesiredView); // move camera to the Camera view
-        FrameCap->CaptureScene();             // also available: CaptureSceneDeferred()
-        ScreenshotCount++;                    // progress to next frame
-        SaveFrameToDisk(*CaptureRenderTarget, FPaths::Combine(FrameCapLocation, FrameCapFilename + Suffix),
-                        bFileFormatJPG);
+        for (int i = 0; i < GetNumberOfShaders(); i++)
+        {
+            FMinimalViewInfo DesiredView;
+            // using 5 digits to reach frame 99999 ~ 30m (assuming ~50fps frame capture)
+            const FString Suffix = FString::Printf(TEXT("%d_%05d.png"), i, ScreenshotCount);
+            Camera->GetCameraView(0, DesiredView);
+            FrameCap->PostProcessSettings = CreatePostProcessingEffect(i);
+            FrameCap->SetCameraView(DesiredView); // move camera to the Camera view
+            FrameCap->CaptureScene();             // also available: CaptureSceneDeferred()
+            ScreenshotCount++;                    // progress to next frame
+            SaveFrameToDisk(*CaptureRenderTarget, FPaths::Combine(FrameCapLocation, FrameCapFilename + Suffix),
+                            bFileFormatJPG);
+        }
     }
 }
 
