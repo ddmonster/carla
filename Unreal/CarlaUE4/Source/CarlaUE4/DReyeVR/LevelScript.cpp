@@ -308,6 +308,7 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
 
 void ADReyeVRLevel::DrawBBoxes()
 {
+    const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
     for (auto &pair : AllActors)
     {
         const std::string &name = pair.first;
@@ -324,13 +325,12 @@ void ADReyeVRLevel::DrawBBoxes()
         ensure(BBox != nullptr);
 
         // here define the logic for when/how/why to draw a bbox overlay
-        const float DistThresh = 20.f; // meters before nearby bounding boxes become red
         if (BBox != nullptr)
         {
             BBox->Activate();
             BBox->MaterialParams.Opacity = 0.1f;
             FLinearColor Col = FLinearColor::Green;
-            if (FVector::Distance(EgoVehiclePtr->GetActorLocation(), A->GetActorLocation()) < DistThresh * 100.f)
+            if (EyeFocusActorName.Equals(A->GetName()))
             {
                 Col = FLinearColor::Red;
             }
