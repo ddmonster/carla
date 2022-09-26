@@ -72,7 +72,13 @@ class ADReyeVRLevel : public ALevelScriptActor
     // for accessing all actors (vehicles/walkers only) in the world
     float RefreshActorSearchTick = 5.f; // tickrate (seconds) for UGameplayStatics::GetAllActorsOfClass
     float TimeSinceLastActorRefresh = 0.f;
-    std::unordered_map<std::string, AActor *> AllActors = {};
+
+    struct ActorAndMetadata
+    {
+        AActor *Actor;
+        FVector BBox_Offset, BBox_Extent;
+    };
+    std::unordered_map<std::string, ActorAndMetadata> AllActors = {};
     void RefreshActors(float DeltaSeconds);
     void DrawBBoxes();
     std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;

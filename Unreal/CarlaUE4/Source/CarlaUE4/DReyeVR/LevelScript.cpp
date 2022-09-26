@@ -278,8 +278,6 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
         {
             UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundActors);
         }
-        // reset & update the AllActors container
-        AllActors.clear();
         // force "delete" for these elements
         for (auto &bbox_key_value : BBoxes)
         {
@@ -287,11 +285,32 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
             bbox_key_value.second->Destroy();    // try to delete this actor in UE4 terms
         }
         BBoxes.clear();
+
+        // add all the new actors (and delete old ones) to container
+        std::unordered_map<std::string, ActorAndMetadata> AllActorsTmp = {};
         for (AActor *A : FoundActors)
         {
             std::string name = TCHAR_TO_UTF8(*A->GetName());
-            AllActors[name] = A;
+
+            // compute bounds for the axis-aligned bounding box
+            FVector BBox_Offset, BBox_Extent;
+            A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
+
+            ActorAndMetadata ActorData;
+            ActorData.Actor = A;
+            /// TODO: ensure the rotation of the BBOX extent works as expected (axis aligned tightest bound)
+            ActorData.BBox_Extent = A->GetActorRotation().RotateVector(BBox_Extent);
+            if (AllActors.find(name) != AllActors.end() && AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
+            {
+                // keep these bounds (tightest) from before
+                ActorData.BBox_Extent = AllActors[name].BBox_Extent;
+            }
+            ActorData.BBox_Offset = BBox_Offset - A->GetActorLocation(); // only offset to static mesh
+            AllActorsTmp[name] = ActorData;
         }
+        // reset & update the AllActors container
+        AllActors.clear();
+        AllActors = AllActorsTmp;
     }
 
     if (TimeSinceLastActorRefresh < RefreshActorSearchTick)
@@ -312,9 +331,15 @@ void ADReyeVRLevel::DrawBBoxes()
     for (auto &pair : AllActors)
     {
         const std::string &name = pair.first;
-        const AActor *A = pair.second;
-        if (name.find("DReyeVR") != std::string::npos) // name contains "DReyeVR"
-            continue;                                  // skip bbox for EgoVehicle (self)
+        const ActorAndMetadata &AaMd = pair.second;
+        const AActor *A = AaMd.Actor;
+        const FVector &BBox_Offset = AaMd.BBox_Offset;
+        const FVector &BBox_Extent = AaMd.BBox_Extent;
+
+        if (A == nullptr || name.find("DReyeVR") != std::string::npos) // name contains "DReyeVR"
+            continue;                                                  // skip bbox for EgoVehicle (self)
+
+        ensure(A != nullptr);
 
         // find the bbox in the container
         if (BBoxes.find(name) == BBoxes.end())
@@ -337,15 +362,10 @@ void ADReyeVRLevel::DrawBBoxes()
             BBox->MaterialParams.BaseColor = Col;
             BBox->MaterialParams.Emissive = 0.1 * Col;
 
-            FVector Origin;
-            FVector BoxExtent;
-            A->GetActorBounds(true, Origin, BoxExtent, false);
-            // UE_LOG(LogTemp, Log, TEXT("Origin: %s Extent %s"), *Origin.ToString(), *BoxExtent.ToString());
             // divide by 100 to get from m to cm, multiply by 2 bc the cube is scaled in both X and Y
-            BBox->SetActorScale3D(2 * BoxExtent / 100.f);
-            BBox->SetActorLocation(Origin);
-            // extent already covers the rotation aspect since the bbox is dynamic and axis aligned
-            // BBox->SetActorRotation(A->GetActorRotation());
+            BBox->SetActorScale3D(2 * BBox_Extent / 100.f);
+            BBox->SetActorLocation(A->GetActorLocation() + BBox_Offset);
+            BBox->SetActorRotation(A->GetActorRotation());
         }
     }
 }

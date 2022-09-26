@@ -105,7 +105,7 @@ void ADReyeVRCustomActor::Initialize(const FString &Name)
 {
     Internals.Name = Name;
     ADReyeVRCustomActor::ActiveCustomActors[TCHAR_TO_UTF8(*Name)] = this;
-    UE_LOG(LogTemp, Log, TEXT("Initialized custom actor: %s"), *Name);
+    // UE_LOG(LogTemp, Log, TEXT("Initialized custom actor: %s"), *Name);
 }
 
 void ADReyeVRCustomActor::BeginPlay()
