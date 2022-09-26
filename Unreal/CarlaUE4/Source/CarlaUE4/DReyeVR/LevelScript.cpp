@@ -144,6 +144,7 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
         SetupReplayer(); // once this is successfully run, it no longer gets executed
     }
 
+    RefreshActors(DeltaSeconds);
     DrawBBoxes();
 }
 
@@ -266,26 +267,64 @@ void ADReyeVRLevel::SetupReplayer()
     }
 }
 
+void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
+{
+    // only update the AllActors container on refresh ticks
+    if (TimeSinceLastActorRefresh == 0.f)
+    {
+        // this is expensive so make sure RefreshActorSearchTick is reasonable!
+        TArray<AActor *> FoundActors;
+        if (GetWorld() != nullptr)
+        {
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundActors);
+        }
+        // reset & update the AllActors container
+        AllActors.clear();
+        // force "delete" for these elements
+        for (auto &bbox_key_value : BBoxes)
+        {
+            bbox_key_value.second->Deactivate(); // value (second) is ADReyeVRCustomActor*
+            bbox_key_value.second->Destroy();    // try to delete this actor in UE4 terms
+        }
+        BBoxes.clear();
+        for (AActor *A : FoundActors)
+        {
+            std::string name = TCHAR_TO_UTF8(*A->GetName());
+            AllActors[name] = A;
+        }
+    }
+
+    if (TimeSinceLastActorRefresh < RefreshActorSearchTick)
+    {
+        // keep incrementing the time since last refresh as long as the threshold has not been met
+        TimeSinceLastActorRefresh += DeltaSeconds;
+    }
+    else
+    {
+        // reset the time since last actor was refreshed if beyond the tick threshold
+        TimeSinceLastActorRefresh = 0.f;
+    }
+}
+
 void ADReyeVRLevel::DrawBBoxes()
 {
-#if 0
-    TArray<AActor *> FoundActors;
-    if (GetWorld() != nullptr)
+    for (auto &pair : AllActors)
     {
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundActors);
-    }
-    for (AActor *A : FoundActors)
-    {
-        std::string name = TCHAR_TO_UTF8(*A->GetName());
-        if (A->GetName().Contains("DReyeVR"))
-            continue; // skip drawing a bbox over the EgoVehicle
+        const std::string &name = pair.first;
+        const AActor *A = pair.second;
+        if (name.find("DReyeVR") != std::string::npos) // name contains "DReyeVR"
+            continue;                                  // skip bbox for EgoVehicle (self)
+
+        // find the bbox in the container
         if (BBoxes.find(name) == BBoxes.end())
         {
             BBoxes[name] = ADReyeVRCustomActor::CreateNew(SM_CUBE, MAT_TRANSLUCENT, GetWorld(), "BBox" + A->GetName());
         }
-        const float DistThresh = 20.f; // meters before nearby bounding boxes become red
         ADReyeVRCustomActor *BBox = BBoxes[name];
         ensure(BBox != nullptr);
+
+        // here define the logic for when/how/why to draw a bbox overlay
+        const float DistThresh = 20.f; // meters before nearby bounding boxes become red
         if (BBox != nullptr)
         {
             BBox->Activate();
@@ -309,7 +348,6 @@ void ADReyeVRLevel::DrawBBoxes()
             // BBox->SetActorRotation(A->GetActorRotation());
         }
     }
-#endif
 }
 
 void ADReyeVRLevel::ReplayCustomActor(const DReyeVR::CustomActorData &RecorderData, const double Per)
