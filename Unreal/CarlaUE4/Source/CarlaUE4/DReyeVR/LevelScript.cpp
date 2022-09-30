@@ -336,8 +336,14 @@ void ADReyeVRLevel::DrawBBoxes()
         const FVector &BBox_Offset = AaMd.BBox_Offset;
         const FVector &BBox_Extent = AaMd.BBox_Extent;
 
-        if (A == nullptr || name.find("DReyeVR") != std::string::npos) // name contains "DReyeVR"
-            continue;                                                  // skip bbox for EgoVehicle (self)
+        if (A == nullptr || A == EgoVehiclePtr)
+            continue; // skip bbox overlay for null or EgoVehicle actors
+
+        const auto OverlayTag = FName("Overlay"); // also defined in CarlaActor.cpp::SetActorEnableOverlay
+        if (!A->ActorHasTag(OverlayTag))
+        {
+            continue; // skip bbox overlay for actors without the bbox tag
+        }
 
         ensure(A != nullptr);
 
