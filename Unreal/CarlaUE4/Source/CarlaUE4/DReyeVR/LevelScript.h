@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AttentionModel.h"                 // AttentionModel
 #include "Carla/Actor/DReyeVRCustomActor.h" // ADReyeVRCustomActor
 #include "Carla/Sensor/DReyeVRData.h"       // DReyeVR::
 #include "Engine/LevelScriptActor.h"        // ALevelScriptActor
@@ -9,6 +10,7 @@
 
 class AEgoVehicle;
 class ADReyeVRPawn;
+class AttentionModel;
 
 UCLASS()
 class ADReyeVRLevel : public ALevelScriptActor
@@ -80,17 +82,12 @@ class ADReyeVRLevel : public ALevelScriptActor
     };
     std::unordered_map<std::string, ActorAndMetadata> AllActors = {};
     void RefreshActors(float DeltaSeconds);
-    void DrawBBoxes(float DeltaSeconds);
+    void DrawBBoxes();
     std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;
     const FName OverlayTag{"Overlay"}; // also defined in CarlaActor.cpp::SetActorEnableOverlay
 
     // attention model
-    // Measuring Driver Situation Awareness Using Region-of-Interest Prediction and Eye Tracking
-    void AttentionModel(float DeltaSeconds, ADReyeVRCustomActor *Overlay, AActor *Actor);
-    float StartTimeHit = 0.f;                                  // time when the eye gaze FIRST hit the actor
-    size_t ActorHitCount = 0;                                  // number of hits of the actor since the first hit time
-    const size_t MaxHitCountThreshold = 10;                    // number of gaze hits to constitute attention
-    constexpr static float MaxHitCountThresholdSeconds = 10.f; // number of seconds to reset the "start hit time"
+    class AttentionModel *Attention = nullptr;
 
     // for audio control
     float EgoVolumePercent;

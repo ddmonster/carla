@@ -205,6 +205,7 @@ def main():
             blueprints = [x for x in blueprints if not x.id.endswith('firetruck')]
             blueprints = [x for x in blueprints if not x.id.endswith('ambulance')]
 
+        blueprints = [x for x in blueprints if not x.id.endswith('egovehicle')]
         blueprints = sorted(blueprints, key=lambda bp: bp.id)
 
         spawn_points = world.get_map().get_spawn_points()
@@ -343,6 +344,9 @@ def main():
 
         # Example of how to use Traffic Manager parameters
         traffic_manager.global_percentage_speed_difference(30.0)
+
+        for vehicle in world.get_actors().filter("vehicle.*"):
+            vehicle.enable_overlay(True)
 
         while True:
             if not args.asynch and synchronous_master:

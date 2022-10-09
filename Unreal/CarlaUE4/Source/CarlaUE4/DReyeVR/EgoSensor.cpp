@@ -231,8 +231,8 @@ void AEgoSensor::ComputeDummyEyeData()
     // generate gaze that rotates in CCW fashion around the camera ray
     const float TimeNow = EyeSensorData.TimestampDevice / 1000.f;
     Combined->GazeDir.X = 5.0;
-    Combined->GazeDir.Y = UKismetMathLibrary::Cos(TimeNow);
-    Combined->GazeDir.Z = UKismetMathLibrary::Sin(TimeNow);
+    Combined->GazeDir.Y = true ? 0 : UKismetMathLibrary::Cos(TimeNow);
+    Combined->GazeDir.Z = true ? 0 : UKismetMathLibrary::Sin(TimeNow);
     UKismetMathLibrary::Vector_Normalize(Combined->GazeDir, 0.0001);
 
     // Assign the origin position to the (3D space) origin
