@@ -145,7 +145,7 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
     }
 
     RefreshActors(DeltaSeconds);
-    DrawBBoxes();
+    DrawBBoxes(DeltaSeconds);
 }
 
 void ADReyeVRLevel::SetupPlayerInputComponent()
@@ -325,21 +325,19 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
     }
 }
 
-void ADReyeVRLevel::DrawBBoxes()
+void ADReyeVRLevel::DrawBBoxes(float DeltaSeconds)
 {
-    const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
     for (auto &pair : AllActors)
     {
         const std::string &name = pair.first;
         const ActorAndMetadata &AaMd = pair.second;
-        const AActor *A = AaMd.Actor;
+        AActor *A = AaMd.Actor;
         const FVector &BBox_Offset = AaMd.BBox_Offset;
         const FVector &BBox_Extent = AaMd.BBox_Extent;
 
         if (A == nullptr || A == EgoVehiclePtr)
             continue; // skip bbox overlay for null or EgoVehicle actors
 
-        const auto OverlayTag = FName("Overlay"); // also defined in CarlaActor.cpp::SetActorEnableOverlay
         if (!A->ActorHasTag(OverlayTag))
         {
             continue; // skip bbox overlay for actors without the bbox tag
@@ -361,7 +359,8 @@ void ADReyeVRLevel::DrawBBoxes()
             BBox->Activate();
             BBox->MaterialParams.Opacity = 0.1f;
             FLinearColor Col = FLinearColor::Green;
-            if (EyeFocusActorName.Equals(A->GetName()))
+            constexpr float DangerThreshold = 20.f * 100.f; // meters for "too close"
+            if ((EgoVehiclePtr->GetActorLocation() - A->GetActorLocation()).Size() < DangerThreshold)
             {
                 Col = FLinearColor::Red;
             }
@@ -372,7 +371,45 @@ void ADReyeVRLevel::DrawBBoxes()
             BBox->SetActorScale3D(2 * BBox_Extent / 100.f);
             BBox->SetActorLocation(A->GetActorLocation() + BBox_Offset);
             BBox->SetActorRotation(A->GetActorRotation());
+
+            AttentionModel(DeltaSeconds, BBox, A);
         }
+    }
+}
+
+void ADReyeVRLevel::AttentionModel(float DeltaSeconds, ADReyeVRCustomActor *Overlay, AActor *Actor)
+{
+    bool bHasAttention = false;
+    ensure(EgoVehiclePtr != nullptr);
+    ensure(Actor != nullptr);
+    ensure(Overlay != nullptr);
+
+    const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
+    const float CurrentTime = UGameplayStatics::GetRealTimeSeconds(GetWorld());
+
+    if (EyeFocusActorName.Equals(Actor->GetName()))
+    {
+        // we have an (ACTOR) hit!
+        if (ActorHitCount == 0)
+        {
+            // only start the count on the first hit
+            StartTimeHit = CurrentTime;
+        }
+        ActorHitCount += 1;
+        UE_LOG(LogTemp, Log, TEXT("Hit count: %d time: %.3f"), ActorHitCount, CurrentTime);
+
+        // deactivate the overlay
+        if (ActorHitCount > MaxHitCountThreshold) // more than 10 hits in the time threshold
+        {
+            Actor->Tags.Remove(OverlayTag);
+            Overlay->Deactivate();
+        }
+    }
+
+    if (CurrentTime - StartTimeHit > MaxHitCountThresholdSeconds)
+    {
+        // reset count
+        ActorHitCount = 0;
     }
 }
 
