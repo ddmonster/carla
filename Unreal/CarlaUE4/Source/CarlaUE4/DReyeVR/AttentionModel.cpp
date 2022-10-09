@@ -9,17 +9,24 @@ void AttentionModel::Evaluate(float CurrentTime, ADReyeVRCustomActor *Overlay, A
     ensure(Overlay != nullptr);
 
     const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
-
     if (EyeFocusActorName.Equals(Actor->GetName()))
     {
         // we have an (ACTOR) hit!
+        if (CurrentActor != Actor)
+        {
+            CurrentActor = Actor; // looking at a new actor, now focus on this one
+            ActorHitCount = 0;    // resets HitCount on new actors
+        }
+
         if (ActorHitCount == 0)
         {
             // only start the count on the first hit
             StartTimeHit = CurrentTime;
         }
+
         ActorHitCount += 1;
-        UE_LOG(LogTemp, Log, TEXT("Hit count: %d time: %.3f"), ActorHitCount, CurrentTime);
+        UE_LOG(LogTemp, Log, TEXT("Hit count: %d name: %s time: %.3f"), ActorHitCount, *CurrentActor->GetName(),
+               CurrentTime);
 
         // deactivate the overlay
         if (ActorHitCount > MaxHitCountThreshold) // more than 10 hits in the time threshold
@@ -31,7 +38,7 @@ void AttentionModel::Evaluate(float CurrentTime, ADReyeVRCustomActor *Overlay, A
 
     if (CurrentTime - StartTimeHit > MaxHitCountThresholdSeconds)
     {
-        // reset count
+        // reset count after the timeout period has passed
         ActorHitCount = 0;
     }
 }

@@ -157,7 +157,7 @@ def main():
     walkers_list = []
     all_id = []
     client = carla.Client(args.host, args.port)
-    client.set_timeout(10.0)
+    client.set_timeout(1000.0)
     synchronous_master = False
     random.seed(args.seed if args.seed is not None else int(time.time()))
 
@@ -180,7 +180,7 @@ def main():
             if not settings.synchronous_mode:
                 synchronous_master = True
                 settings.synchronous_mode = True
-                settings.fixed_delta_seconds = 0.05
+                settings.fixed_delta_seconds = 0.0166 # 60hz
             else:
                 synchronous_master = False
         else:
