@@ -10,7 +10,6 @@
 
 class AEgoVehicle;
 class ADReyeVRPawn;
-class AttentionModel;
 
 UCLASS()
 class ADReyeVRLevel : public ALevelScriptActor
@@ -82,12 +81,12 @@ class ADReyeVRLevel : public ALevelScriptActor
     };
     std::unordered_map<std::string, ActorAndMetadata> AllActors = {};
     void RefreshActors(float DeltaSeconds);
-    void DrawBBoxes();
+    void DrawBBoxes(const float DeltaSeconds);
     std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;
     const FName OverlayTag{"Overlay"}; // also defined in CarlaActor.cpp::SetActorEnableOverlay
 
     // attention model
-    class AttentionModel *Attention = nullptr;
+    class SituationalAwareness::AttentionModel *Attention = nullptr;
 
     // for audio control
     float EgoVolumePercent;

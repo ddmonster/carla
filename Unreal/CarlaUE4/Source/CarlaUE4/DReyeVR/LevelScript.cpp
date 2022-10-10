@@ -23,7 +23,7 @@ ADReyeVRLevel::ADReyeVRLevel(FObjectInitializer const &FO) : Super(FO)
     ReadConfigValue("Replayer", "RunSyncReplay", bReplaySync);
 
     // initialize attention model
-    Attention = new AttentionModel();
+    Attention = new SituationalAwareness::AttentionModel();
 }
 
 void ADReyeVRLevel::BeginPlay()
@@ -148,7 +148,7 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
     }
 
     RefreshActors(DeltaSeconds);
-    DrawBBoxes();
+    DrawBBoxes(DeltaSeconds);
 }
 
 void ADReyeVRLevel::SetupPlayerInputComponent()
@@ -328,7 +328,7 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
     }
 }
 
-void ADReyeVRLevel::DrawBBoxes()
+void ADReyeVRLevel::DrawBBoxes(const float DeltaSeconds)
 {
     for (auto &pair : AllActors)
     {
@@ -361,14 +361,16 @@ void ADReyeVRLevel::DrawBBoxes()
         {
             BBox->Activate();
             BBox->MaterialParams.Opacity = 0.1f;
-            FLinearColor Col = FLinearColor::Green;
-            constexpr float DangerThreshold = 20.f * 100.f; // meters for "too close"
-            if ((EgoVehiclePtr->GetActorLocation() - A->GetActorLocation()).Size() < DangerThreshold)
-            {
-                Col = FLinearColor::Red;
-            }
-            BBox->MaterialParams.BaseColor = Col;
-            BBox->MaterialParams.Emissive = 0.1 * Col;
+
+            // this colouring is handled by the Attention model evaluation
+            // FLinearColor Col = FLinearColor::Green;
+            // constexpr float DangerThreshold = 20.f * 100.f; // meters for "too close"
+            // if ((EgoVehiclePtr->GetActorLocation() - A->GetActorLocation()).Size() < DangerThreshold)
+            // {
+            //     Col = FLinearColor::Red;
+            // }
+            // BBox->MaterialParams.BaseColor = Col;
+            // BBox->MaterialParams.Emissive = 0.1 * Col;
 
             // divide by 100 to get from m to cm, multiply by 2 bc the cube is scaled in both X and Y
             BBox->SetActorScale3D(2 * BBox_Extent / 100.f);
@@ -378,7 +380,7 @@ void ADReyeVRLevel::DrawBBoxes()
             // tick attention model
             const float CurrentTime = UGameplayStatics::GetRealTimeSeconds(GetWorld());
             ensure(Attention != nullptr);
-            Attention->Evaluate(CurrentTime, BBox, A, EgoVehiclePtr);
+            Attention->Evaluate(DeltaSeconds, CurrentTime, BBox, A, EgoVehiclePtr);
         }
     }
 }
