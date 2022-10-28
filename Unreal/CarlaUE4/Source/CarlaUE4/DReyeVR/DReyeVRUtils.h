@@ -475,4 +475,37 @@ static FPostProcessSettings CreatePostProcessingEffect(size_t Idx)
     return ShaderFactory[Idx]();
 }
 
+static FHitResult DownGroundTrace(const UWorld *World, const FVector &TopPosition, const float Height,
+                                  const std::vector<const AActor *> &Ignored = {})
+{
+    // run a trace from the TopPosition straight down to sample the birds-eye-view of the ground
+    FCollisionQueryParams TraceParam;
+    TraceParam = FCollisionQueryParams(FName("CheckGround"), true);
+    for (const AActor *A : Ignored)
+    {
+        TraceParam.AddIgnoredActor(A);
+    }
+    TraceParam.bTraceComplex = true;
+    TraceParam.bReturnPhysicalMaterial = false;
+    FHitResult Hit(EForceInit::ForceInit);
+    World->LineTraceSingleByChannel(Hit, TopPosition, TopPosition + Height * FVector::DownVector, ECC_Visibility,
+                                    TraceParam);
+    return Hit;
+}
+
+static bool bIsWalkable(const FString &Name)
+{
+    // check whether a ground is "walkable" by pedestrian
+
+    // expects name in lowercase! Use FString::ToLower()
+    // Name.Contains("grass") kicks pedestrians off the sidewalk
+    return Name.Contains("sidewalk") || Name.Contains("crosswalk") || Name.Contains("ramp"); // driveways
+}
+
+static bool bIsWalkable(const AActor *Actor)
+{
+    // check whether a ground is "walkable" by pedestrian
+    return bIsWalkable(Actor->GetName().ToLower());
+}
+
 #endif

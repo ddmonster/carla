@@ -3,6 +3,7 @@
 #include "AttentionModel.h"                 // AttentionModel
 #include "Carla/Actor/DReyeVRCustomActor.h" // ADReyeVRCustomActor
 #include "Carla/Sensor/DReyeVRData.h"       // DReyeVR::
+#include "DummyWalkers.h"                   // DummyWalkers
 #include "Engine/LevelScriptActor.h"        // ALevelScriptActor
 #include <unordered_map>                    // std::unordered_map
 
@@ -87,6 +88,9 @@ class ADReyeVRLevel : public ALevelScriptActor
 
     // attention model
     class SituationalAwareness::AttentionModel *Attention = nullptr;
+
+    // dummy walkers
+    class DummyWalkers Walkers;
 
     // for audio control
     float EgoVolumePercent;

@@ -1,7 +1,7 @@
 #include "EgoVehicle.h"
 #include "Carla/Actor/ActorAttribute.h"             // FActorAttribute
 #include "Carla/Actor/ActorRegistry.h"              // Register
-#include "Carla/Game/CarlaStatics.h"                // GetEpisode
+#include "Carla/Game/CarlaStatics.h"                // GetCurrentEpisode
 #include "Carla/Vehicle/CarlaWheeledVehicleState.h" // ECarlaWheeledVehicleState
 #include "DReyeVRPawn.h"                            // ADReyeVRPawn
 #include "DrawDebugHelpers.h"                       // Debug Line/Sphere

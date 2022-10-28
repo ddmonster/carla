@@ -1,5 +1,5 @@
 #include "LevelScript.h"
-#include "Carla/Game/CarlaStatics.h"           // UCarlaStatics::GetRecorder
+#include "Carla/Game/CarlaStatics.h"           // GetRecorder, GetEpisode
 #include "Carla/Sensor/DReyeVRSensor.h"        // ADReyeVRSensor
 #include "Carla/Vehicle/CarlaWheeledVehicle.h" // ACarlaWheeledVehicle
 #include "Components/AudioComponent.h"         // UAudioComponent
@@ -54,6 +54,9 @@ void ADReyeVRLevel::BeginPlay()
 
     // Initialize DReyeVR spectator
     SetupSpectator();
+
+    // Spawn background dummy walkers
+    Walkers.Setup(GetWorld());
 
     // Initialize control mode
     ControlMode = DRIVER::HUMAN;
@@ -149,6 +152,9 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
 
     RefreshActors(DeltaSeconds);
     DrawBBoxes(DeltaSeconds);
+
+    // tick walkers
+    Walkers.Tick(GetWorld(), DeltaSeconds);
 }
 
 void ADReyeVRLevel::SetupPlayerInputComponent()

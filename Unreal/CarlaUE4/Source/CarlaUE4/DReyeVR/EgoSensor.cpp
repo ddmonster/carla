@@ -1,6 +1,6 @@
 #include "EgoSensor.h"
 
-#include "Carla/Game/CarlaStatics.h"    // GetEpisode
+#include "Carla/Game/CarlaStatics.h"    // GetCurrentEpisode
 #include "DReyeVRUtils.h"               // ReadConfigValue, ComputeClosestToRayIntersection
 #include "EgoVehicle.h"                 // AEgoVehicle
 #include "Kismet/GameplayStatics.h"     // UGameplayStatics::ProjectWorldToScreen
