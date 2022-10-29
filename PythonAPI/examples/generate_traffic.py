@@ -306,22 +306,25 @@ def main():
                 walkers_list.append({"id": results[i].actor_id})
                 walker_speed2.append(walker_speed[i])
         walker_speed = walker_speed2
-        # 3. we spawn the walker controller
-        batch = []
-        walker_controller_bp = world.get_blueprint_library().find('controller.ai.walker')
+        # # 3. we spawn the walker controller
+        # batch = []
+        # walker_controller_bp = world.get_blueprint_library().find('controller.ai.walker')
+        # for i in range(len(walkers_list)):
+        #     batch.append(SpawnActor(walker_controller_bp, carla.Transform(), walkers_list[i]["id"]))
+        # results = client.apply_batch_sync(batch, True)
+        # for i in range(len(results)):
+        #     if results[i].error:
+        #         logging.error(results[i].error)
+        #     else:
+        #         walkers_list[i]["con"] = results[i].actor_id
+        # # 4. we put together the walkers and controllers id to get the objects from their id
         for i in range(len(walkers_list)):
-            batch.append(SpawnActor(walker_controller_bp, carla.Transform(), walkers_list[i]["id"]))
-        results = client.apply_batch_sync(batch, True)
-        for i in range(len(results)):
-            if results[i].error:
-                logging.error(results[i].error)
-            else:
-                walkers_list[i]["con"] = results[i].actor_id
-        # 4. we put together the walkers and controllers id to get the objects from their id
-        for i in range(len(walkers_list)):
-            all_id.append(walkers_list[i]["con"])
+            # all_id.append(walkers_list[i]["con"])
             all_id.append(walkers_list[i]["id"])
         all_actors = world.get_actors(all_id)
+        for walker in all_actors:
+            walker.apply_tag("Overlay")
+            walker.apply_tag("DummyWalker")
 
         # wait for a tick to ensure client receives the last transform of the walkers we have just created
         if args.asynch or not synchronous_master:
@@ -331,14 +334,14 @@ def main():
 
         # 5. initialize each controller and set target to walk to (list is [controler, actor, controller, actor ...])
         # set how many pedestrians can cross the road
-        world.set_pedestrians_cross_factor(percentagePedestriansCrossing)
-        for i in range(0, len(all_id), 2):
-            # start walker
-            all_actors[i].start()
-            # set walk to random point
-            all_actors[i].go_to_location(world.get_random_location_from_navigation())
-            # max speed
-            all_actors[i].set_max_speed(float(walker_speed[int(i/2)]))
+        # world.set_pedestrians_cross_factor(percentagePedestriansCrossing)
+        # for i in range(0, len(all_id), 2):
+        #     # start walker
+        #     all_actors[i].start()
+        #     # set walk to random point
+        #     all_actors[i].go_to_location(world.get_random_location_from_navigation())
+        #     # max speed
+        #     all_actors[i].set_max_speed(float(walker_speed[int(i/2)]))
 
         print('spawned %d vehicles and %d walkers, press Ctrl+C to exit.' % (len(vehicles_list), len(walkers_list)))
 
@@ -346,11 +349,19 @@ def main():
         traffic_manager.global_percentage_speed_difference(30.0)
 
         for vehicle in world.get_actors().filter("vehicle.*"):
-            vehicle.enable_overlay(True)
+            vehicle.apply_tag("Overlay")
 
+        i = 0
         while True:
             if not args.asynch and synchronous_master:
                 world.tick()
+                i += 1
+                if i == 1000:
+                    print("DISABLING ALL WALKERS")
+                    for walker in all_actors:
+                        walker.apply_tag("!Overlay")
+                        walker.apply_tag("!DummyWalker")
+                print(f"i: {i}", end="\r", flush=True)
             else:
                 world.wait_for_tick()
 

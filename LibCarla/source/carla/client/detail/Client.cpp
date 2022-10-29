@@ -412,8 +412,8 @@ namespace detail {
     _pimpl->AsyncCall("set_actor_enable_gravity", actor, enabled);
   }
 
-  void Client::SetActorEnableOverlay(rpc::ActorId actor, const bool enabled) {
-    _pimpl->AsyncCall("set_actor_enable_overlay", actor, enabled);
+  void Client::SetActorApplyTag(rpc::ActorId actor, const std::string &tag) {
+    _pimpl->AsyncCall("set_actor_apply_tag", actor, tag);
   }
 
   void Client::SetActorAutopilot(rpc::ActorId vehicle, const bool enabled) {

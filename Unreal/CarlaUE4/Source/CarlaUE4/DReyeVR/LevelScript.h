@@ -84,7 +84,8 @@ class ADReyeVRLevel : public ALevelScriptActor
     void RefreshActors(float DeltaSeconds);
     void DrawBBoxes(const float DeltaSeconds);
     std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;
-    const FName OverlayTag{"Overlay"}; // also defined in CarlaActor.cpp::SetActorEnableOverlay
+    const FName OverlayTag{"Overlay"}; // make sure to use this in PythonAPI as
+    // actor.apply_tag("Overlay") to enable overlay and actor.apply_tag("!Overlay") to remove
 
     // attention model
     class SituationalAwareness::AttentionModel *Attention = nullptr;

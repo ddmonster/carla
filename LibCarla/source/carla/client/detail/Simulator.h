@@ -435,8 +435,8 @@ namespace detail {
       _client.SetActorEnableGravity(actor.GetId(), enabled);
     }
 
-    void SetActorEnableOverlay(Actor &actor, bool enabled) {
-      _client.SetActorEnableOverlay(actor.GetId(), enabled);
+    void SetActorApplyTag(Actor &actor, const std::string &tag) {
+      _client.SetActorApplyTag(actor.GetId(), tag);
     }
 
     /// @}

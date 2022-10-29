@@ -3,7 +3,7 @@
 #include "Carla/Actor/CarlaActor.h"        // FCarlaActor
 #include "Carla/Actor/CarlaActorFactory.h" // ACarlaActorFactory
 #include <random>                          // std::uniform_real_distribution
-#include <vector>
+#include <unordered_map>                   // std::unordered_map
 
 class DummyWalkers
 {
@@ -20,7 +20,20 @@ class DummyWalkers
         float AngularStep = 45.f; // granularity of angular checks for walkable
     };
 
-    std::vector<WalkerStruct> Walkers;
+    WalkerStruct NewWalker(FCarlaActor *Walker)
+    {
+        struct WalkerStruct WS;
+        {
+            WS.Walker = Walker;
+            float rand_0_1 = Unif01(PhysicsRNG);
+            WS.Speed *= (rand_0_1 + 0.5f); // between 50% more/less
+        }
+        return WS;
+    }
+
+    void FindWalkers(UWorld *World);
+
+    std::unordered_map<FCarlaActor *, WalkerStruct> Walkers;
     std::mt19937 SpawnRNG, DescrRNG, PhysicsRNG;
     std::uniform_real_distribution<float> Unif01;
     int NumWalkers;

@@ -238,9 +238,9 @@ namespace detail {
         rpc::ActorId actor,
         bool enabled);
 
-    void SetActorEnableOverlay(
+    void SetActorApplyTag(
         rpc::ActorId actor,
-        bool enabled);
+        const std::string &tag);
 
     void SetActorAutopilot(
         rpc::ActorId vehicle,

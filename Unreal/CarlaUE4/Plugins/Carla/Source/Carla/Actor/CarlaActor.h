@@ -237,7 +237,7 @@ public:
 
   virtual ECarlaServerResponse SetActorEnableGravity(bool bEnabled);
 
-  virtual ECarlaServerResponse SetActorEnableOverlay(bool bEnabled);
+  virtual ECarlaServerResponse SetActorApplyTag(const FString &);
 
   // Vehicle functions
   virtual ECarlaServerResponse EnableActorConstantVelocity(const FVector&)

@@ -186,11 +186,11 @@ void export_commands() {
     .def_readwrite("enabled", &cr::Command::SetEnableGravity::enabled)
   ;
 
-  class_<cr::Command::SetEnableOverlay>("SetEnableOverlay")
-    .def("__init__", &command_impl::CustomInit<ActorPtr, bool>, (arg("actor"), arg("enabled")))
-    .def(init<cr::ActorId, bool>((arg("actor_id"), arg("enabled"))))
-    .def_readwrite("actor_id", &cr::Command::SetEnableOverlay::actor)
-    .def_readwrite("enabled", &cr::Command::SetEnableOverlay::enabled)
+  class_<cr::Command::ApplyTag>("SetApplyTag")
+    .def("__init__", &command_impl::CustomInit<ActorPtr, std::string>, (arg("actor"), arg("tag")))
+    .def(init<cr::ActorId, std::string>((arg("actor_id"), arg("tag"))))
+    .def_readwrite("actor_id", &cr::Command::ApplyTag::actor)
+    .def_readwrite("tag", &cr::Command::ApplyTag::tag)
   ;
 
   class_<cr::Command::SetAutopilot>("SetAutopilot")
@@ -230,7 +230,7 @@ void export_commands() {
   implicitly_convertible<cr::Command::ApplyTorque, cr::Command>();
   implicitly_convertible<cr::Command::SetSimulatePhysics, cr::Command>();
   implicitly_convertible<cr::Command::SetEnableGravity, cr::Command>();
-  implicitly_convertible<cr::Command::SetEnableOverlay, cr::Command>();
+  implicitly_convertible<cr::Command::ApplyTag, cr::Command>();
   implicitly_convertible<cr::Command::SetAutopilot, cr::Command>();
   implicitly_convertible<cr::Command::SetVehicleLightState, cr::Command>();
 }

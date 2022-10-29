@@ -8,7 +8,7 @@
 
 DummyWalkers::DummyWalkers()
 {
-    ReadConfigValue("DummyWalkers", "NumberOfWalkers", NumWalkers);
+    ReadConfigValue("DummyWalkers", "NumberOfInitialWalkers", NumWalkers);
     ReadConfigValue("DummyWalkers", "RandomSeed", Seed);
 
     // seed random number generator (one per random sequence)
@@ -130,14 +130,29 @@ void DummyWalkers::Setup(UWorld *World)
             Walker = Result.Value; // assign FCarlaActor
         }
         ensure(Walker != nullptr);
+        Walkers[Walker] = NewWalker(Walker);
+    }
+}
 
-        struct WalkerStruct WS;
+void DummyWalkers::FindWalkers(UWorld *World)
+{
+    auto Episode = UCarlaStatics::GetCurrentEpisode(World);
+    ensure(Episode != nullptr);
+    if (Episode == nullptr)
+        return;
+
+    const FName DummyWalkerTag{"DummyWalker"};
+    const FActorRegistry &Registry = Episode->GetActorRegistry();
+    for (auto It = Registry.begin(); It != Registry.end(); ++It)
+    {
+        FCarlaActor *Actor = It.Value().Get();
+        if (Actor->GetActorType() == FCarlaActor::ActorType::Walker && Actor->GetActor()->ActorHasTag(DummyWalkerTag))
         {
-            WS.Walker = Walker;
-            float rand_0_1 = Unif01(PhysicsRNG);
-            WS.Speed *= (rand_0_1 + 0.5f); // between 50% more/less
+            if (Walkers.find(Actor) == Walkers.end() && Actor->GetActor()->WasRecentlyRendered())
+            {
+                Walkers[Actor] = NewWalker(Actor);
+            }
         }
-        Walkers.push_back(WS);
     }
 }
 
@@ -146,8 +161,11 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
     // loop over all relevent (rendered) walkers and give them some simple
     // policy to walk around the sidewalks
 
-    for (WalkerStruct &WS : Walkers)
+    FindWalkers(World);
+
+    for (auto &KeyValuePair : Walkers)
     {
+        WalkerStruct &WS = KeyValuePair.second;
         class FCarlaActor *Walker = WS.Walker;
         ensure(Walker != nullptr);
         if (Walker == nullptr)
@@ -159,10 +177,12 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
         if (WalkerActor == nullptr)
             continue;
 
-        // optimization tip! Only compute their walk cycle if they are visible!
+        // Skip these walkers
         {
-            const float Tolerance = 0.0f; // immediate!
-            if (!WalkerActor->WasRecentlyRendered(Tolerance))
+            const FName DummyWalkerTag{"DummyWalker"};
+            bool SkipWalker = !WalkerActor->WasRecentlyRendered(0.0f) || // optimization
+                              !WalkerActor->ActorHasTag(DummyWalkerTag); // not part of this policy
+            if (SkipWalker)
             {
                 // apply empty control (just stay in place)
                 auto Response = Walker->ApplyControlToWalker(FWalkerControl{});

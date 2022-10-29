@@ -593,24 +593,23 @@ ECarlaServerResponse FCarlaActor::SetActorEnableGravity(bool bEnabled)
   return ECarlaServerResponse::Success;
 }
 
-ECarlaServerResponse FCarlaActor::SetActorEnableOverlay(bool bEnabled)
+ECarlaServerResponse FCarlaActor::SetActorApplyTag(const FString &Tag)
 {
-  /// TODO: consider moving the OverlayActor logic (including tracking) to within the FCarlaActor?
+  // use SetActorApplyTag("Hello") to add "Hello" tag
+  // use SetActorApplyTag("!Hello") to remove "Hello" tag
 
   auto Actor = GetActor();
   if (Actor == nullptr)
-  {
     return ECarlaServerResponse::NullActor;
-  }
-  const auto OverlayTag = FName("Overlay");
+  if (Tag.Len() == 0)
+    return ECarlaServerResponse::FunctionNotSupported;
+
+  bool bEnabled = (Tag[0] != '!'); // use this bang to remove a tag from the actor
+  const FString OverlayTag = bEnabled ? Tag : Tag.Mid(1);
   if (bEnabled)
-  {
-    Actor->Tags.Add(OverlayTag);
-  }
+    Actor->Tags.Add(FName(*OverlayTag));
   else
-  {
-    Actor->Tags.Remove(OverlayTag);
-  }
+    Actor->Tags.Remove(FName(*OverlayTag));
   return ECarlaServerResponse::Success;
 }
 

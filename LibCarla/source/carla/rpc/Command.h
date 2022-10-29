@@ -193,14 +193,14 @@ namespace rpc {
       MSGPACK_DEFINE_ARRAY(actor, enabled);
     };
 
-    struct SetEnableOverlay : CommandBase<SetEnableOverlay> {
-      SetEnableOverlay() = default;
-      SetEnableOverlay(ActorId id, bool value)
+    struct ApplyTag : CommandBase<ApplyTag> {
+      ApplyTag() = default;
+      ApplyTag(ActorId id, const std::string &Tag)
         : actor(id),
-          enabled(value) {}
+          tag(Tag) {}
       ActorId actor;
-      bool enabled;
-      MSGPACK_DEFINE_ARRAY(actor, enabled);
+      std::string tag;
+      MSGPACK_DEFINE_ARRAY(actor, tag);
     };
 
     struct SetAutopilot : CommandBase<SetAutopilot> {
@@ -258,7 +258,7 @@ namespace rpc {
         ApplyTorque,
         SetSimulatePhysics,
         SetEnableGravity,
-        SetEnableOverlay,
+        ApplyTag,
         SetAutopilot,
         ShowDebugTelemetry,
         SetVehicleLightState>;

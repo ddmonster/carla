@@ -88,8 +88,8 @@ namespace client {
     GetEpisode().Lock()->SetActorEnableGravity(*this, enabled);
   }
 
-  void Actor::SetEnableOverlay(const bool enabled) {
-    GetEpisode().Lock()->SetActorEnableOverlay(*this, enabled);
+  void Actor::ApplyTag(const std::string &Tag) {
+    GetEpisode().Lock()->SetActorApplyTag(*this, Tag);
   }
 
   rpc::ActorState Actor::GetActorState() const {
