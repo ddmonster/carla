@@ -8,10 +8,15 @@
 
 DummyWalkers::DummyWalkers()
 {
-    /// TODO: use params file
-    NumWalkers = 30;
-    Seed = 0;
+    ReadConfigValue("DummyWalkers", "NumberOfWalkers", NumWalkers);
+    ReadConfigValue("DummyWalkers", "RandomSeed", Seed);
+
+    // seed random number generator (one per random sequence)
+    SpawnRNG = std::mt19937(Seed);
+    DescrRNG = std::mt19937(Seed);
+    PhysicsRNG = std::mt19937(Seed);
 }
+
 void DummyWalkers::Setup(UWorld *World)
 {
     // get carla episode/map
@@ -80,16 +85,14 @@ void DummyWalkers::Setup(UWorld *World)
     // begin spawning the walkers
     for (size_t i = 0; i < NumWalkers; i++)
     {
-        /// TODO: seed the randomness so it is consistent
-
         // designate spawn location
         FTransform SpawnTransform;
         {
-            size_t RandIdx = FMath::RandRange(0, SideWalkLocations.Num() - 1);
+            size_t RandIdx = RandRange(Unif01(SpawnRNG), 0, SideWalkLocations.Num() - 1);
             FVector Location = SideWalkLocations[RandIdx];
             Location.Z += 100; // to account for the actor height (cm)
             FRotator Rotation = FRotator::ZeroRotator;
-            Rotation.Yaw = FMath::RandRange(-180, 180); // random heading
+            Rotation.Yaw = RandRange(Unif01(SpawnRNG), -180, 180); // random heading
             SpawnTransform = FTransform{Rotation, Location, FVector::OneVector};
         }
 
@@ -100,7 +103,7 @@ void DummyWalkers::Setup(UWorld *World)
             FActorDescription Description;
             {
                 // designate walker type
-                size_t RandIdx = FMath::RandRange(0, SpawnableWalkers.Num() - 1);
+                size_t RandIdx = RandRange(Unif01(DescrRNG), 0, SpawnableWalkers.Num() - 1);
                 FActorDefinition Definition = SpawnableWalkers[RandIdx];
                 Description.UId = Definition.UId;
                 Description.Id = Definition.Id;
@@ -127,7 +130,14 @@ void DummyWalkers::Setup(UWorld *World)
             Walker = Result.Value; // assign FCarlaActor
         }
         ensure(Walker != nullptr);
-        Walkers.push_back(Walker);
+
+        struct WalkerStruct WS;
+        {
+            WS.Walker = Walker;
+            float rand_0_1 = Unif01(PhysicsRNG);
+            WS.Speed *= (rand_0_1 + 0.5f); // between 50% more/less
+        }
+        Walkers.push_back(WS);
     }
 }
 
@@ -136,14 +146,15 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
     // loop over all relevent (rendered) walkers and give them some simple
     // policy to walk around the sidewalks
 
-    for (FCarlaActor *Walker : Walkers)
+    for (WalkerStruct &WS : Walkers)
     {
+        class FCarlaActor *Walker = WS.Walker;
         ensure(Walker != nullptr);
         if (Walker == nullptr)
             continue;
 
         // get AActor from FCarlaActor
-        const AActor *WalkerActor = Walker->GetActor();
+        const class AActor *WalkerActor = Walker->GetActor();
         ensure(WalkerActor != nullptr);
         if (WalkerActor == nullptr)
             continue;
@@ -153,6 +164,10 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
             const float Tolerance = 0.0f; // immediate!
             if (!WalkerActor->WasRecentlyRendered(Tolerance))
             {
+                // apply empty control (just stay in place)
+                auto Response = Walker->ApplyControlToWalker(FWalkerControl{});
+                Walker->SetActorState(carla::rpc::ActorState::Dormant); // go to sleep
+
                 continue; // skip computation for this actor
             }
         }
@@ -160,11 +175,9 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
         const FVector &Location = WalkerActor->GetRootComponent()->GetComponentLocation(); // world space
         FRotator Rotation = WalkerActor->GetRootComponent()->GetComponentRotation();       // world space
         // move player forward by Speed meters per second
-        const float Speed = 134.f;      // ~3mph (average human walking speed)
-        const float AngularStep = 45.f; // granularity of angular checks for walkable
-        const size_t NumChecks = static_cast<size_t>(360 / AngularStep);
-        const float PersonHeightMax = 180; // cm (on average)
-        FVector NewWalkableLocation;       // where the actor will land if they take the step
+        const size_t NumChecks = static_cast<size_t>(360 / WS.AngularStep);
+        constexpr float PersonHeightMax = 180; // cm (on average)
+        FVector NewWalkableLocation;           // where the actor will land if they take the step
 
         bool Walkable = false;
         int RemainingIters = 10; // upper bound so loop won't go forever
@@ -174,7 +187,7 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
             for (int i = 0; i < NumChecks && !Walkable; i++)
             {
                 const FVector PossibleNewLocation =
-                    Location + Lookahead * Speed * Rotation.RotateVector(FVector::ForwardVector);
+                    Location + Lookahead * WS.Speed * Rotation.RotateVector(FVector::ForwardVector);
                 { // compute if ground in front of Walker is walkable
                     FHitResult Hit = DownGroundTrace(World, PossibleNewLocation, PersonHeightMax, {WalkerActor});
                     class AActor *GroundActor = nullptr;
@@ -185,7 +198,7 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
                 if (!Walkable)
                 { // begin rotation step to see if the next AngularStep is walkable
                     // rotate CW (arbitrary choice)
-                    Rotation.Yaw += AngularStep;
+                    Rotation.Yaw += WS.AngularStep;
                 }
             }
             Lookahead += 1.f; // can also make it double (ie. nonlinear increase)
@@ -198,11 +211,11 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
             // Walker->PutActorToSleep(UCarlaStatics::GetCurrentEpisode(World)); // destroys this actor
         }
 
-        FWalkerControl WalkerControl;
+        struct FWalkerControl WalkerControl;
         { // create walker control following policy (stay on sidewalk)
 
             { // set forward speed
-                WalkerControl.Speed = Speed;
+                WalkerControl.Speed = WS.Speed;
             }
 
             { // need to jump?
@@ -214,7 +227,6 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
                     {
                         const float JumpThresh = 5.f; // cm threshold to jump
                         // if the walkable location is higher than the current location by a threshold
-                        UE_LOG(LogTemp, Log, TEXT("Z diff: %.3f, %.3f"), NewWalkableLocation.Z, RightBelow.Location.Z);
                         if (NewWalkableLocation.Z > RightBelow.Location.Z + JumpThresh) // perhaps on a curb/hill
                         {
                             WalkerControl.Jump = true;

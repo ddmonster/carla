@@ -508,4 +508,9 @@ static bool bIsWalkable(const AActor *Actor)
     return bIsWalkable(Actor->GetName().ToLower());
 }
 
+static int RandRange(float F, int Min, int Max)
+{
+    return static_cast<int>(F * (Max - Min) - Min);
+}
+
 #endif
