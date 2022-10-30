@@ -16,6 +16,7 @@
 #include "FlatHUD.h"                                  // ADReyeVRHUD
 #include "ImageUtils.h"                               // CreateTexture2D
 #include "LevelScript.h"                              // ADReyeVRLevel
+#include "Overlaymanager.h"                           // FOverlayManager
 #include "WheeledVehicle.h"                           // VehicleMovementComponent
 #include <stdio.h>
 #include <vector>
@@ -235,6 +236,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float MaxSteerAngleDeg;
     float MaxSteerVelocity;
     float SteeringAnimScale;
+
+    FOverlayManager *OverlayManager = nullptr;
 
     ////////////////:OTHER:////////////////
 
