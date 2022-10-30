@@ -19,6 +19,14 @@ DummyWalkers::DummyWalkers()
 
 void DummyWalkers::Setup(UWorld *World)
 {
+    // this is a very expensive function to spawn all the initial walkers
+    // a) find all possible walker spawn locations (this is very slow)
+    // b) designates what kind of actors (by blueprint definition) to spawn
+    // c) goes and spawns all the walkers
+
+    if (NumWalkers == 0) // if we are spawning no actors to begin with, skip this
+        return;
+
     // get carla episode/map
     auto Episode = UCarlaStatics::GetCurrentEpisode(World);
     ensure(Episode != nullptr);
