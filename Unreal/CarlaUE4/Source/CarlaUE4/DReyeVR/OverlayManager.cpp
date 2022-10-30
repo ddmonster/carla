@@ -1,56 +1,91 @@
 #include "OverlayManager.h"
-#include "Carla/Actor/ActorInfo.h"
-#include "Carla/Actor/ActorRegistry.h"
-#include "Carla/Actor/CarlaActor.h"
-#include "Carla/Game/CarlaStatics.h"
+#include "Carla/Actor/ActorRegistry.h" // FActorRegistry
+#include "Carla/Actor/CarlaActor.h"    // FCarlaActor
+#include "Carla/Game/CarlaStatics.h"   // GetCurrentEpisodes
 #include "DrawDebugHelpers.h"
 #include "GameFramework/Actor.h"
-#include "carla/rpc/ActorState.h"
-#include "carla/rpc/VehicleLightState.h"
 
 void FOverlayManager::Tick(float DeltaTime)
 {
-    if (!Episode)
+    if (!Episode || !EgoVehiclePtr)
         return;
 
     const FActorRegistry &Registry = Episode->GetActorRegistry();
-    int x = 0;
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
         FCarlaActor *Actor = It.Value().Get();
-        if (Actor->GetActorId() == EgoVehicleID)
-            continue;
+        if (Actor->GetActor() == EgoVehiclePtr)
+            continue; // skip the EgoVehicle
 
         FCarlaActor::ActorType type = Actor->GetActorType();
         if (type == FCarlaActor::ActorType::Vehicle || type == FCarlaActor::ActorType::Walker)
         {
             if (Actor->GetActor()->WasRecentlyRendered(DeltaTime))
             {
+                if (OverlayMapping.find(Actor) == OverlayMapping.end())
+                {
+                    // assign some overlay to this actor
+                    OverlayMapping[Actor] = ActorOverlayData::New(World, Actor);
+                }
+                ensure(OverlayMapping.find(Actor) != OverlayMapping.end());
+
                 // FVector Pos = Actor->GetActorGlobalLocation();
-                FVector Pos = Actor->GetActor()->GetActorLocation();
-                DrawDebugSphere(World, Pos, 25.0f, 12, FColor::Blue);
-                ++x;
+                FVector BBox_Offset, BBox_Extent;
+                Actor->GetActor()->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
+                float Height = 2 * BBox_Extent.Z; // extent is only half the "volume" (extension from center)
+                // 1m (100 cm) from the height of the actor
+                FVector Pos = Actor->GetActor()->GetActorLocation() + (Height + 100.f) * FVector::UpVector;
+
+                /// TODO: make rotation relative to EgoVehicle
+                ensure(OverlayMapping[Actor].Overlay != nullptr);
+                auto &Overlay = *(OverlayMapping[Actor].Overlay);
+                { // enable overlay and move correctly
+                    Overlay.Activate();
+                    auto Col = FLinearColor::Red;
+                    Overlay.MaterialParams.BaseColor = Col;
+                    Overlay.MaterialParams.Emissive = 0.5 * Col;
+                    Overlay.MaterialParams.Opacity = 0.5;
+                    Overlay.SetActorScale3D(0.5 * FVector::OneVector);
+                    Overlay.SetActorLocation(Pos);
+                    FRotator Rotation = OverlayTypeRotationCone(OverlayMapping[Actor].OverlayType);
+                    Overlay.SetActorRotation(Rotation);
+                }
             }
         }
     }
-    UE_LOG(LogTemp, Log, TEXT("Overlay Manager %d"), x);
 }
 
 void FOverlayManager::SetWorld(UWorld *ThisWorld)
 {
+    ensure(ThisWorld != nullptr);
     World = ThisWorld;
-}
-
-void FOverlayManager::SetEpisode(UCarlaEpisode *ThisEpisode)
-{
-    Episode = ThisEpisode;
+    Episode = UCarlaStatics::GetCurrentEpisode(World);
+    ensure(Episode != nullptr);
 }
 
 void FOverlayManager::Destroy()
 {
 }
 
-FOverlayManager::FOverlayManager(int ID)
+FRotator FOverlayManager::OverlayTypeRotationCone(enum FOverlayManager::ActorOverlayType OverlayType)
 {
-    EgoVehicleID = ID;
+    // FRotator{Pitch, Yaw, Roll}
+    // assuming the Overlay is a cone (default pointing up)
+    if (OverlayType == FOverlayManager::ActorOverlayType::UP)
+    {
+        return FRotator{0, 0, 0};
+    }
+    else if (OverlayType == FOverlayManager::ActorOverlayType::DOWN)
+    {
+        return FRotator{0, 180, 0};
+    }
+    else if (OverlayType == FOverlayManager::ActorOverlayType::LEFT)
+    {
+        return FRotator{90, 90, 0};
+    }
+    else if (OverlayType == FOverlayManager::ActorOverlayType::RIGHT)
+    {
+        return FRotator{90, -90, 0};
+    }
+    return FRotator::ZeroRotator;
 }

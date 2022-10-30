@@ -42,7 +42,7 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
     ConstructSteeringWheel();
 
     // Create overlay manager
-    OverlayManager = new FOverlayManager(EgoVehicleID);
+    OverlayManager = new FOverlayManager(this);
 }
 
 void AEgoVehicle::ReadConfigVariables()
@@ -110,7 +110,6 @@ void AEgoVehicle::BeginPlay()
 
     ensure(OverlayManager != nullptr);
     OverlayManager->SetWorld(World);
-    OverlayManager->SetEpisode(Episode);
 
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoVehicle"));
 }
