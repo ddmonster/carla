@@ -7,6 +7,7 @@
 
 void FOverlayManager::Tick(float DeltaTime)
 {
+#if 0 // fails if registry is not perfectly aligned with world (fails on --reloadWorld)
     if (!Episode || !EgoVehiclePtr)
         return;
 
@@ -14,7 +15,7 @@ void FOverlayManager::Tick(float DeltaTime)
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
         FCarlaActor *Actor = It.Value().Get();
-        if (Actor->GetActor() == EgoVehiclePtr)
+        if (Actor == nullptr || Actor->GetActor() == EgoVehiclePtr)
             continue; // skip the EgoVehicle
 
         FCarlaActor::ActorType type = Actor->GetActorType();
@@ -53,6 +54,7 @@ void FOverlayManager::Tick(float DeltaTime)
             }
         }
     }
+#endif
 }
 
 void FOverlayManager::SetWorld(UWorld *ThisWorld)
