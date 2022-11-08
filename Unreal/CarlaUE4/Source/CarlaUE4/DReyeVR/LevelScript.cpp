@@ -2,6 +2,7 @@
 #include "Carla/Game/CarlaStatics.h"           // GetRecorder, GetEpisode
 #include "Carla/Sensor/DReyeVRSensor.h"        // ADReyeVRSensor
 #include "Carla/Vehicle/CarlaWheeledVehicle.h" // ACarlaWheeledVehicle
+#include "Carla/Walker/WalkerBase.h"           // AWalkerBase
 #include "Components/AudioComponent.h"         // UAudioComponent
 #include "DReyeVRPawn.h"                       // ADReyeVRPawn
 #include "EgoVehicle.h"                        // AEgoVehicle
@@ -282,11 +283,19 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
     if (TimeSinceLastActorRefresh == 0.f)
     {
         // this is expensive so make sure RefreshActorSearchTick is reasonable!
-        TArray<AActor *> FoundActors;
+        TArray<AActor *> FoundWalkers;
+        TArray<AActor *> FoundVehicles;
         if (GetWorld() != nullptr)
         {
-            UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundActors);
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundVehicles);
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWalkerBase::StaticClass(), FoundWalkers);
         }
+
+        // concat the walkers and vehicles to a single "actors" list
+        TArray<AActor *> FoundActors;
+        FoundActors += FoundVehicles;
+        FoundActors += FoundWalkers;
+
         // force "delete" for these elements
         for (auto &bbox_key_value : BBoxes)
         {
