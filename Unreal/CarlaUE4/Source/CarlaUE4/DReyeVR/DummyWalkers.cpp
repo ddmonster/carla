@@ -151,9 +151,12 @@ void DummyWalkers::FindWalkers(UWorld *World)
 
     const FName DummyWalkerTag{"DummyWalker"};
     const FActorRegistry &Registry = Episode->GetActorRegistry();
+    const size_t PrevSize = Walkers.size();
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
         FCarlaActor *Actor = It.Value().Get();
+        if (Actor == nullptr)
+            continue; // skip this actor
         if (Actor->GetActorType() == FCarlaActor::ActorType::Walker && Actor->GetActor()->ActorHasTag(DummyWalkerTag))
         {
             if (Walkers.find(Actor) == Walkers.end() && Actor->GetActor()->WasRecentlyRendered())
@@ -162,6 +165,9 @@ void DummyWalkers::FindWalkers(UWorld *World)
             }
         }
     }
+    const size_t NewSize = Walkers.size();
+    if (NewSize != PrevSize)
+        UE_LOG(LogTemp, Log, TEXT("Updated Walker list to contain %zu walkers (was %zu)"), NewSize, PrevSize);
 }
 
 void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
@@ -169,21 +175,39 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
     // loop over all relevent (rendered) walkers and give them some simple
     // policy to walk around the sidewalks
 
-    FindWalkers(World);
+    if (TimeSinceLastActorRefresh == 0.f)
+    {
+        FindWalkers(World);
+    }
+    if (TimeSinceLastActorRefresh < RefreshActorSearchTick)
+    {
+        // keep incrementing the time since last refresh as long as the threshold has not been met
+        TimeSinceLastActorRefresh += DeltaSeconds;
+    }
+    else
+    {
+        // reset the time since last actor was refreshed if beyond the tick threshold
+        TimeSinceLastActorRefresh = 0.f;
+    }
 
+    std::vector<FCarlaActor *> ToRemove = {}; // which walkers are no longer valid
     for (auto &KeyValuePair : Walkers)
     {
         WalkerStruct &WS = KeyValuePair.second;
         class FCarlaActor *Walker = WS.Walker;
-        ensure(Walker != nullptr);
         if (Walker == nullptr)
+        {
+            ToRemove.push_back(KeyValuePair.first);
             continue;
+        }
 
         // get AActor from FCarlaActor
         const class AActor *WalkerActor = Walker->GetActor();
-        ensure(WalkerActor != nullptr);
         if (WalkerActor == nullptr)
+        {
+            ToRemove.push_back(KeyValuePair.first);
             continue;
+        }
 
         // Skip these walkers
         {
@@ -271,5 +295,12 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
         }
         Walker->SetActorState(carla::rpc::ActorState::Active); // NOT dormant
         auto Response = Walker->ApplyControlToWalker(WalkerControl);
+    }
+
+    // remove all the ToRemove actors
+    for (FCarlaActor *DeadWalker : ToRemove)
+    {
+        ensure(Walkers.find(DeadWalker) != Walkers.end());
+        Walkers.erase(DeadWalker);
     }
 }

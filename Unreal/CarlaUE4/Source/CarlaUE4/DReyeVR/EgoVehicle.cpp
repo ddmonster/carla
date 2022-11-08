@@ -96,9 +96,6 @@ void AEgoVehicle::BeginPlay()
     World = GetWorld();
     Episode = UCarlaStatics::GetCurrentEpisode(World);
 
-    // Spawn and attach the EgoSensor
-    InitSensor();
-
     // initialize
     InitAIPlayer();
 
@@ -112,6 +109,8 @@ void AEgoVehicle::BeginPlay()
     OverlayManager->SetWorld(World);
 
     UE_LOG(LogTemp, Log, TEXT("Initialized DReyeVR EgoVehicle"));
+
+    ensure(EgoSensor == nullptr); // EgoSensor gets initialized on the very first tick!
 }
 
 void AEgoVehicle::BeginDestroy()
@@ -128,11 +127,11 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    // Update the positions based off replay data
-    ReplayTick();
-
     // Get the current data from the AEgoSensor and use it
     UpdateSensor(DeltaSeconds);
+
+    // Update the positions based off replay data
+    ReplayTick();
 
     // Draw debug lines on editor
     DebugLines();
@@ -322,6 +321,9 @@ void AEgoVehicle::TickAutopilot()
 
 void AEgoVehicle::InitSensor()
 {
+    // update the world on refresh (ex. --reloadWorld)
+    World = GetWorld();
+    check(World != nullptr);
     // Spawn the EyeTracker Carla sensor and attach to Ego-Vehicle:
     FActorSpawnParameters EyeTrackerSpawnInfo;
     EyeTrackerSpawnInfo.Owner = this;
@@ -381,6 +383,20 @@ void AEgoVehicle::ReplayTick()
 
 void AEgoVehicle::UpdateSensor(const float DeltaSeconds)
 {
+    if (EgoSensor == nullptr) // Spawn and attach the EgoSensor
+    {
+        // unfortunately World->SpawnActor *sometimes* fails if used in BeginPlay so
+        // calling it once in the tick is fine to avoid this crash.
+        InitSensor();
+    }
+
+    ensure(EgoSensor != nullptr);
+    if (EgoSensor == nullptr)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("EgoSensor initialization failed!"));
+        return;
+    }
+
     // Explicitly update the EgoSensor here, synchronized with EgoVehicle tick
     EgoSensor->ManualTick(DeltaSeconds); // Ensures we always get the latest data
 

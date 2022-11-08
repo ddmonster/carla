@@ -38,4 +38,8 @@ class DummyWalkers
     std::uniform_real_distribution<float> Unif01;
     int NumWalkers;
     int Seed;
+
+    // for accessing all actors (vehicles/walkers only) in the world
+    float RefreshActorSearchTick = 5.f; // tickrate (seconds) for FindWalkers()
+    float TimeSinceLastActorRefresh = 0.f;
 };

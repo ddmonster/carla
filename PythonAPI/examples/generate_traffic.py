@@ -356,11 +356,11 @@ def main():
             if not args.asynch and synchronous_master:
                 world.tick()
                 i += 1
-                if i == 1000:
-                    print("DISABLING ALL WALKERS")
-                    for walker in all_actors:
-                        walker.apply_tag("!Overlay")
-                        walker.apply_tag("!DummyWalker")
+                # if i == 1000:
+                #     print("DISABLING ALL WALKERS")
+                #     for walker in all_actors:
+                #         walker.apply_tag("!Overlay")
+                #         walker.apply_tag("!DummyWalker")
                 print(f"i: {i}", end="\r", flush=True)
             else:
                 world.wait_for_tick()
