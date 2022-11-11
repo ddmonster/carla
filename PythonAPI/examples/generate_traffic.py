@@ -323,7 +323,7 @@ def main():
             all_id.append(walkers_list[i]["id"])
         all_actors = world.get_actors(all_id)
         for walker in all_actors:
-            walker.apply_tag("Overlay")
+            # walker.apply_tag("Overlay")
             walker.apply_tag("DummyWalker")
 
         # wait for a tick to ensure client receives the last transform of the walkers we have just created
@@ -355,13 +355,6 @@ def main():
         while True:
             if not args.asynch and synchronous_master:
                 world.tick()
-                i += 1
-                # if i == 1000:
-                #     print("DISABLING ALL WALKERS")
-                #     for walker in all_actors:
-                #         walker.apply_tag("!Overlay")
-                #         walker.apply_tag("!DummyWalker")
-                print(f"i: {i}", end="\r", flush=True)
             else:
                 world.wait_for_tick()
 
@@ -376,10 +369,6 @@ def main():
 
         print('\ndestroying %d vehicles' % len(vehicles_list))
         client.apply_batch([carla.command.DestroyActor(x) for x in vehicles_list])
-
-        # stop walker controllers (list is [controller, actor, controller, actor ...])
-        for i in range(0, len(all_id), 2):
-            all_actors[i].stop()
 
         print('\ndestroying %d walkers' % len(walkers_list))
         client.apply_batch([carla.command.DestroyActor(x) for x in all_id])
