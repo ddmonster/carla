@@ -33,13 +33,13 @@ class DummyWalkers
 
     void FindWalkers(UWorld *World);
 
-    std::unordered_map<FCarlaActor *, WalkerStruct> Walkers;
+    std::unordered_map<AActor *, WalkerStruct> Walkers;
     std::mt19937 SpawnRNG, DescrRNG, PhysicsRNG;
     std::uniform_real_distribution<float> Unif01;
     int NumWalkers;
     int Seed;
 
     // for accessing all actors (vehicles/walkers only) in the world
-    float RefreshActorSearchTick = 5.f; // tickrate (seconds) for FindWalkers()
+    float RefreshActorSearchTick = 1.f; // tickrate (seconds) for FindWalkers()
     float TimeSinceLastActorRefresh = 0.f;
 };
