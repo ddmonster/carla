@@ -10,6 +10,8 @@ DummyWalkers::DummyWalkers()
 {
     ReadConfigValue("DummyWalkers", "NumberOfInitialWalkers", NumWalkers);
     ReadConfigValue("DummyWalkers", "RandomSeed", Seed);
+    ReadConfigValue("DummyWalkers", "PolicyTickRate", RefreshActorSearchTick);
+    ReadConfigValue("DummyWalkers", "Tag", DummyWalkerTag);
 
     // seed random number generator (one per random sequence)
     SpawnRNG = std::mt19937(Seed);
@@ -26,6 +28,11 @@ void DummyWalkers::Setup(UWorld *World)
 
     if (NumWalkers == 0) // if we are spawning no actors to begin with, skip this
         return;
+
+    UE_LOG(
+        LogTemp, Warning,
+        TEXT("NOTE: DummyWalkers C++ spawn is slow and kinda broken. It is recommended to instead spawn your walkers "
+             "with PythonAPI and apply the DummyWalker tag: actor.apply_tag(\"DummyWalker\") to get a better effect."));
 
     // get carla episode/map
     auto Episode = UCarlaStatics::GetCurrentEpisode(World);
@@ -151,7 +158,6 @@ void DummyWalkers::FindWalkers(UWorld *World)
     if (Episode == nullptr)
         return;
 
-    const FName DummyWalkerTag{"DummyWalker"};
     const FActorRegistry &Registry = Episode->GetActorRegistry();
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
@@ -211,7 +217,6 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
 
         // Skip these walkers
         {
-            const FName DummyWalkerTag{"DummyWalker"};
             bool SkipWalker = !WalkerActor->WasRecentlyRendered(0.0f) || // optimization
                               !WalkerActor->ActorHasTag(DummyWalkerTag); // not part of this policy
             if (SkipWalker)

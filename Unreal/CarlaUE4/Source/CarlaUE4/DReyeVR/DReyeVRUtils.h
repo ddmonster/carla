@@ -161,6 +161,13 @@ static void ReadConfigValue(const FString &Section, const FString &Variable, FSt
         UE_LOG(LogTemp, Error, TEXT("No variable matching %s found"), *FString(VariableName.c_str()));
 }
 
+static void ReadConfigValue(const FString &Section, const FString &Variable, FName &Value)
+{
+    FString TmpValueString;
+    ReadConfigValue(Section, Variable, TmpValueString);
+    Value = FName(*TmpValueString);
+}
+
 static FVector ComputeClosestToRayIntersection(const FVector &L0, const FVector &LDir, const FVector &R0,
                                                const FVector &RDir)
 {

@@ -1,8 +1,18 @@
 #include "AttentionModel.h"
-#include "EgoVehicle.h" // AEgoVehicle
+#include "DReyeVRUtils.h" // ReadConfigVariable
+#include "EgoVehicle.h"   // AEgoVehicle
 
 namespace SituationalAwareness
 {
+
+AttentionModel::AttentionModel()
+{
+    // initialize metaparams from the config file
+    ReadConfigValue("AttentionModel", "ComprehendedThreshold", ComprehendedThresholdSeconds);
+    ReadConfigValue("AttentionModel", "LookAwayThreshold", LookAwayThresholdSeconds);
+    ReadConfigValue("AttentionModel", "DetectedThresholdLifetime", DetectedThresholdLifetimeSeconds);
+    ReadConfigValue("AttentionModel", "ComprehendedThresholdLifetime", ComprehendedThresholdLifetimeSeconds);
+}
 
 void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime, ADReyeVRCustomActor *Overlay,
                               AActor *Actor, AEgoVehicle *EgoVehiclePtr)

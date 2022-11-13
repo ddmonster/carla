@@ -84,10 +84,9 @@ class ADReyeVRLevel : public ALevelScriptActor
     void RefreshActors(float DeltaSeconds);
     void DrawBBoxes(const float DeltaSeconds);
     std::unordered_map<std::string, ADReyeVRCustomActor *> BBoxes;
-    const FName OverlayTag{"Overlay"}; // make sure to use this in PythonAPI as
-    // actor.apply_tag("Overlay") to enable overlay and actor.apply_tag("!Overlay") to remove
 
     // attention model
+    FName OverlayTag; // make sure to use this in PythonAPI
     class SituationalAwareness::AttentionModel *Attention = nullptr;
 
     // dummy walkers

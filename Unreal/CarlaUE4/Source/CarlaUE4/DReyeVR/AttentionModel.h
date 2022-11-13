@@ -27,7 +27,7 @@ struct ElementSA
 class AttentionModel
 {
   public:
-    AttentionModel() = default;
+    AttentionModel();
 
     void Evaluate(const float DeltaSeconds, float CurrentTime, ADReyeVRCustomActor *Overlay, AActor *Actor,
                   AEgoVehicle *EgoVehiclePtr);
@@ -39,12 +39,12 @@ class AttentionModel
     std::unordered_map<AActor *, ElementSA> SceneElements;
 
     // metaparameters
-    const float ComprehendedThresholdSeconds = 0.5f; // if dwelled for this time (s) => comprehended
-    const float LookAwayThresholdSeconds = 0.2;
+    float ComprehendedThresholdSeconds = 0.5f; // if dwelled for this time (s) => comprehended
+    float LookAwayThresholdSeconds = 0.2f;
 
     // number of seconds an actor can stay in this "state" before downgrading
-    const float DetectedThresholdLifetimeSeconds = 1.f;
-    const float ComprehendedThresholdLifetimeSeconds = 5.f;
+    float DetectedThresholdLifetimeSeconds = 1.f;
+    float ComprehendedThresholdLifetimeSeconds = 5.f;
 };
 
 } // namespace SituationalAwareness

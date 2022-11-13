@@ -39,6 +39,9 @@ class DummyWalkers
     int NumWalkers;
     int Seed;
 
+    // metaparams
+    FName DummyWalkerTag;
+
     // for accessing all actors (vehicles/walkers only) in the world
     float RefreshActorSearchTick = 1.f; // tickrate (seconds) for FindWalkers()
     float TimeSinceLastActorRefresh = 0.f;

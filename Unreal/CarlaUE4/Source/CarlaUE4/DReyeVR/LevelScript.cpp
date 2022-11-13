@@ -23,6 +23,9 @@ ADReyeVRLevel::ADReyeVRLevel(FObjectInitializer const &FO) : Super(FO)
     // Recorder/replayer
     ReadConfigValue("Replayer", "RunSyncReplay", bReplaySync);
 
+    // initialize overlay tag
+    ReadConfigValue("AttentionModel", "Tag", OverlayTag);
+
     // initialize attention model
     Attention = new SituationalAwareness::AttentionModel();
 }
