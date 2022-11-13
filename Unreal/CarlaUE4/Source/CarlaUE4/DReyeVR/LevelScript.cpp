@@ -25,6 +25,7 @@ ADReyeVRLevel::ADReyeVRLevel(FObjectInitializer const &FO) : Super(FO)
 
     // initialize overlay tag
     ReadConfigValue("AttentionModel", "Tag", OverlayTag);
+    ReadConfigValue("AttentionModel", "BBoxOpacity", BBoxOpacity);
 
     // initialize attention model
     Attention = new SituationalAwareness::AttentionModel();
@@ -290,6 +291,8 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
         TArray<AActor *> FoundVehicles;
         if (GetWorld() != nullptr)
         {
+            /// TODO: make utility functions (DReyeVRUtils.h) for GetAllWalkers and GetAllVehicles and the like using
+            // Carla's own Registry (heavily Null checked! ESPECIALLY FCarlaActor::IsPendingKill()) for performance!
             UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundVehicles);
             UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWalkerBase::StaticClass(), FoundWalkers);
         }
@@ -297,6 +300,7 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
         // concat the walkers and vehicles to a single "actors" list
         TArray<AActor *> FoundActors;
         FoundActors += FoundVehicles;
+        const size_t NumVehicles = FoundVehicles.Num();
         FoundActors += FoundWalkers;
 
         // force "delete" for these elements
@@ -309,24 +313,38 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
 
         // add all the new actors (and delete old ones) to container
         std::unordered_map<std::string, ActorAndMetadata> AllActorsTmp = {};
-        for (AActor *A : FoundActors)
+        for (size_t i = 0; i < FoundActors.Num(); i++)
         {
+            AActor *A = FoundActors[i];
+            bool bActorIsWalker = (i < NumVehicles);
             std::string name = TCHAR_TO_UTF8(*A->GetName());
 
             // compute bounds for the axis-aligned bounding box
             FVector BBox_Offset, BBox_Extent;
-            A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
+            { // assign the bbox size for these actors (different for walkers/vehicles)
+                if (bActorIsWalker)
+                { // we know this actor is a vehicle (Since FoundVehicles was added first)
+                    A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
+                }
+                else
+                { // we know this actor is a walker
+                    A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
+                    // recall this Extent is in cm!
+                    BBox_Extent = FVector{50.f, 50.f, BBox_Extent.Z}; // ensure extent in XY plane is capped
+                }
+            }
 
             ActorAndMetadata ActorData;
             ActorData.Actor = A;
             /// TODO: ensure the rotation of the BBOX extent works as expected (axis aligned tightest bound)
             ActorData.BBox_Extent = A->GetActorRotation().RotateVector(BBox_Extent);
-            if (AllActors.find(name) != AllActors.end() && AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
+            if (!bActorIsWalker && AllActors.find(name) != AllActors.end() &&
+                AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
             {
                 // keep these bounds (tightest) from before
                 ActorData.BBox_Extent = AllActors[name].BBox_Extent;
             }
-            ActorData.BBox_Offset = BBox_Offset - A->GetActorLocation(); // only offset to static mesh
+            ActorData.BBox_Offset = BBox_Offset - A->GetActorLocation(); // only offset to static mesh (relative pos)
             AllActorsTmp[name] = ActorData;
         }
         // reset & update the AllActors container
@@ -378,9 +396,9 @@ void ADReyeVRLevel::DrawBBoxes(const float DeltaSeconds)
         if (BBox != nullptr)
         {
             BBox->Activate();
-            BBox->MaterialParams.Opacity = 0.1f;
+            BBox->MaterialParams.Opacity = BBoxOpacity;
 
-            // this colouring is handled by the Attention model evaluation
+            /// NOTE: this colouring is handled by the Attention model evaluation
             // FLinearColor Col = FLinearColor::Green;
             // constexpr float DangerThreshold = 20.f * 100.f; // meters for "too close"
             // if ((EgoVehiclePtr->GetActorLocation() - A->GetActorLocation()).Size() < DangerThreshold)

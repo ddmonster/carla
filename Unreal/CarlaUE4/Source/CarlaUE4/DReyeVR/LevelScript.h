@@ -87,6 +87,7 @@ class ADReyeVRLevel : public ALevelScriptActor
 
     // attention model
     FName OverlayTag; // make sure to use this in PythonAPI
+    float BBoxOpacity = 0.1f;
     class SituationalAwareness::AttentionModel *Attention = nullptr;
 
     // dummy walkers
