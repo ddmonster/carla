@@ -316,13 +316,13 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
         for (size_t i = 0; i < FoundActors.Num(); i++)
         {
             AActor *A = FoundActors[i];
-            bool bActorIsWalker = (i < NumVehicles);
+            bool bActorIsVehicle = (i < NumVehicles);
             std::string name = TCHAR_TO_UTF8(*A->GetName());
 
             // compute bounds for the axis-aligned bounding box
             FVector BBox_Offset, BBox_Extent;
             { // assign the bbox size for these actors (different for walkers/vehicles)
-                if (bActorIsWalker)
+                if (bActorIsVehicle)
                 { // we know this actor is a vehicle (Since FoundVehicles was added first)
                     A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
                 }
@@ -338,7 +338,7 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
             ActorData.Actor = A;
             /// TODO: ensure the rotation of the BBOX extent works as expected (axis aligned tightest bound)
             ActorData.BBox_Extent = A->GetActorRotation().RotateVector(BBox_Extent);
-            if (!bActorIsWalker && AllActors.find(name) != AllActors.end() &&
+            if (bActorIsVehicle && AllActors.find(name) != AllActors.end() &&
                 AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
             {
                 // keep these bounds (tightest) from before
