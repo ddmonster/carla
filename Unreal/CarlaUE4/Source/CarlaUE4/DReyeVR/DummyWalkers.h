@@ -16,8 +16,9 @@ class DummyWalkers
     struct WalkerStruct
     {
         FCarlaActor *Walker = nullptr;
-        float Speed = 134.f;      // ~3mph (average human walking speed)
-        float AngularStep = 45.f; // granularity of angular checks for walkable
+        float Speed = 134.f;         // ~3mph (average human walking speed)
+        float AngularStep = 45.f;    // granularity of angular checks for walkable
+        float TimeInSamePlace = 0.f; // how long has the actor not moved (to tell is stuck in place)
     };
 
     WalkerStruct NewWalker(FCarlaActor *Walker)
@@ -31,7 +32,7 @@ class DummyWalkers
         return WS;
     }
 
-    void FindWalkers(UWorld *World);
+    bool FindWalkers(UWorld *World);
 
     std::unordered_map<AActor *, WalkerStruct> Walkers;
     std::mt19937 SpawnRNG, DescrRNG, PhysicsRNG;
@@ -43,6 +44,6 @@ class DummyWalkers
     FName DummyWalkerTag;
 
     // for accessing all actors (vehicles/walkers only) in the world
-    float RefreshActorSearchTick = 1.f; // tickrate (seconds) for FindWalkers()
+    float RefreshActorSearchTick = 0.1f; // tickrate (seconds) for FindWalkers()
     float TimeSinceLastActorRefresh = 0.f;
 };

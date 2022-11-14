@@ -1,4 +1,6 @@
 #include "LevelScript.h"
+#include "Carla/Actor/ActorDefinition.h"       // FActorDefinition
+#include "Carla/Actor/CarlaActor.h"            // FCarlaActor
 #include "Carla/Game/CarlaStatics.h"           // GetRecorder, GetEpisode
 #include "Carla/Sensor/DReyeVRSensor.h"        // ADReyeVRSensor
 #include "Carla/Vehicle/CarlaWheeledVehicle.h" // ACarlaWheeledVehicle
@@ -286,22 +288,17 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
     // only update the AllActors container on refresh ticks
     if (TimeSinceLastActorRefresh == 0.f)
     {
-        // this is expensive so make sure RefreshActorSearchTick is reasonable!
-        TArray<AActor *> FoundWalkers;
-        TArray<AActor *> FoundVehicles;
-        if (GetWorld() != nullptr)
-        {
-            /// TODO: make utility functions (DReyeVRUtils.h) for GetAllWalkers and GetAllVehicles and the like using
-            // Carla's own Registry (heavily Null checked! ESPECIALLY FCarlaActor::IsPendingKill()) for performance!
-            UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACarlaWheeledVehicle::StaticClass(), FoundVehicles);
-            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWalkerBase::StaticClass(), FoundWalkers);
-        }
+        // this is expensive-ish so make sure RefreshActorSearchTick is reasonable!
+        auto WorldPtr = GetWorld();
+        ensure(WorldPtr != nullptr);
+        if (WorldPtr == nullptr)
+            return;
 
-        // concat the walkers and vehicles to a single "actors" list
-        TArray<AActor *> FoundActors;
-        FoundActors += FoundVehicles;
-        const size_t NumVehicles = FoundVehicles.Num();
-        FoundActors += FoundWalkers;
+        auto Episode = UCarlaStatics::GetCurrentEpisode(WorldPtr);
+        ensure(Episode != nullptr);
+        if (Episode == nullptr)
+            return;
+        const FActorRegistry &Registry = Episode->GetActorRegistry();
 
         // force "delete" for these elements
         for (auto &bbox_key_value : BBoxes)
@@ -313,10 +310,18 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
 
         // add all the new actors (and delete old ones) to container
         std::unordered_map<std::string, ActorAndMetadata> AllActorsTmp = {};
-        for (size_t i = 0; i < FoundActors.Num(); i++)
+        for (auto It = Registry.begin(); It != Registry.end(); ++It)
         {
-            AActor *A = FoundActors[i];
-            bool bActorIsVehicle = (i < NumVehicles);
+            FCarlaActor *CarlaActor = It.Value().Get();
+            if (CarlaActor == nullptr || CarlaActor->IsPendingKill())
+                continue; // skip this actor
+            AActor *A = CarlaActor->GetActor();
+            ensure(A != nullptr);
+
+            bool bActorIsVehicle = (CarlaActor->GetActorType() == FCarlaActor::ActorType::Vehicle);
+            if (!A->ActorHasTag(OverlayTag))
+                continue; // skip reserving a bbox for this actor
+
             std::string name = TCHAR_TO_UTF8(*A->GetName());
 
             // compute bounds for the axis-aligned bounding box
@@ -330,19 +335,25 @@ void ADReyeVRLevel::RefreshActors(float DeltaSeconds)
                 { // we know this actor is a walker
                     A->GetActorBounds(true, BBox_Offset, BBox_Extent, false);
                     // recall this Extent is in cm!
-                    BBox_Extent = FVector{50.f, 50.f, BBox_Extent.Z}; // ensure extent in XY plane is capped
+                    BBox_Extent = FVector{70.f, 70.f, BBox_Extent.Z}; // ensure extent in XY plane is capped
                 }
             }
 
             ActorAndMetadata ActorData;
             ActorData.Actor = A;
-            /// TODO: ensure the rotation of the BBOX extent works as expected (axis aligned tightest bound)
-            ActorData.BBox_Extent = A->GetActorRotation().RotateVector(BBox_Extent);
-            if (bActorIsVehicle && AllActors.find(name) != AllActors.end() &&
-                AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
+            if (bActorIsVehicle)
             {
-                // keep these bounds (tightest) from before
-                ActorData.BBox_Extent = AllActors[name].BBox_Extent;
+                /// TODO: ensure the rotation of the BBOX extent works as expected (axis aligned tightest bound)
+                ActorData.BBox_Extent = A->GetActorRotation().RotateVector(BBox_Extent);
+                if (AllActors.find(name) != AllActors.end() && AllActors[name].BBox_Extent.Size() < BBox_Extent.Size())
+                {
+                    // keep these bounds (tightest) from before
+                    ActorData.BBox_Extent = AllActors[name].BBox_Extent;
+                }
+            }
+            else
+            {
+                ActorData.BBox_Extent = BBox_Extent; // no rotation for walkers! (otherwise leads to squishing of bbox!)
             }
             ActorData.BBox_Offset = BBox_Offset - A->GetActorLocation(); // only offset to static mesh (relative pos)
             AllActorsTmp[name] = ActorData;

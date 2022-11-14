@@ -323,7 +323,7 @@ def main():
             all_id.append(walkers_list[i]["id"])
         all_actors = world.get_actors(all_id)
         for walker in all_actors:
-            # walker.apply_tag("Overlay")
+            walker.apply_tag("Overlay")
             walker.apply_tag("DummyWalker")
 
         # wait for a tick to ensure client receives the last transform of the walkers we have just created

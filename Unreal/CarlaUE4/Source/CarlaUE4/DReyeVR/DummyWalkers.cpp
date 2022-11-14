@@ -33,7 +33,7 @@ void DummyWalkers::Setup(UWorld *World)
         LogTemp, Warning,
         TEXT("NOTE: DummyWalkers C++ spawn is slow and kinda broken. It is recommended to instead spawn your walkers "
              "with PythonAPI and apply the DummyWalker tag: actor.apply_tag(\"DummyWalker\") to get a better effect."));
-
+#if 0 // this also won't add the actors to the CarlaRegistry so they won't be findable anyways!
     // get carla episode/map
     auto Episode = UCarlaStatics::GetCurrentEpisode(World);
     ensure(Episode != nullptr);
@@ -149,15 +149,18 @@ void DummyWalkers::Setup(UWorld *World)
         ensure(WalkerActor != nullptr);
         Walkers[WalkerActor] = NewWalker(Walker);
     }
+#endif
 }
 
-void DummyWalkers::FindWalkers(UWorld *World)
+bool DummyWalkers::FindWalkers(UWorld *World)
 {
     auto Episode = UCarlaStatics::GetCurrentEpisode(World);
     ensure(Episode != nullptr);
     if (Episode == nullptr)
-        return;
+        return false;
 
+    // clear all the walkers to refresh on the next tick
+    decltype(Walkers) WalkersTmp; // new batch of walkers
     const FActorRegistry &Registry = Episode->GetActorRegistry();
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
@@ -168,35 +171,53 @@ void DummyWalkers::FindWalkers(UWorld *World)
         ensure(WalkerActor != nullptr);
         if (Actor->GetActorType() == FCarlaActor::ActorType::Walker && WalkerActor->ActorHasTag(DummyWalkerTag))
         {
-            if (Walkers.find(WalkerActor) == Walkers.end() && WalkerActor->WasRecentlyRendered())
+            if (WalkerActor->WasRecentlyRendered()) // optimization
             {
-                Walkers[WalkerActor] = NewWalker(Actor);
+                FCarlaActor *ExistingCarlaActor = nullptr;
+                if (Walkers.find(WalkerActor) != Walkers.end())
+                { // found existing Walker from previous tick
+                    ExistingCarlaActor = Walkers[WalkerActor].Walker;
+                }
+                if (ExistingCarlaActor == nullptr || ExistingCarlaActor->IsPendingKill())
+                    WalkersTmp[WalkerActor] = NewWalker(Actor);
+                else // copy from the existing container
+                    WalkersTmp[WalkerActor] = Walkers[WalkerActor];
             }
         }
     }
-    const size_t NewSize = Walkers.size();
-    if (NewSize > 0)
-        UE_LOG(LogTemp, Log, TEXT("Updated Walker list to with %zu walkers"), NewSize);
+    Walkers.clear();
+    Walkers = WalkersTmp;
+
+    // const size_t NewSize = Walkers.size();
+    // if (NewSize > 0)
+    //     UE_LOG(LogTemp, Log, TEXT("Updated Walker list to with %zu walkers"), NewSize);
+    return Walkers.size() > 0;
 }
 
 void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
 {
     // loop over all relevent (rendered) walkers and give them some simple
-    // policy to walk around the sidewalks
+    // (roomba-like) policy to walk around the sidewalks
 
-    if (TimeSinceLastActorRefresh == 0.f)
-    {
-        FindWalkers(World);
-    }
     if (TimeSinceLastActorRefresh < RefreshActorSearchTick)
     {
         // keep incrementing the time since last refresh as long as the threshold has not been met
         TimeSinceLastActorRefresh += DeltaSeconds;
+        return; // don't update the walker's policy
     }
     else
     {
         // reset the time since last actor was refreshed if beyond the tick threshold
         TimeSinceLastActorRefresh = 0.f;
+    }
+
+    /// NOTE: since the WalkerStruct tracks the LastLocation and LastRotation since
+    // being spawned with NewWalker(), the tickrate (TimeSinceLastActorRefresh) determines
+    // how long this data is "stale" for (until the next dummy walker tick).
+    bool bFoundWalkers = FindWalkers(World);
+    if (bFoundWalkers)
+    {
+        ensure(Walkers.size() > 0);
     }
 
     for (auto &KeyValuePair : Walkers)
@@ -239,7 +260,28 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
         bool Walkable = false;
         int RemainingIters = 10; // upper bound so loop won't go forever
         float Lookahead = 1.f;   // grows to cover more ground if no walkable found
-        while (Walkable == false && RemainingIters > 0)
+
+        // compute whether this walker is stuck
+        {
+            auto AngularVel = [](AActor *Actor) {
+                // taken from CarlaActor.cpp (FCarlaActor::GetActorAngularVelocity)
+                UPrimitiveComponent *Primitive = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
+                if (Primitive)
+                    return Primitive->GetPhysicsAngularVelocityInDegrees();
+                return FVector();
+            };
+            const float VelocityStoppedThreshCm = 10.f;  // if velocity within this (cm/s) consider "stopped"
+            const float AngularVelStoppedThreshCm = 3.f; // if angular velocity within this (deg/s) consider "stopped"
+            if (WalkerActor->GetVelocity().Size() < VelocityStoppedThreshCm &&
+                AngularVel(WalkerActor).Size() < AngularVelStoppedThreshCm)
+                WS.TimeInSamePlace += RefreshActorSearchTick; // its been at least this long since last check
+            else
+                WS.TimeInSamePlace = 0.f;
+        }
+        bool bIsStuck = (WS.TimeInSamePlace > 5.f * RefreshActorSearchTick); // stuck => hasn't moved in this long
+
+        // compute whether this walker should rotate
+        while ((Walkable == false && RemainingIters > 0) || bIsStuck)
         {
             for (int i = 0; i < NumChecks && !Walkable; i++)
             {
@@ -252,10 +294,11 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
                     Walkable = (GroundActor != nullptr && bIsWalkable(GroundActor));
                     NewWalkableLocation = Hit.Location;
                 }
-                if (!Walkable)
+                if (!Walkable || bIsStuck)
                 { // begin rotation step to see if the next AngularStep is walkable
                     // rotate CW (arbitrary choice)
                     Rotation.Yaw += WS.AngularStep;
+                    bIsStuck = false; // to end the loop! (after a slight rotation)
                 }
             }
             Lookahead += 1.f; // can also make it double (ie. nonlinear increase)
@@ -301,7 +344,4 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
         Walker->SetActorState(carla::rpc::ActorState::Active); // NOT dormant
         auto Response = Walker->ApplyControlToWalker(WalkerControl);
     }
-
-    // clear all the walkers to refresh on the next tick
-    Walkers.clear();
 }
