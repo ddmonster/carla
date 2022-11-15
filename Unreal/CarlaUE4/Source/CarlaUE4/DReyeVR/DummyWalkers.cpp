@@ -171,7 +171,7 @@ bool DummyWalkers::FindWalkers(UWorld *World)
         ensure(WalkerActor != nullptr);
         if (Actor->GetActorType() == FCarlaActor::ActorType::Walker && WalkerActor->ActorHasTag(DummyWalkerTag))
         {
-            if (WalkerActor->WasRecentlyRendered()) // optimization
+            if (WalkerActor->WasRecentlyRendered(RefreshActorSearchTick)) // optimization
             {
                 FCarlaActor *ExistingCarlaActor = nullptr;
                 if (Walkers.find(WalkerActor) != Walkers.end())
@@ -238,8 +238,8 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
 
         // Skip these walkers
         {
-            bool SkipWalker = !WalkerActor->WasRecentlyRendered(0.0f) || // optimization
-                              !WalkerActor->ActorHasTag(DummyWalkerTag); // not part of this policy
+            bool SkipWalker = !WalkerActor->WasRecentlyRendered(RefreshActorSearchTick) || // optimization
+                              !WalkerActor->ActorHasTag(DummyWalkerTag);                   // not part of this policy
             if (SkipWalker)
             {
                 // apply empty control (just stay in place)
