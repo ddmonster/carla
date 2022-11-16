@@ -10,7 +10,7 @@ DummyWalkers::DummyWalkers()
 {
     ReadConfigValue("DummyWalkers", "NumberOfInitialWalkers", NumWalkers);
     ReadConfigValue("DummyWalkers", "RandomSeed", Seed);
-    ReadConfigValue("DummyWalkers", "PolicyTickRate", RefreshActorSearchTick);
+    ReadConfigValue("DummyWalkers", "PolicyTickRate", ActorPolicyTickRate);
     ReadConfigValue("DummyWalkers", "Tag", DummyWalkerTag);
 
     // seed random number generator (one per random sequence)
@@ -171,18 +171,15 @@ bool DummyWalkers::FindWalkers(UWorld *World)
         ensure(WalkerActor != nullptr);
         if (Actor->GetActorType() == FCarlaActor::ActorType::Walker && WalkerActor->ActorHasTag(DummyWalkerTag))
         {
-            if (WalkerActor->WasRecentlyRendered(RefreshActorSearchTick)) // optimization
-            {
-                FCarlaActor *ExistingCarlaActor = nullptr;
-                if (Walkers.find(WalkerActor) != Walkers.end())
-                { // found existing Walker from previous tick
-                    ExistingCarlaActor = Walkers[WalkerActor].Walker;
-                }
-                if (ExistingCarlaActor == nullptr || ExistingCarlaActor->IsPendingKill())
-                    WalkersTmp[WalkerActor] = NewWalker(Actor);
-                else // copy from the existing container
-                    WalkersTmp[WalkerActor] = Walkers[WalkerActor];
+            FCarlaActor *ExistingCarlaActor = nullptr;
+            if (Walkers.find(WalkerActor) != Walkers.end())
+            { // found existing Walker from previous tick
+                ExistingCarlaActor = Walkers[WalkerActor].Walker;
             }
+            if (ExistingCarlaActor == nullptr || ExistingCarlaActor->IsPendingKill())
+                WalkersTmp[WalkerActor] = NewWalker(Actor);
+            else // copy from the existing container
+                WalkersTmp[WalkerActor] = Walkers[WalkerActor];
         }
     }
     Walkers.clear();
@@ -199,7 +196,7 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
     // loop over all relevent (rendered) walkers and give them some simple
     // (roomba-like) policy to walk around the sidewalks
 
-    if (TimeSinceLastActorRefresh < RefreshActorSearchTick)
+    if (TimeSinceLastActorRefresh < ActorPolicyTickRate)
     {
         // keep incrementing the time since last refresh as long as the threshold has not been met
         TimeSinceLastActorRefresh += DeltaSeconds;
@@ -238,8 +235,8 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
 
         // Skip these walkers
         {
-            bool SkipWalker = !WalkerActor->WasRecentlyRendered(RefreshActorSearchTick) || // optimization
-                              !WalkerActor->ActorHasTag(DummyWalkerTag);                   // not part of this policy
+            bool SkipWalker = !WalkerActor->WasRecentlyRendered(ActorPolicyTickRate) || // optimization
+                              !WalkerActor->ActorHasTag(DummyWalkerTag);                // not part of this policy
             if (SkipWalker)
             {
                 // apply empty control (just stay in place)
@@ -274,11 +271,16 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
             const float AngularVelStoppedThreshCm = 3.f; // if angular velocity within this (deg/s) consider "stopped"
             if (WalkerActor->GetVelocity().Size() < VelocityStoppedThreshCm &&
                 AngularVel(WalkerActor).Size() < AngularVelStoppedThreshCm)
-                WS.TimeInSamePlace += RefreshActorSearchTick; // its been at least this long since last check
+                WS.TimeInSamePlace += ActorPolicyTickRate; // its been at least this long since last check
             else
                 WS.TimeInSamePlace = 0.f;
         }
-        bool bIsStuck = (WS.TimeInSamePlace > 5.f * RefreshActorSearchTick); // stuck => hasn't moved in this long
+        WS.TimeSinceStuck += ActorPolicyTickRate;
+        bool bIsStuck = (WS.TimeInSamePlace > 5.f * ActorPolicyTickRate); // stuck => hasn't moved in this long
+        if (bIsStuck)
+        {
+            WS.TimeSinceStuck = 0.f;
+        }
 
         // compute whether this walker should rotate
         while ((Walkable == false && RemainingIters > 0) || bIsStuck)
@@ -296,9 +298,14 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
                 }
                 if (!Walkable || bIsStuck)
                 { // begin rotation step to see if the next AngularStep is walkable
-                    // rotate CW (arbitrary choice)
-                    Rotation.Yaw += WS.AngularStep;
-                    bIsStuck = false; // to end the loop! (after a slight rotation)
+                    // rotate CW once then CCW once then CW once then CCW, and so on...
+                    float sign = (i % 2 == 0) ? 1.f : -1.f;  // 1 => CW, -1 => CCW
+                    if (bIsStuck || WS.TimeSinceStuck < 1.f) // stuck or was stuck recently
+                    {
+                        sign = 1.f;       // make it so recovery from being stuck is always CW
+                        bIsStuck = false; // to end the loop! (after a slight rotation)
+                    }
+                    Rotation.Yaw += sign * (i + 1) * WS.AngularStep;
                 }
             }
             Lookahead += 1.f; // can also make it double (ie. nonlinear increase)

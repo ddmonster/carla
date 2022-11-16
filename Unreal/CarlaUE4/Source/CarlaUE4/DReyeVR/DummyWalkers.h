@@ -19,6 +19,7 @@ class DummyWalkers
         float Speed = 134.f;         // ~3mph (average human walking speed)
         float AngularStep = 45.f;    // granularity of angular checks for walkable
         float TimeInSamePlace = 0.f; // how long has the actor not moved (to tell is stuck in place)
+        float TimeSinceStuck = 0.f;
     };
 
     WalkerStruct NewWalker(FCarlaActor *Walker)
@@ -44,6 +45,6 @@ class DummyWalkers
     FName DummyWalkerTag;
 
     // for accessing all actors (vehicles/walkers only) in the world
-    float RefreshActorSearchTick = 0.1f; // tickrate (seconds) for FindWalkers()
+    float ActorPolicyTickRate = 0.1f; // tickrate (seconds) for FindWalkers()
     float TimeSinceLastActorRefresh = 0.f;
 };

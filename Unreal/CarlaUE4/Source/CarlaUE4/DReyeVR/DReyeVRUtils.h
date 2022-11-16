@@ -503,10 +503,11 @@ static FHitResult DownGroundTrace(const UWorld *World, const FVector &TopPositio
 static bool bIsWalkable(const FString &Name)
 {
     // check whether a ground is "walkable" by pedestrian
+    /// NOTE: expects name in lowercase! Use FString::ToLower()
 
-    // expects name in lowercase! Use FString::ToLower()
     // Name.Contains("grass") kicks pedestrians off the sidewalk
-    return Name.Contains("sidewalk") || Name.Contains("crosswalk") || Name.Contains("ramp"); // driveways
+    // "sidewalk" or "crosswalk"
+    return Name.Contains("walk") || Name.Contains("ramp"); // driveways
 }
 
 static bool bIsWalkable(const AActor *Actor)

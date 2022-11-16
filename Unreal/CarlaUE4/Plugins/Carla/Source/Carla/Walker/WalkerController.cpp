@@ -41,7 +41,7 @@ void AWalkerController::OnPossess(APawn *InPawn)
   }
 
   MovementComponent->MaxWalkSpeed = GetMaximumWalkSpeed();
-  MovementComponent->JumpZVelocity = 100.0f;
+  MovementComponent->JumpZVelocity = 30.0f;
   Character->JumpMaxCount = 2;
 }
 
