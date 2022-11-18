@@ -482,8 +482,8 @@ static FPostProcessSettings CreatePostProcessingEffect(size_t Idx)
     return ShaderFactory[Idx]();
 }
 
-static FHitResult DownGroundTrace(const UWorld *World, const FVector &TopPosition, const float Height,
-                                  const std::vector<const AActor *> &Ignored = {})
+static FHitResult SimpleRayTrace(const UWorld *World, const FVector &Start, const FVector &End,
+                                 const std::vector<const AActor *> &Ignored = {})
 {
     // run a trace from the TopPosition straight down to sample the birds-eye-view of the ground
     FCollisionQueryParams TraceParam;
@@ -495,8 +495,11 @@ static FHitResult DownGroundTrace(const UWorld *World, const FVector &TopPositio
     TraceParam.bTraceComplex = true;
     TraceParam.bReturnPhysicalMaterial = false;
     FHitResult Hit(EForceInit::ForceInit);
-    World->LineTraceSingleByChannel(Hit, TopPosition, TopPosition + Height * FVector::DownVector, ECC_Visibility,
-                                    TraceParam);
+    World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParam);
+    DrawDebugLine(World,
+                  Start, // start line
+                  End,   // end line
+                  FColor::Green, false, -1, 0, 1);
     return Hit;
 }
 

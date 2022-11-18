@@ -64,7 +64,7 @@ void DummyWalkers::Setup(UWorld *World)
                 {
                     // compute ground actor
                     FVector TopPosition{XPos, YPos, WorldBounds.Max.Z};
-                    FHitResult Hit = DownGroundTrace(World, TopPosition, Height);
+                    FHitResult Hit = SimpleRayTrace(World, TopPosition, TopPosition + Height * FVector::DownVector);
                     AActor *GroundActor = Hit.Actor.Get(); // dereference weak ptr
                     if (GroundActor != nullptr && bIsWalkable(GroundActor))
                     {
@@ -290,7 +290,8 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
                 const FVector PossibleNewLocation =
                     Location + Lookahead * WS.Speed * Rotation.RotateVector(FVector::ForwardVector);
                 { // compute if ground in front of Walker is walkable
-                    FHitResult Hit = DownGroundTrace(World, PossibleNewLocation, PersonHeightMax, {WalkerActor});
+                    auto GroundPt = PossibleNewLocation + PersonHeightMax * FVector::DownVector;
+                    FHitResult Hit = SimpleRayTrace(World, Location, GroundPt, {WalkerActor});
                     class AActor *GroundActor = nullptr;
                     GroundActor = Hit.Actor.Get(); // dereference weak ptr
                     Walkable = (GroundActor != nullptr && bIsWalkable(GroundActor));
@@ -328,7 +329,8 @@ void DummyWalkers::Tick(UWorld *World, const float DeltaSeconds)
             { // need to jump?
                 if (Walkable)
                 {
-                    FHitResult RightBelow = DownGroundTrace(World, Location, PersonHeightMax, {WalkerActor});
+                    auto RightBelowPt = Location + PersonHeightMax * FVector::DownVector;
+                    FHitResult RightBelow = SimpleRayTrace(World, Location, RightBelowPt, {WalkerActor});
                     AActor *RightBelowActor = RightBelow.Actor.Get();
                     if (RightBelowActor != nullptr && RightBelowActor->GetName().ToLower().Contains("curb"))
                     {
