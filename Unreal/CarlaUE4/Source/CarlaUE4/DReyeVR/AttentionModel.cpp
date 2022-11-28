@@ -12,6 +12,11 @@ AttentionModel::AttentionModel()
     ReadConfigValue("AttentionModel", "LookAwayThreshold", LookAwayThresholdSeconds);
     ReadConfigValue("AttentionModel", "DetectedThresholdLifetime", DetectedThresholdLifetimeSeconds);
     ReadConfigValue("AttentionModel", "ComprehendedThresholdLifetime", ComprehendedThresholdLifetimeSeconds);
+
+    ReadConfigValue("AttentionModel", "Glow", Glow);
+    ReadConfigValue("AttentionModel", "UndetectedState", UndetectedCol);
+    ReadConfigValue("AttentionModel", "DetectedState", DetectedCol);
+    ReadConfigValue("AttentionModel", "ComprehendedState", ComprehendedCol);
 }
 
 void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime, ADReyeVRCustomActor *Overlay,
@@ -82,22 +87,27 @@ void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime,
     // update actor AR overlay
     {
         FLinearColor Col;
-        /// TODO: also play with opacity? Maybe more comprehended => less opacity to reduce cognitive load
-        if (Awareness.State == AttentionState::UNDETECTED)
+        switch (Awareness.State)
         {
-            Col = FLinearColor::Red;
+        case (AttentionState::UNDETECTED): {
+            Col = UndetectedCol;
+            break;
         }
-        else if (Awareness.State == AttentionState::DETECTED)
-        {
-            Col = FLinearColor::Yellow;
+        case (AttentionState::DETECTED): {
+            Col = DetectedCol;
+            break;
         }
-        else
-        {
-            ensure(Awareness.State == AttentionState::COMPREHENDED);
-            Col = FLinearColor::Green;
+        case (AttentionState::COMPREHENDED):
+        default: {
+            Col = ComprehendedCol;
+            break;
         }
+        }
+        float Opacity = Col.A; // between 0 and 1
+        Col.A = 1.0f;          // color is just RGB (no A)
         Overlay->MaterialParams.BaseColor = Col;
-        Overlay->MaterialParams.Emissive = 0.1 * Col;
+        Overlay->MaterialParams.Emissive = Glow * Col;
+        Overlay->MaterialParams.Opacity = Opacity;
     }
 
     // keep track of this actor's awareness for future calls
@@ -107,9 +117,14 @@ void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime,
 bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, const AActor *Actor,
                                         const AEgoVehicle *EgoVehiclePtr) const
 {
-    // check if the EgoVehicle's FocusActor hits the actor
-    const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
-    return (EyeFocusActorName.Equals(Actor->GetName()));
+    // high-precision ray trace (no threshold)
+    // const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
+    // return (EyeFocusActorName.Equals(Actor->GetName()));
+
+    float TraceRadius = 30.0f; // radius in cm
+    FHitResult Hit;
+    bool bDidHit = EgoVehiclePtr->GetSensor()->ComputeGazeTrace(Hit, ECC_Visibility, TraceRadius);
+    return bDidHit && (Hit.Actor == Actor);
 }
 
 } // namespace SituationalAwareness

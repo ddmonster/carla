@@ -45,6 +45,12 @@ class AttentionModel
     // number of seconds an actor can stay in this "state" before downgrading
     float DetectedThresholdLifetimeSeconds = 1.f;
     float ComprehendedThresholdLifetimeSeconds = 5.f;
+
+    // colors for the different states
+    FLinearColor UndetectedCol;
+    FLinearColor DetectedCol;
+    FLinearColor ComprehendedCol;
+    float Glow = 0.f;
 };
 
 } // namespace SituationalAwareness
