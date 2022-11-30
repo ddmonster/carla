@@ -33,7 +33,7 @@ class AttentionModel
                   AEgoVehicle *EgoVehiclePtr);
 
   private:
-    bool WithinROICondition(const ADReyeVRCustomActor *Overlay, const AActor *Actor,
+    bool WithinROICondition(const ADReyeVRCustomActor *Overlay, AActor *Actor,
                             const AEgoVehicle *EgoVehiclePtr) const;
 
     std::unordered_map<AActor *, ElementSA> SceneElements;

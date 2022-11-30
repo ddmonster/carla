@@ -114,7 +114,7 @@ void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime,
     SceneElements[Actor] = Awareness;
 }
 
-bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, const AActor *Actor,
+bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, AActor *Actor,
                                         const AEgoVehicle *EgoVehiclePtr) const
 {
     // high-precision ray trace (no threshold)
@@ -123,7 +123,28 @@ bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, cons
 
     float TraceRadius = 30.0f; // radius in cm
     FHitResult Hit;
-    bool bDidHit = EgoVehiclePtr->GetSensor()->ComputeGazeTrace(Hit, ECC_Visibility, TraceRadius);
+    // enable collisions for specific trace
+    AWheeledVehicle *VehicleActor = Cast<AWheeledVehicle>(Actor);
+    ACharacter *WalkerActor = Cast<ACharacter>(Actor);
+
+    USkeletalMeshComponent *Mesh = nullptr;
+    { // get the mesh from the vehicle/walker
+        if (VehicleActor != nullptr)
+            Mesh = VehicleActor->GetMesh();
+        else if (WalkerActor != nullptr)
+            Mesh = WalkerActor->GetMesh();
+    }
+
+    auto AttentionTrace = ECollisionChannel::ECC_GameTraceChannel4;
+    if (Mesh != nullptr)
+    {
+        // these actors should have collision enabled for ECC_GameTraceChannel4
+        Mesh->SetCollisionResponseToChannel(AttentionTrace, ECollisionResponse::ECR_Block);
+    }
+
+    // using ECollisionChannel::ECC_GameTraceChannel4 to filter collisions to only Vehicles & Walkers
+    bool bDidHit = EgoVehiclePtr->GetSensor()->ComputeGazeTrace(Hit, AttentionTrace, TraceRadius);
+    UE_LOG(LogTemp, Log, TEXT("Hit actor: %s"), bDidHit ? *Hit.Actor->GetName() : *FString("None"));
     return bDidHit && (Hit.Actor == Actor);
 }
 
