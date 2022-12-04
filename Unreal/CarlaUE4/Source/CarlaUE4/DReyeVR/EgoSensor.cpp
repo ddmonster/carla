@@ -304,7 +304,18 @@ void AEgoSensor::ComputeTraceFocusInfo(const ECollisionChannel TraceChannel, flo
     // Update fields
     FString ActorName = "None";
     if (Hit.Actor != nullptr)
+    {
         Hit.Actor->GetName(ActorName);
+        FString Suffix = ""; // suffix to the actor "name" (actor type we care about)
+        if (Cast<AWheeledVehicle>(Hit.Actor) != nullptr)
+            Suffix = "_Vehicle";
+        else if (Cast<ACharacter>(Hit.Actor) != nullptr)
+            Suffix = "_Walker";
+        else if (Cast<ATrafficSignBase>(Hit.Actor) != nullptr)
+            Suffix = "_TrafficLight";
+        /// TODO: add more suffixes here.
+        ActorName += Suffix;
+    }
     // update internal data structure (see DReyeVRData::FocusInfo for default constructor)
     FocusInfoData = {
         Hit.Actor,    // pointer to actor being hit (if any, else nullptr)
