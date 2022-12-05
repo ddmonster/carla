@@ -17,6 +17,8 @@ AttentionModel::AttentionModel()
     ReadConfigValue("AttentionModel", "UndetectedState", UndetectedCol);
     ReadConfigValue("AttentionModel", "DetectedState", DetectedCol);
     ReadConfigValue("AttentionModel", "ComprehendedState", ComprehendedCol);
+
+    ReadConfigValue("AttentionModel", "TraceRadius", TraceRadius);
 }
 
 void AttentionModel::Evaluate(const float DeltaSeconds, const float CurrentTime, ADReyeVRCustomActor *Overlay,
@@ -121,7 +123,6 @@ bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, AAct
     // const FString &EyeFocusActorName = EgoVehiclePtr->GetSensor()->GetData()->GetFocusActorName();
     // return (EyeFocusActorName.Equals(Actor->GetName()));
 
-    float TraceRadius = 30.0f; // radius in cm
     FHitResult Hit;
     // enable collisions for specific trace
     AWheeledVehicle *VehicleActor = Cast<AWheeledVehicle>(Actor);
@@ -144,7 +145,7 @@ bool AttentionModel::WithinROICondition(const ADReyeVRCustomActor *Overlay, AAct
 
     // using ECollisionChannel::ECC_GameTraceChannel4 to filter collisions to only Vehicles & Walkers
     bool bDidHit = EgoVehiclePtr->GetSensor()->ComputeGazeTrace(Hit, AttentionTrace, TraceRadius);
-    UE_LOG(LogTemp, Log, TEXT("Hit actor: %s"), bDidHit ? *Hit.Actor->GetName() : *FString("None"));
+    // UE_LOG(LogTemp, Log, TEXT("Hit actor: %s"), bDidHit ? *Hit.Actor->GetName() : *FString("None"));
     return bDidHit && (Hit.Actor == Actor);
 }
 

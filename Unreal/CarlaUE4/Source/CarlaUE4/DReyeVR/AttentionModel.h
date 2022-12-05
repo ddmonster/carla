@@ -39,6 +39,7 @@ class AttentionModel
     std::unordered_map<AActor *, ElementSA> SceneElements;
 
     // metaparameters
+    float TraceRadius = 30.0f; // radius in cm
     float ComprehendedThresholdSeconds = 0.5f; // if dwelled for this time (s) => comprehended
     float LookAwayThresholdSeconds = 0.2f;
 
