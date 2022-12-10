@@ -157,11 +157,14 @@ void ADReyeVRLevel::Tick(float DeltaSeconds)
         SetupReplayer(); // once this is successfully run, it no longer gets executed
     }
 
-    RefreshActors(DeltaSeconds);
-    DrawBBoxes(DeltaSeconds);
+    if (EgoVehiclePtr && !EgoVehiclePtr->GetSensor()->IsReplaying())
+    {
+        RefreshActors(DeltaSeconds);
+        DrawBBoxes(DeltaSeconds);
 
-    // tick walkers
-    Walkers.Tick(GetWorld(), DeltaSeconds);
+        // tick walkers
+        Walkers.Tick(GetWorld(), DeltaSeconds);
+    }
 }
 
 void ADReyeVRLevel::SetupPlayerInputComponent()
