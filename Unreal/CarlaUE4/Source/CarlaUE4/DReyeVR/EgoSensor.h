@@ -47,6 +47,7 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
 
     // function where replayer requests a screenshot
     void TakeScreenshot() override;
+    bool ComputeGazeTrace(FHitResult &Hit, const ECollisionChannel TraceChannel, float TraceRadius = 0.f) const;
 
   protected:
     void BeginPlay();
