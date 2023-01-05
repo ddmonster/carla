@@ -22,6 +22,9 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
 
     // spawn and construct the first person camera
     ConstructCamera();
+
+    // log
+    UE_LOG(LogTemp, Log, TEXT("Spawning DReyeVR pawn for player0"));
 }
 
 void ADReyeVRPawn::ReadConfigVariables()
@@ -89,7 +92,7 @@ void ADReyeVRPawn::BeginEgoVehicle(AEgoVehicle *Vehicle, UWorld *World, APlayerC
     FirstPersonCam->RegisterComponentWithWorld(World);
 
     // Setup the HUD
-    InitFlatHUD(Player);
+    InitFlatHUD();
 }
 
 void ADReyeVRPawn::BeginDestroy()
@@ -232,13 +235,14 @@ void ADReyeVRPawn::DrawSpectatorScreen(const FVector &GazeOrigin, const FVector 
 /// ----------------:FLATHUD:----------------- ///
 /// ========================================== ///
 
-void ADReyeVRPawn::InitFlatHUD(APlayerController *P)
+void ADReyeVRPawn::InitFlatHUD()
 {
-    check(P);
-    AHUD *Raw_HUD = P->GetHUD();
+    check(Player);
+    class AHUD *Raw_HUD = Player->GetHUD();
+    ensure(Raw_HUD);
     FlatHUD = Cast<ADReyeVRHUD>(Raw_HUD);
     if (FlatHUD)
-        FlatHUD->SetPlayer(P);
+        FlatHUD->SetPlayer(Player);
     else
         UE_LOG(LogTemp, Warning, TEXT("Unable to initialize DReyeVR HUD!"));
     // make sure to disable the flat hud when in VR (not supported, only displays on half of one eye screen)

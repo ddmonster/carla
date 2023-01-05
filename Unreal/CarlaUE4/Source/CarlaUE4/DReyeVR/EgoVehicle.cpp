@@ -17,6 +17,8 @@
 // Sets default values
 AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
+    UE_LOG(LogTemp, Log, TEXT("Spawning Ego Vehicle: %s"), *FString(this->GetName()));
+
     ReadConfigVariables();
 
     // this actor ticks AFTER the physics simulation is done
@@ -40,6 +42,8 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 
     // Initialize the steering wheel
     ConstructSteeringWheel();
+
+    UE_LOG(LogTemp, Log, TEXT("Finished spawning %s"), *FString(this->GetName()));
 }
 
 void AEgoVehicle::ReadConfigVariables()
@@ -248,10 +252,12 @@ void AEgoVehicle::SetPawn(ADReyeVRPawn *PawnIn)
 
 const UCameraComponent *AEgoVehicle::GetCamera() const
 {
+    ensure(FirstPersonCam != nullptr);
     return FirstPersonCam;
 }
 UCameraComponent *AEgoVehicle::GetCamera()
 {
+    ensure(FirstPersonCam != nullptr);
     return FirstPersonCam;
 }
 FVector AEgoVehicle::GetCameraOffset() const
@@ -282,7 +288,10 @@ const class AEgoSensor *AEgoVehicle::GetSensor() const
 
 void AEgoVehicle::InitAIPlayer()
 {
-    AI_Player = Cast<AWheeledVehicleAIController>(this->GetController());
+    this->SpawnDefaultController(); // spawns default (AI) controller and gets possessed by it
+    auto PlayerController = this->GetController();
+    ensure(PlayerController != nullptr);
+    AI_Player = Cast<AWheeledVehicleAIController>(PlayerController);
     ensure(AI_Player != nullptr);
 }
 
@@ -706,7 +715,7 @@ void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 /// -----------------:LEVEL:------------------ ///
 /// ========================================== ///
 
-void AEgoVehicle::SetLevel(ADReyeVRLevel *Level)
+void AEgoVehicle::SetLevel(ADReyeVRGameMode *Level)
 {
     this->DReyeVRLevel = Level;
     check(DReyeVRLevel != nullptr);

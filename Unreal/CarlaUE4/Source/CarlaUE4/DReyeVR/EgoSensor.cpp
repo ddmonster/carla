@@ -344,7 +344,7 @@ void AEgoSensor::SetEgoVehicle(class AEgoVehicle *NewEgoVehicle)
     check(Vehicle);
 }
 
-void AEgoSensor::SetLevel(class ADReyeVRLevel *LevelIn)
+void AEgoSensor::SetLevel(class ADReyeVRGameMode *LevelIn)
 {
     DReyeVRLevel = LevelIn;
     check(DReyeVRLevel);
