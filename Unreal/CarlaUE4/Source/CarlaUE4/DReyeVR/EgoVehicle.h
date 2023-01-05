@@ -41,7 +41,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     virtual void Tick(float DeltaTime) override; // called automatically
 
     // Setters from external classes
-    void SetLevel(ADReyeVRGameMode *Level);
+    void SetGame(ADReyeVRGameMode *Game);
     void SetPawn(ADReyeVRPawn *Pawn);
     void SetVolume(const float VolumeIn);
 
@@ -112,8 +112,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     struct MirrorParams
     {
         bool Enabled;
-        FVector MirrorPos, MirrorScale, ReflectionPos, ReflectionScale;
-        FRotator MirrorRot, ReflectionRot;
+        FTransform MirrorTransform, ReflectionTransform;
         float ScreenPercentage;
         FString Name;
         void Initialize(class UStaticMeshComponent *SM, class UPlanarReflectionComponent *Reflection,
@@ -135,8 +134,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     // rear mirror chassis (dynamic)
     UPROPERTY(Category = Mirrors, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UStaticMeshComponent *RearMirrorChassisSM;
-    FVector RearMirrorChassisPos, RearMirrorChassisScale;
-    FRotator RearMirrorChassisRot;
+    FTransform RearMirrorChassisTransform;
 
     ////////////////:AICONTROLLER:////////////////
     class AWheeledVehicleAIController *AI_Player = nullptr;
@@ -207,8 +205,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UAudioComponent *TurnSignalSound; // good for turn signals
 
     ////////////////:LEVEL:////////////////
-    void TickLevel(float DeltaSeconds);
-    class ADReyeVRGameMode *DReyeVRLevel;
+    void TickGame(float DeltaSeconds);
+    class ADReyeVRGameMode *DReyeVRGame;
 
     ////////////////:DASH:////////////////
     // Text Render components (Like the HUD but part of the mesh and works in VR)

@@ -23,9 +23,11 @@ ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
 
     // initialize default classes
     this->HUDClass = ADReyeVRHUD::StaticClass();
-    static ConstructorHelpers::FObjectFinder<UBlueprint> WeatherBP(
-        TEXT("Blueprint'/Game/Carla/Blueprints/Weather/BP_Weather.BP_Weather'"));
-    this->WeatherClass = WeatherBP.Object->GeneratedClass;
+    // find object UClass rather than UBlueprint
+    // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
+    static ConstructorHelpers::FObjectFinder<UClass> WeatherBP(
+        TEXT("/Game/Carla/Blueprints/Weather/BP_Weather.BP_Weather_C"));
+    this->WeatherClass = WeatherBP.Object;
 
     // initialize actor factories
     // https://forums.unrealengine.com/t/what-is-the-right-syntax-of-fclassfinder-and-how-could-i-generaly-use-it-to-find-a-specific-blueprint/363884
@@ -47,17 +49,19 @@ ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
     };
 
     // read config variables
-    ReadConfigValue("Level", "EgoVolumePercent", EgoVolumePercent);
-    ReadConfigValue("Level", "NonEgoVolumePercent", NonEgoVolumePercent);
-    ReadConfigValue("Level", "AmbientVolumePercent", AmbientVolumePercent);
+    ReadConfigValue("Game", "EgoVolumePercent", EgoVolumePercent);
+    ReadConfigValue("Game", "NonEgoVolumePercent", NonEgoVolumePercent);
+    ReadConfigValue("Game", "AmbientVolumePercent", AmbientVolumePercent);
+    ReadConfigValue("Game", "DoSpawnEgoVehicleTransform", bDoSpawnEgoVehicleTransform);
+    ReadConfigValue("Game", "SpawnEgoVehicleTransform", SpawnEgoVehicleTransform);
 
     // Recorder/replayer
     ReadConfigValue("Replayer", "RunSyncReplay", bReplaySync);
 
     // get ego vehicle bp
-    static ConstructorHelpers::FObjectFinder<UBlueprint> EgoVehicleBP(
-        TEXT("Blueprint'/Game/Carla/Blueprints/Vehicles/DReyeVR/BP_EgoVehicle_DReyeVR.BP_EgoVehicle_DReyeVR'"));
-    EgoVehicleBPClass = static_cast<UClass *>(EgoVehicleBP.Object->GeneratedClass);
+    static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(
+        TEXT("/Game/Carla/Blueprints/Vehicles/DReyeVR/BP_EgoVehicle_DReyeVR.BP_EgoVehicle_DReyeVR_C"));
+    EgoVehicleBPClass = static_cast<UClass *>(EgoVehicleBP.Object);
 }
 
 void ADReyeVRGameMode::BeginPlay()
@@ -126,13 +130,15 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
         FActorSpawnParameters SpawnParams;
         SpawnParams.Owner = this;
         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        FTransform SpawnPt = GetSpawnPoint();
+        // use the provided transform if requested, else generate a spawn point
+        FTransform SpawnPt = bDoSpawnEgoVehicleTransform ? SpawnEgoVehicleTransform : GetSpawnPoint();
+        LOG("Determined EgoVehicle spawn location to be: %s (%d)", *SpawnPt.ToString(), bDoSpawnEgoVehicleTransform);
         ensure(EgoVehicleBPClass != nullptr);
         EgoVehiclePtr =
             World->SpawnActor<AEgoVehicle>(EgoVehicleBPClass, SpawnPt.GetLocation(), SpawnPt.Rotator(), SpawnParams);
     }
     check(EgoVehiclePtr != nullptr);
-    EgoVehiclePtr->SetLevel(this);
+    EgoVehiclePtr->SetGame(this);
     if (DReyeVR_Pawn)
     {
         // need to assign ego vehicle before possess!
@@ -146,7 +152,7 @@ void ADReyeVRGameMode::SetupSpectator()
 {
     /// TODO: fix bug where HMD is not detected on package BeginPlay()
     // if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-    const bool bEnableVRSpectator = true;
+    const bool bEnableVRSpectator = false;
     if (bEnableVRSpectator)
     {
         FVector SpawnLocn;
@@ -177,12 +183,21 @@ void ADReyeVRGameMode::SetupSpectator()
             }
         }
     }
+
+    if (SpectatorPtr != nullptr)
+    {
+        LOG("Found available spectator in world");
+    }
+    else
+    {
+        LOG_WARN("No available spectator actor in world");
+    }
 }
 
 void ADReyeVRGameMode::BeginDestroy()
 {
     Super::BeginDestroy();
-    LOG("Finished Level");
+    LOG("Finished Game");
 }
 
 void ADReyeVRGameMode::Tick(float DeltaSeconds)
