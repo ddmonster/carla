@@ -101,7 +101,7 @@ static void ReadDReyeVRConfig()
                 if (std::getline(iss_Line, Value, ';')) // gets left side of ';' for comments
                 {
                     std::string VariableName = CreateVariableName(Section, Key);
-                    Params[VariableName].DataStr = FString(Value.c_str());
+                    Params[VariableName].DataStr = FString(Value.c_str()).TrimStartAndEnd();
                 }
             }
         }
