@@ -7,9 +7,7 @@ Util/Build
 Install
 Plugins
 !Unreal/CarlaUE4/Plugins
-Unreal/CarlaUE4/Plugins/Streetmap
-Unreal/CarlaUE4/Plugins/HoudiniEngine
-
+cmake-build-debug
 
 /ExportedMaps
 /Import/*
@@ -50,3 +48,5 @@ _out*
 _site
 core
 profiler.csv
+CarlaUE4.xcworkspace
+OptionalModules.ini
