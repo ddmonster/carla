@@ -221,7 +221,7 @@ void AEgoVehicle::SetCameraRootPose(const FTransform &CameraPoseTransform)
 {
     // sets the base posision of the Camera root (where the camera is at "rest")
     this->CameraPose = CameraPoseTransform;
-    LOG("Setting camera pose to: %s", *(CameraPose + CameraPoseOffset).ToString());
+    // LOG("Setting camera pose to: %s", *(CameraPose + CameraPoseOffset).ToString());
 
     // First, set the root of the camera to the driver's seat head pos
     VRCameraRoot->SetRelativeLocation(CameraPose.GetLocation() + CameraPoseOffset.GetLocation());
@@ -627,25 +627,23 @@ void AEgoVehicle::UpdateDash()
     {
         const DReyeVR::AggregateData *Replay = EgoSensor->GetData();
         XPH = Replay->GetVehicleVelocity() * SpeedometerScale; // FwdSpeed is in cm/s
-        if (Replay->GetUserInputs().ToggledReverse)
-        {
-            bReverse = !bReverse;
-            PlayGearShiftSound();
-        }
+        const auto &ReplayInputs = Replay->GetUserInputs();
+        if (ReplayInputs.ToggledReverse)
+            PressReverse();
+        else
+            ReleaseReverse();
+
         if (bEnableTurnSignalAction)
         {
-            if (Replay->GetUserInputs().TurnSignalLeft)
-            {
-                LeftSignalTimeToDie = FPlatformTime::Seconds() + TurnSignalDuration;
-                RightSignalTimeToDie = 0.f;
-                PlayTurnSignalSound();
-            }
-            if (Replay->GetUserInputs().TurnSignalRight)
-            {
-                RightSignalTimeToDie = FPlatformTime::Seconds() + TurnSignalDuration;
-                LeftSignalTimeToDie = 0.f;
-                PlayTurnSignalSound();
-            }
+            if (ReplayInputs.TurnSignalLeft)
+                PressTurnSignalL();
+            else
+                ReleaseTurnSignalL();
+
+            if (ReplayInputs.TurnSignalRight)
+                PressTurnSignalR();
+            else
+                ReleaseTurnSignalR();
         }
     }
     else
@@ -660,16 +658,21 @@ void AEgoVehicle::UpdateDash()
     {
         // Draw the signals
         float Now = FPlatformTime::Seconds();
-        if (Now < RightSignalTimeToDie)
-            TurnSignals->SetText(FText::FromString(">>>"));
-        else if (Now < LeftSignalTimeToDie)
-            TurnSignals->SetText(FText::FromString("<<<"));
-        else
-            TurnSignals->SetText(FText::FromString("")); // nothing
+        const float StartTime = std::max(RightSignalTimeToDie, LeftSignalTimeToDie) - TurnSignalDuration;
+        FString TurnSignalStr = "";
+        constexpr static float TurnSignalBlinkRate = 0.4f; // rate of blinking
+        if (std::fmodf(Now - StartTime, TurnSignalBlinkRate * 2) < TurnSignalBlinkRate)
+        {
+            if (Now < RightSignalTimeToDie)
+                TurnSignalStr = ">>>";
+            else if (Now < LeftSignalTimeToDie)
+                TurnSignalStr = "<<<";
+        }
+        TurnSignals->SetText(FText::FromString(TurnSignalStr));
     }
 
     // Draw the gear shifter
-    if (bReverse)
+    if (bReverse) // backwards
         GearShifter->SetText(FText::FromString("R"));
     else
         GearShifter->SetText(FText::FromString("D"));
