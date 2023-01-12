@@ -108,6 +108,13 @@ else
 fi
 unset LLVM_BASENAME
 
+if ${MAC_OS}; then
+  # overwrite the LLVM paths to use the MacOSX libraries
+  # LLVM_INCLUDE=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+  # LLVM_LIBPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
+  LLVM_INCLUDE=$(xcrun --show-sdk-path)/usr/include/c++/v1
+  LLVM_LIBPATH=$(xcrun --show-sdk-path)/usr/lib
+fi
 # ==============================================================================
 # -- Get boost includes --------------------------------------------------------
 # ==============================================================================
@@ -442,7 +449,7 @@ XERCESC_VERSION=3.2.3
 XERCESC_BASENAME=xerces-c-${XERCESC_VERSION}
 
 XERCESC_TEMP_FOLDER=${XERCESC_BASENAME}
-XERCESC_REPO=https://ftp.cixug.es/apache//xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.tar.gz
+XERCESC_REPO=https://archive.apache.org/dist/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.tar.gz
 
 XERCESC_SRC_DIR=${XERCESC_BASENAME}-source
 XERCESC_INSTALL_DIR=${XERCESC_BASENAME}-install
