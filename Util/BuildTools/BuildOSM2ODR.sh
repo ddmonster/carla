@@ -89,16 +89,21 @@ if ${BUILD_OSM2ODR} ; then
   mkdir -p ${OSM2ODR_BUILD_FOLDER}
   cd ${OSM2ODR_BUILD_FOLDER}
 
+if ${MAC_OS}; then
+  # define clang compiler for MacOS
+  export CC=/usr/bin/clang
+  export CXX=/usr/bin/clang++
+else
   CARLA_LLVM_VERSION_MAJOR=$(cut -d'.' -f1 <<<"$(clang --version | head -n 1 | sed -r 's/^([^.]+).*$/\1/; s/^[^0-9]*([0-9]+).*$/\1/')")
-  
+
   if [ -z "$CARLA_LLVM_VERSION_MAJOR" ] ; then
     fatal_error "Failed to retrieve the installed version of the clang compiler."
   else
     echo "Using clang-$CARLA_LLVM_VERSION_MAJOR as the CARLA compiler."
   fi
-
   export CC=/usr/bin/clang-$CARLA_LLVM_VERSION_MAJOR
   export CXX=/usr/bin/clang++-$CARLA_LLVM_VERSION_MAJOR
+fi
 
   cmake ${OSM2ODR_SOURCE_FOLDER} \
       -G "Eclipse CDT4 - Ninja" \
