@@ -206,7 +206,7 @@ namespace multigpu {
 
       // _deadline.expires_from_now(_timeout);
       // sent first size buffer
-      int this_size = text.size();
+      std::size_t this_size = text.size();
       boost::asio::async_write(
           self->_socket,
           boost::asio::buffer(&this_size, sizeof(this_size)),

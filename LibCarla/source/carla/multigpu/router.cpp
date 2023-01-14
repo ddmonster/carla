@@ -114,7 +114,8 @@ void Router::Write(MultiGPUCommand id, Buffer &&buffer) {
   CommandHeader header;
   header.id = id;
   header.size = buffer.size();
-  Buffer buf_header((uint8_t *) &header, sizeof(header));
+  carla::Buffer buf_header(reinterpret_cast<const carla::Buffer::value_type *>(&header),
+                           static_cast<carla::Buffer::size_type>(sizeof(header)));
   
   auto message = Primary::MakeMessage(std::move(buf_header), std::move(buffer));
   
@@ -132,7 +133,8 @@ std::future<SessionInfo> Router::WriteToNext(MultiGPUCommand id, Buffer &&buffer
   CommandHeader header;
   header.id = id;
   header.size = buffer.size();
-  Buffer buf_header((uint8_t *) &header, sizeof(header));
+  carla::Buffer buf_header(reinterpret_cast<const carla::Buffer::value_type *>(&header),
+                           static_cast<carla::Buffer::size_type>(sizeof(header)));
 
   auto message = Primary::MakeMessage(std::move(buf_header), std::move(buffer));
 

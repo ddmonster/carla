@@ -138,7 +138,7 @@ void FCarlaEngine::NotifyInitGame(const UCarlaSettings &Settings)
             auto sensor_id = *(reinterpret_cast<carla::streaming::detail::stream_id_type *>(Data.data()));
             // query dispatcher
             carla::streaming::detail::token_type token(Server.GetStreamingServer().GetToken(sensor_id));
-            carla::Buffer buf(reinterpret_cast<unsigned char *>(&token), (size_t) sizeof(token));
+            carla::Buffer buf(reinterpret_cast<const carla::Buffer::value_type *>(&token), static_cast<carla::Buffer::size_type>(sizeof(token)));
             carla::log_info("responding with a token for port ", token.get_port());
             Secondary->Write(std::move(buf));
             break;
@@ -147,7 +147,7 @@ void FCarlaEngine::NotifyInitGame(const UCarlaSettings &Settings)
           case carla::multigpu::MultiGPUCommand::YOU_ALIVE:
           {
             std::string msg("Yes, I'm alive");
-            carla::Buffer buf((unsigned char *) msg.c_str(), (size_t) msg.size());
+            carla::Buffer buf(reinterpret_cast<const carla::Buffer::value_type *>(msg.c_str()), static_cast<carla::Buffer::size_type>(msg.size()));
             carla::log_info("responding is alive command");
             Secondary->Write(std::move(buf));
             break;
@@ -297,7 +297,7 @@ void FCarlaEngine::OnPostTick(UWorld *World, ELevelTick TickType, float DeltaSec
 
         // send frame data to secondary
         std::string Tmp(OutStream.str());
-        SecondaryServer->GetCommander().SendFrameData(carla::Buffer(std::move((unsigned char *) Tmp.c_str()), (size_t) Tmp.size()));
+        SecondaryServer->GetCommander().SendFrameData(carla::Buffer(std::move(reinterpret_cast<const carla::Buffer::value_type *>(Tmp.c_str())), static_cast<carla::Buffer::size_type>(Tmp.size())));
 
         GetCurrentEpisode()->GetFrameData().Clear();
       }

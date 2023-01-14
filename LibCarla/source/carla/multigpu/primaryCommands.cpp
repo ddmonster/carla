@@ -32,15 +32,16 @@ void PrimaryCommands::SendFrameData(carla::Buffer buffer) {
 
 // broadcast to all secondary servers the map to load
 void PrimaryCommands::SendLoadMap(std::string map) {
-  carla::Buffer buf((unsigned char *) map.c_str(), (size_t) map.size() + 1);
+  carla::Buffer buf(reinterpret_cast<const carla::Buffer::value_type *>(map.c_str()),
+                    static_cast<carla::Buffer::size_type>(map.size() + 1));
   _router->Write(MultiGPUCommand::LOAD_MAP, std::move(buf));
 }
 
 // send to who the router wants the request for a token
 token_type PrimaryCommands::SendGetToken(carla::streaming::detail::stream_id_type sensor_id) {
   log_info("asking for a token");
-  carla::Buffer buf((carla::Buffer::value_type *) &sensor_id, 
-                    (size_t) sizeof(carla::streaming::detail::stream_id_type));
+  carla::Buffer buf(reinterpret_cast<const carla::Buffer::value_type *>(&sensor_id),
+                    static_cast<carla::Buffer::size_type>(sizeof(streaming::detail::stream_id_type)));
   auto fut = _router->WriteToNext(MultiGPUCommand::GET_TOKEN, std::move(buf));
 
   auto response = fut.get();
@@ -52,7 +53,8 @@ token_type PrimaryCommands::SendGetToken(carla::streaming::detail::stream_id_typ
 // send to know if a connection is alive
 void PrimaryCommands::SendIsAlive() {
   std::string msg("Are you alive?");
-  carla::Buffer buf((unsigned char *) msg.c_str(), (size_t) msg.size());
+  carla::Buffer buf(reinterpret_cast<const carla::Buffer::value_type *>(msg.c_str()),
+                    static_cast<carla::Buffer::size_type>(msg.size()));
   log_info("sending is alive command");
   auto fut = _router->WriteToNext(MultiGPUCommand::YOU_ALIVE, std::move(buf));
   auto response = fut.get();
