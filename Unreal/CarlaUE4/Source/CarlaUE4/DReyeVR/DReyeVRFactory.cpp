@@ -6,7 +6,7 @@
 #include "EgoSensor.h"                                 // AEgoSensor
 #include "EgoVehicle.h"                                // AEgoVehicle
 
-#define EgoVehicleBP_Str "/Game/Carla/Blueprints/Vehicles/DReyeVR/BP_EgoVehicle_DReyeVR.BP_EgoVehicle_DReyeVR_C"
+#define EgoVehicleBP_Str "/Game/DReyeVR/EgoVehicle/BP_model3.BP_model3_C"
 
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {

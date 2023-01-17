@@ -165,7 +165,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load skeletal mesh (static mesh)
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT(
-        "SkeletalMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mesh/SM_VehicleMesh_DReyeVR.SM_VehicleMesh_DReyeVR'"));
+        "SkeletalMesh'/Game/DReyeVR/EgoVehicle/model3/Mesh/SkeletalMesh_model3.SkeletalMesh_model3'"));
     // original: "SkeletalMesh'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_v2.SM_TeslaM3_v2'"
     USkeletalMesh *SkeletalMesh = CarMesh.Object;
     if (SkeletalMesh == nullptr)
@@ -176,8 +176,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load skeleton (for animations)
     static ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(
-        TEXT("Skeleton'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mesh/"
-             "SM_VehicleSkeleton_DReyeVR.SM_VehicleSkeleton_DReyeVR'"));
+        TEXT("Skeleton'/Game/DReyeVR/EgoVehicle/model3/Mesh/Skeleton_model3.Skeleton_model3'"));
     // original:
     // "Skeleton'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_lights_body_Skeleton.SM_TeslaM3_lights_body_Skeleton'"
     USkeleton *Skeleton = CarSkeleton.Object;
@@ -189,7 +188,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load animations bp
     static ConstructorHelpers::FClassFinder<UObject> AnimBPClass(
-        TEXT("/Game/Carla/Blueprints/Vehicles/DReyeVR/Mesh/SM_VehicleAnim_DReyeVR.SM_VehicleAnim_DReyeVR_C"));
+        TEXT("/Game/DReyeVR/EgoVehicle/model3/Mesh/Animation_model3.Animation_model3_C"));
     // original: "/Game/Carla/Static/Car/4Wheeled/Tesla/Tesla_Animation.Tesla_Animation_C"
     auto AnimInstance = AnimBPClass.Class;
     if (!AnimBPClass.Succeeded())
@@ -200,7 +199,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load physics asset
     static ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(TEXT(
-        "PhysicsAsset'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mesh/SM_PhysicsAsset_DReyeVR.SM_PhysicsAsset_DReyeVR'"));
+        "PhysicsAsset'/Game/DReyeVR/EgoVehicle/model3/Mesh/Physics_model3.Physics_model3'"));
     // original: "PhysicsAsset'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_PhysicsAsset.SM_TeslaM3_PhysicsAsset'"
     UPhysicsAsset *PhysicsAsset = CarPhysics.Object;
     if (PhysicsAsset == nullptr)
@@ -558,15 +557,14 @@ void AEgoVehicle::ConstructMirrors()
     if (RearMirrorParams.Enabled)
     {
         static ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(
-            TEXT("StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/"
-                 "RearMirror_DReyeVR_Glass_SM.RearMirror_DReyeVR_Glass_SM'"));
+            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RearMirror_model3.RearMirror_model3'"));
         RearMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorSM")));
         RearMirrorSM->SetStaticMesh(RearSM.Object);
         RearReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RearMirrorParams.Name + "Refl")));
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(TEXT(
-            "StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/RearMirror_DReyeVR_SM.RearMirror_DReyeVR_SM'"));
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(
+            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RearMirror_Mesh_model3.RearMirror_Mesh_model3'"));
         RearMirrorChassisSM =
             CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorChassisSM")));
         RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
@@ -583,8 +581,8 @@ void AEgoVehicle::ConstructMirrors()
     /// Left mirror
     if (LeftMirrorParams.Enabled)
     {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(TEXT(
-            "StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/LeftMirror_DReyeVR_SM.LeftMirror_DReyeVR_SM'"));
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(
+            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/LeftMirror_model3.LeftMirror_model3'"));
         LeftMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(LeftMirrorParams.Name + "MirrorSM")));
         LeftMirrorSM->SetStaticMesh(LeftSM.Object);
         LeftReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(LeftMirrorParams.Name + "Refl")));
@@ -594,8 +592,7 @@ void AEgoVehicle::ConstructMirrors()
     if (RightMirrorParams.Enabled)
     {
         static ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(
-            TEXT("StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/Mirrors/"
-                 "RightMirror_DReyeVR_SM.RightMirror_DReyeVR_SM'"));
+            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RightMirror_model3.RightMirror_model3'"));
         RightMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RightMirrorParams.Name + "MirrorSM")));
         RightMirrorSM->SetStaticMesh(RightSM.Object);
         RightReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RightMirrorParams.Name + "Refl")));
@@ -615,14 +612,14 @@ void AEgoVehicle::ConstructEgoSounds()
     ensureMsgf(CrashSound != nullptr, TEXT("Vehicle crash sound should be initialized!"));
 
     static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(
-        TEXT("SoundWave'/Game/Carla/Blueprints/Vehicles/DReyeVR/Sounds/GearShift.GearShift'"));
+        TEXT("SoundWave'/Game/DReyeVR/Sounds/GearShift.GearShift'"));
     GearShiftSound = CreateDefaultSubobject<UAudioComponent>(TEXT("GearShift"));
     GearShiftSound->SetupAttachment(GetRootComponent());
     GearShiftSound->bAutoActivate = false;
     GearShiftSound->SetSound(GearSound.Object);
 
     static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(
-        TEXT("SoundWave'/Game/Carla/Blueprints/Vehicles/DReyeVR/Sounds/TurnSignal.TurnSignal'"));
+        TEXT("SoundWave'/Game/DReyeVR/Sounds/TurnSignal.TurnSignal'"));
     TurnSignalSound = CreateDefaultSubobject<UAudioComponent>(TEXT("TurnSignal"));
     TurnSignalSound->SetupAttachment(GetRootComponent());
     TurnSignalSound->bAutoActivate = false;
@@ -762,9 +759,8 @@ void AEgoVehicle::UpdateDash()
 
 void AEgoVehicle::ConstructSteeringWheel()
 {
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(
-        TEXT("StaticMesh'/Game/Carla/Blueprints/Vehicles/DReyeVR/SteeringWheel/"
-             "SM_SteeringWheel_DReyeVR.SM_SteeringWheel_DReyeVR'"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(TEXT(
+        "StaticMesh'/Game/DReyeVR/EgoVehicle/model3/SteeringWheel/Wheel_StaticMeshl_model3.Wheel_StaticMeshl_model3'"));
     SteeringWheel = CreateDefaultSubobject<UStaticMeshComponent>(FName("SteeringWheel"));
     SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
     SteeringWheel->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
