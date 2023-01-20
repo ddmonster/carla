@@ -48,26 +48,25 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if ${MAC_OS}; then
-  source $(dirname "$0")/Environment.sh
+CARLA_LLVM_VERSION_MAJOR=$(cut -d'.' -f1 <<<"$(clang --version | head -n 1 | sed -r 's/^([^.]+).*$/\1/; s/^[^0-9]*([0-9]+).*$/\1/')")
 
+if [ -z "$CARLA_LLVM_VERSION_MAJOR" ] ; then
+  fatal_error "Failed to retrieve the installed version of the clang compiler."
+else
+  echo "Using clang-$CARLA_LLVM_VERSION_MAJOR as the CARLA compiler."
+fi
+
+source $(dirname "$0")/Environment.sh
+
+
+if [[ -z "${CARLA_LLVM_VERSION_MAJOR}" ]]; then
+  fatal_error "Missing clang version variable."
+fi
+
+if ${MAC_OS}; then
   export CC=clang
   export CXX=clang++
 else
-  CARLA_LLVM_VERSION_MAJOR=$(cut -d'.' -f1 <<<"$(clang --version | head -n 1 | sed -r 's/^([^.]+).*$/\1/; s/^[^0-9]*([0-9]+).*$/\1/')")
-
-  if [ -z "$CARLA_LLVM_VERSION_MAJOR" ] ; then
-    fatal_error "Failed to retrieve the installed version of the clang compiler."
-  else
-    echo "Using clang-$CARLA_LLVM_VERSION_MAJOR as the CARLA compiler."
-  fi
-
-  source $(dirname "$0")/Environment.sh
-
-  if [[ -z "${CARLA_LLVM_VERSION_MAJOR}" ]]; then
-    fatal_error "Missing clang version variable."
-  fi
-
   export CC=clang-$CARLA_LLVM_VERSION_MAJOR
   export CXX=clang++-$CARLA_LLVM_VERSION_MAJOR
 fi
@@ -108,11 +107,7 @@ if ${BUILD_PYTHONAPI} ; then
   # Add patchelf to the path. Auditwheel relies on patchelf to repair ELF files.
   export PATH="${LIBCARLA_INSTALL_CLIENT_FOLDER}/bin:${PATH}"
 
-  if ${MAC_OS} ; then
-    CODENAME="osx"
-  else
-    CODENAME=$(cat /etc/os-release | grep VERSION_CODENAME)
-  fi
+  CODENAME=$(uname -s)
   if [[ ! -z ${TARGET_WHEEL_PLATFORM} ]] && [[ ${CODENAME#*=} != "bionic" ]] ; then
     log "A target platform has been specified but you are not using a compatible linux distribution. The wheel repair step will be skipped"
     TARGET_WHEEL_PLATFORM=
