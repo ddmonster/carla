@@ -26,6 +26,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
         Parameters.Model = "Model3";
         Parameters.ObjectType = EgoVehicleBP_Str;
         Parameters.Class = AEgoVehicle::StaticClass();
+        Parameters.NumberOfWheels = 4;
 
         // need to create an FActorDefinition from our FActorDescription for some reason -_-
         bool Success = false;

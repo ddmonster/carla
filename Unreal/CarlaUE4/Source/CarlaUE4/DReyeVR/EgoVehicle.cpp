@@ -137,16 +137,6 @@ void AEgoVehicle::Tick(float DeltaSeconds)
     // Ensure appropriate autopilot functionality is accessible from EgoVehicle
     TickAutopilot();
 
-    if (Pawn)
-    {
-        // Draw the spectator vr screen and overlay elements
-        Pawn->DrawSpectatorScreen(EgoSensor->GetData()->GetGazeOrigin(DReyeVR::Gaze::LEFT),
-                                  EgoSensor->GetData()->GetGazeDir(DReyeVR::Gaze::LEFT));
-
-        // draws combined reticle
-        Pawn->DrawFlatHUD(DeltaSeconds, EgoSensor->GetData()->GetGazeOrigin(), EgoSensor->GetData()->GetGazeDir());
-    }
-
     // Update the world level
     TickGame(DeltaSeconds);
 
