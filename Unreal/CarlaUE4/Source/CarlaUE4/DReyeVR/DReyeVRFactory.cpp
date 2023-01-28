@@ -8,6 +8,12 @@
 
 #define EgoVehicleBP_Str "/Game/DReyeVR/EgoVehicle/BP_model3.BP_model3_C"
 
+// instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
+// => dreyevr.vehicle.model3 & dreyevr.sensor.ego_sensor
+// in PythonAPI use world.get_actors().filter("dreyevr.*") or world.get_blueprint_library().filter("dreyevr.*")
+// and you won't accidentally get these actors when performing filter("vehicle.*") or filter("sensor.*")
+#define CATEGORY TEXT("DReyeVR")
+
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
@@ -22,7 +28,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     FActorDefinition EgoVehicleDef;
     {
         FVehicleParameters Parameters;
-        Parameters.Make = "DReyeVR";
+        Parameters.Make = "Vehicle";
         Parameters.Model = "Model3";
         Parameters.ObjectType = EgoVehicleBP_Str;
         Parameters.Class = AEgoVehicle::StaticClass();
@@ -30,7 +36,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
 
         // need to create an FActorDefinition from our FActorDescription for some reason -_-
         bool Success = false;
-        UActorBlueprintFunctionLibrary::MakeVehicleDefinition(Parameters, Success, EgoVehicleDef);
+        ADReyeVRFactory::MakeVehicleDefinition(Parameters, Success, EgoVehicleDef);
         if (!Success)
         {
             LOG_ERROR("Unable to create DReyeVR vehicle definition!");
@@ -40,13 +46,70 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
 
     FActorDefinition EgoSensorDef;
     {
-        const FString Type = "DReyeVR";
+        const FString Type = "Sensor";
         const FString Id = "Ego_Sensor";
-        EgoSensorDef = UActorBlueprintFunctionLibrary::MakeGenericSensorDefinition(Type, Id);
+        ADReyeVRFactory::MakeSensorDefinition(Type, Id, EgoSensorDef);
         EgoSensorDef.Class = AEgoSensor::StaticClass();
     }
 
     return {EgoVehicleDef, EgoSensorDef};
+}
+
+void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters, bool &Success,
+                                            FActorDefinition &Definition)
+{
+    // assign the ID/Tags with category (ex. "vehicle.tesla.model3" => "harplab.dreyevr.model3")
+    Definition = UActorBlueprintFunctionLibrary::MakeGenericDefinition(CATEGORY, Parameters.Make, Parameters.Model);
+    Definition.Class = Parameters.Class;
+
+    FActorVariation ActorRole;
+    {
+        ActorRole.Id = TEXT("role_name");
+        ActorRole.Type = EActorAttributeType::String;
+        ActorRole.RecommendedValues = {TEXT("ego_vehicle")}; // assume this is the CARLA "hero"
+        ActorRole.bRestrictToRecommended = false;
+    }
+    Definition.Variations.Emplace(ActorRole);
+
+    FActorVariation StickyControl;
+    {
+        StickyControl.Id = TEXT("sticky_control");
+        StickyControl.Type = EActorAttributeType::Bool;
+        StickyControl.bRestrictToRecommended = false;
+        StickyControl.RecommendedValues.Emplace(TEXT("false"));
+    }
+    Definition.Variations.Emplace(StickyControl);
+
+    FActorAttribute ObjectType;
+    {
+        ObjectType.Id = TEXT("object_type");
+        ObjectType.Type = EActorAttributeType::String;
+        ObjectType.Value = Parameters.ObjectType;
+    }
+    Definition.Attributes.Emplace(ObjectType);
+
+    FActorAttribute NumberOfWheels;
+    {
+        NumberOfWheels.Id = TEXT("number_of_wheels");
+        NumberOfWheels.Type = EActorAttributeType::Int;
+        NumberOfWheels.Value = FString::FromInt(Parameters.NumberOfWheels);
+    }
+    Definition.Attributes.Emplace(NumberOfWheels);
+
+    FActorAttribute Generation;
+    {
+        Generation.Id = TEXT("generation");
+        Generation.Type = EActorAttributeType::Int;
+        Generation.Value = FString::FromInt(Parameters.Generation);
+    }
+    Definition.Attributes.Emplace(Generation);
+
+    Success = UActorBlueprintFunctionLibrary::CheckActorDefinition(Definition);
+}
+
+void ADReyeVRFactory::MakeSensorDefinition(const FString &Type, const FString &Id, FActorDefinition &Definition)
+{
+    Definition = UActorBlueprintFunctionLibrary::MakeGenericDefinition(CATEGORY, Type, Id);
 }
 
 FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform,
