@@ -28,38 +28,38 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     FActorDefinition EgoVehicleDef;
     {
         FVehicleParameters Parameters;
-        Parameters.Make = "Vehicle";
         Parameters.Model = "Model3";
         Parameters.ObjectType = EgoVehicleBP_Str;
         Parameters.Class = AEgoVehicle::StaticClass();
         Parameters.NumberOfWheels = 4;
 
-        // need to create an FActorDefinition from our FActorDescription for some reason -_-
-        bool Success = false;
-        ADReyeVRFactory::MakeVehicleDefinition(Parameters, Success, EgoVehicleDef);
-        if (!Success)
-        {
-            LOG_ERROR("Unable to create DReyeVR vehicle definition!");
-        }
-        EgoVehicleDef.Class = Parameters.Class;
+        ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
     }
 
     FActorDefinition EgoSensorDef;
     {
-        const FString Type = "Sensor";
         const FString Id = "Ego_Sensor";
-        ADReyeVRFactory::MakeSensorDefinition(Type, Id, EgoSensorDef);
-        EgoSensorDef.Class = AEgoSensor::StaticClass();
+        ADReyeVRFactory::MakeSensorDefinition(Id, EgoSensorDef);
     }
 
     return {EgoVehicleDef, EgoSensorDef};
 }
 
-void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters, bool &Success,
-                                            FActorDefinition &Definition)
+// copied and modified from UActorBlueprintFunctionLibrary
+FActorDefinition MakeGenericDefinition(const FString &Category, const FString &Type, const FString &Id)
+{
+    FActorDefinition Definition;
+
+    TArray<FString> Tags = {Category.ToLower(), Type.ToLower(), Id.ToLower()};
+    Definition.Id = FString::Join(Tags, TEXT("."));
+    Definition.Tags = FString::Join(Tags, TEXT(","));
+    return Definition;
+}
+
+void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters, FActorDefinition &Definition)
 {
     // assign the ID/Tags with category (ex. "vehicle.tesla.model3" => "harplab.dreyevr.model3")
-    Definition = UActorBlueprintFunctionLibrary::MakeGenericDefinition(CATEGORY, Parameters.Make, Parameters.Model);
+    Definition = MakeGenericDefinition(CATEGORY, TEXT("Vehicle"), Parameters.Model);
     Definition.Class = Parameters.Class;
 
     FActorVariation ActorRole;
@@ -103,13 +103,12 @@ void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters
         Generation.Value = FString::FromInt(Parameters.Generation);
     }
     Definition.Attributes.Emplace(Generation);
-
-    Success = UActorBlueprintFunctionLibrary::CheckActorDefinition(Definition);
 }
 
-void ADReyeVRFactory::MakeSensorDefinition(const FString &Type, const FString &Id, FActorDefinition &Definition)
+void ADReyeVRFactory::MakeSensorDefinition(const FString &Id, FActorDefinition &Definition)
 {
-    Definition = UActorBlueprintFunctionLibrary::MakeGenericDefinition(CATEGORY, Type, Id);
+    Definition = MakeGenericDefinition(CATEGORY, TEXT("Sensor"), Id);
+    Definition.Class = AEgoSensor::StaticClass();
 }
 
 FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform,

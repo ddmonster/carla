@@ -19,8 +19,8 @@ class ADReyeVRFactory : public ACarlaActorFactory
     FActorSpawnResult SpawnActor(const FTransform &SpawnAtTransform, const FActorDescription &ActorDescription) final;
 
   private:
-    void MakeVehicleDefinition(const FVehicleParameters &Parameters, bool &Success, FActorDefinition &Definition);
-    void MakeSensorDefinition(const FString &Type, const FString &Id, FActorDefinition &Definition);
+    void MakeVehicleDefinition(const FVehicleParameters &Parameters, FActorDefinition &Definition);
+    void MakeSensorDefinition(const FString &Id, FActorDefinition &Definition);
 
     class UClass *EgoVehicleBPClass = nullptr;
 };
