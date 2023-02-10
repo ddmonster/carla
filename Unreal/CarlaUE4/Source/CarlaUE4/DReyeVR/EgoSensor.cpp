@@ -78,7 +78,9 @@ void AEgoSensor::BeginPlay()
 #if USE_FOVEATED_RENDER
     // Initialize VRS plugin (using our VRS fork!)
     UVariableRateShadingFunctionLibrary::EnableVRS(bEnableFovRender);
-    UVariableRateShadingFunctionLibrary::EnableEyeTracking(bEnableFovRender);
+    bool bUseFixedFoveatedRendering = false; // fixed does not use eye tracking!
+    UVariableRateShadingFunctionLibrary::EnableEyeTracking(!bUseFixedFoveatedRendering);
+    LOG("Initialized Variable Rate Shading (VRS) plugin");
 #endif
 
     LOG("Initialized DReyeVR EgoSensor");
