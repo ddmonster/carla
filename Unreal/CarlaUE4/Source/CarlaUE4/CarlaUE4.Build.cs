@@ -64,8 +64,8 @@ public class CarlaUE4 : ModuleRules
         // Add plugin dependencies
         if (UseSRanipalPlugin)
         {
-            PrivateDependencyModuleNames.AddRange(new string[] { "SRanipalEye" });
-            PrivateIncludePathModuleNames.AddRange(new string[] { "SRanipalEye" });
+            PrivateDependencyModuleNames.AddRange(new string[] { "SRanipal", "SRanipalEye" });
+            PrivateIncludePathModuleNames.AddRange(new string[] { "SRanipal", "SRanipalEye" });
         }
 
         if (UseLogitechPlugin)
