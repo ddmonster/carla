@@ -518,8 +518,8 @@ void AEgoSensor::TickFoveatedRender()
     F.LeftEyeDirection = GetData()->GetGazeDir(DReyeVR::Gaze::LEFT);
     ConvertToEyeTrackerSpace(F.LeftEyeDirection);
     F.RightEyeOrigin = GetData()->GetGazeOrigin(DReyeVR::Gaze::RIGHT);
-    ConvertToEyeTrackerSpace(F.RightEyeDirection);
     F.RightEyeDirection = GetData()->GetGazeDir(DReyeVR::Gaze::RIGHT);
+    ConvertToEyeTrackerSpace(F.RightEyeDirection);
     F.FixationPoint = GetData()->GetFocusActorPoint();
     F.ConfidenceValue = 0.99f;
     UVariableRateShadingFunctionLibrary::UpdateStereoGazeDataToFoveatedRendering(F);
