@@ -15,6 +15,9 @@ namespace DReyeVR
 
 struct CARLA_API DataSerializer
 {
+    DataSerializer() = default;
+    virtual ~DataSerializer() = default;
+
     virtual void Read(std::ifstream &InFile) = 0;
     virtual void Write(std::ofstream &OutFile) const = 0;
     virtual FString ToString() const = 0;
