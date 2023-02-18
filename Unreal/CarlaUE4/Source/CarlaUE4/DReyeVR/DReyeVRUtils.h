@@ -30,7 +30,9 @@ struct ParamString
         // basically any UE4 type that has a ::InitFromString method
         T Ret;
         if (Ret.InitFromString(DataStr) == false)
+        {
             LOG_ERROR("Unable to decipher \"%s\" to a type", *DataStr);
+        }
         return Ret;
     }
 
@@ -84,7 +86,7 @@ static void ReadDReyeVRConfig()
         while (std::getline(ConfigFile, Line))
         {
             // std::string stdKey = std::string(TCHAR_TO_UTF8(*Key));
-            if (Line[0] == ';') // ignore comments
+            if (Line[0] == '#' || Line[0] == ';') // ignore comments
                 continue;
             std::istringstream iss_Line(Line);
             if (Line[0] == '[') // test section
@@ -97,10 +99,11 @@ static void ReadDReyeVRConfig()
             if (std::getline(iss_Line, Key, '=')) // gets left side of '=' into FileKey
             {
                 std::string Value;
-                if (std::getline(iss_Line, Value, ';')) // gets left side of ';' for comments
+                if (std::getline(iss_Line, Value, '#')) // gets left side of '#' for comments
                 {
                     std::string VariableName = CreateVariableName(Section, Key);
-                    Params[VariableName].DataStr = FString(Value.c_str()).TrimStartAndEnd();
+                    bool bHasQuotes = false;
+                    Params[VariableName].DataStr = FString(Value.c_str()).TrimStartAndEnd().TrimQuotes(&bHasQuotes);
                 }
             }
         }
@@ -262,26 +265,6 @@ static void GenerateCrosshairImage(TArray<FColor> &Src, const float Size, const 
             Src.Add(PixelColour);
         }
     }
-}
-
-static FVector2D ProjectGazeToScreen(const APlayerController *Player, const UCameraComponent *Camera,
-                                     const FVector &InOrigin, const FVector &InDir, bool bPlayerViewportRelative = true)
-{
-    if (Player == nullptr)
-        return FVector2D::ZeroVector;
-
-    // compute the 3D world point of the InOrigin + InDir
-    const FVector &WorldPos = Camera->GetComponentLocation();
-    const FRotator &WorldRot = Camera->GetComponentRotation();
-    const FVector Origin = WorldPos + WorldRot.RotateVector(InOrigin);
-    const FVector GazeDir = 100.f * WorldRot.RotateVector(InDir);
-    const FVector WorldPoint = Origin + GazeDir;
-
-    FVector2D ProjectedCoords;
-    // first project the 3D point to 2D using the player's viewport
-    UGameplayStatics::ProjectWorldToScreen(Player, WorldPoint, ProjectedCoords, bPlayerViewportRelative);
-
-    return ProjectedCoords;
 }
 
 static float CmPerSecondToXPerHour(const bool MilesPerHour)
