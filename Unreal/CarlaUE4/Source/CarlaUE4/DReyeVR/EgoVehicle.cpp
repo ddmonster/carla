@@ -304,7 +304,7 @@ void AEgoVehicle::SetPawn(ADReyeVRPawn *PawnIn)
     ensure(FirstPersonCam != nullptr);
     FAttachmentTransformRules F(EAttachmentRule::KeepRelative, false);
     Pawn->AttachToComponent(VRCameraRoot, F);
-    Pawn->GetCamera()->AttachToComponent(VRCameraRoot, F);
+    FirstPersonCam->AttachToComponent(VRCameraRoot, F);
     // Then set the actual camera to be at its origin (attached to VRCameraRoot)
     FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
     FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
@@ -438,19 +438,13 @@ void AEgoVehicle::ReplayTick()
         // see https://docs.unrealengine.com/4.26/en-US/API/Runtime/Engine/Engine/ETeleportType/
         SetActorTransform(ReplayTransform, false, nullptr, ETeleportType::TeleportPhysics);
 
-        if (bCameraFollowHMD)
+        // set the camera reenactment orientation
         {
-            // assign first person camera orientation and location (absolute)
-            const FTransform ReplayCameraTransAbs(Replay->GetCameraRotationAbs(), // FRotator (Rotation)
-                                                  Replay->GetCameraLocationAbs(), // FVector (Location)
-                                                  FVector::OneVector);            // FVector (Scale3D)
-            FirstPersonCam->SetWorldTransform(ReplayCameraTransAbs, false, nullptr, ETeleportType::TeleportPhysics);
-        }
-        else
-        {
-            // reset to forward view
-            FirstPersonCam->SetRelativeLocation(FVector::ZeroVector);
-            FirstPersonCam->SetRelativeRotation(FRotator::ZeroRotator);
+            const FTransform CameraOrientation =
+                bCameraFollowHMD // follow HMD reenacts all the head movmeents that were recorded
+                    ? FTransform(Replay->GetCameraRotation(), Replay->GetCameraLocation(), FVector::OneVector)
+                    : FTransform::Identity; // otherwise just point forward (neutral position)
+            FirstPersonCam->SetRelativeTransform(CameraOrientation, false, nullptr, ETeleportType::TeleportPhysics);
         }
 
         // overwrite vehicle inputs to use the replay data
