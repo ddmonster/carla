@@ -532,38 +532,53 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     AccelerationPedalLast = AccelerationPedal;
     BrakePedalLast = BrakePedal;
 
-    // Button presses (turn signals, reverse)
-    if (WheelState->rgbButtons[0] || WheelState->rgbButtons[1] || // Any of the 4 face pads
-        WheelState->rgbButtons[2] || WheelState->rgbButtons[3])
+    ManageButtonPresses();
+}
+
+void ADReyeVRPawn::ManageButtonPresses()
+{
+    const bool bABXY_A = WheelState->rgbButtons[0];
+    const bool bABXY_B = WheelState->rgbButtons[1];
+    const bool bABXY_X = WheelState->rgbButtons[2];
+    const bool bABXY_Y = WheelState->rgbButtons[3];
+
+    if (bABXY_A || bABXY_B || bABXY_X || bABXY_Y)
         EgoVehicle->PressReverse();
     else
         EgoVehicle->ReleaseReverse();
 
-    if (WheelState->rgbButtons[4])
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_A, bABXY_A);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_B, bABXY_B);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_X, bABXY_X);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_Y, bABXY_Y);
+
+    bool bTurnSignalR = WheelState->rgbButtons[4];
+    bool bTurnSignalL = WheelState->rgbButtons[5];
+
+    if (bTurnSignalR)
         EgoVehicle->PressTurnSignalR();
     else
         EgoVehicle->ReleaseTurnSignalR();
 
-    if (WheelState->rgbButtons[5])
+    if (bTurnSIgnalL)
         EgoVehicle->PressTurnSignalL();
     else
         EgoVehicle->ReleaseTurnSignalL();
 
     // if (WheelState->rgbButtons[23]) // big red button on right side of g923
 
-    // EgoVehicle VRCamerRoot base position adjustment
-    if (WheelState->rgdwPOV[0] == 0) // positive in X
-        EgoVehicle->CameraFwd();
-    else if (WheelState->rgdwPOV[0] == 18000) // negative in X
-        EgoVehicle->CameraBack();
-    else if (WheelState->rgdwPOV[0] == 9000) // positive in Y
-        EgoVehicle->CameraRight();
-    else if (WheelState->rgdwPOV[0] == 27000) // negative in Y
-        EgoVehicle->CameraLeft();
-    else if (WheelState->rgbButtons[19]) // positive in Z
-        EgoVehicle->CameraUp();
-    else if (WheelState->rgbButtons[20]) // negative in Z
-        EgoVehicle->CameraDown();
+    const bool bDPad_Up = (WheelState->rgdwPOV[0] == 0);
+    const bool bDPad_Right = (WheelState->rgdwPOV[0] == 9000);
+    const bool bDPad_Down = (WheelState->rgdwPOV[0] == 18000);
+    const bool bDPad_Left = (WheelState->rgdwPOV[0] == 27000);
+    const bool bPositive = (WheelState->rgbButtons[19]);
+    const bool bNegative = (WheelState->rgbButtons[20]);
+
+    EgoVehicle->CameraPositionAdjust(bDPad_Up, bDPad_Right, bDPad_Down, bDPad_Left, bPositive, bNegative);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_DPad_Up, bDPad_Up);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_DPad_Right, bDPad_Right);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_DPad_Left, bDPad_Left);
+    EgoVehicle->UpdateWheelButton(EgoVehicle->Button_DPad_Down, bDPad_Down);
 }
 
 void ADReyeVRPawn::ApplyForceFeedback() const

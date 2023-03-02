@@ -54,10 +54,21 @@ void AEgoVehicle::CameraDown()
 
 void AEgoVehicle::CameraPositionAdjust(const FVector &Disp)
 {
+    if (Disp.Equals(FVector::ZeroVector, 0.0001f))
+        return;
     // preserves adjustment even after changing view
     CameraPoseOffset.SetLocation(CameraPoseOffset.GetLocation() + Disp);
     VRCameraRoot->SetRelativeLocation(CameraPose.GetLocation() + CameraPoseOffset.GetLocation());
     /// TODO: account for rotation? scale?
+}
+
+void AEgoVehicle::CameraPositionAdjust(bool bForward, bool bRight, bool bBackwards, bool bLeft, bool bUp, bool bDown)
+{
+    // add the corresponding directions according to the adjustment booleans
+    const FVector Disp = FVector::ForwardVector * bForward + FVector::RightVector * bRight +
+                         FVector::BackwardVector * bBackwards + FVector::LeftVector * bLeft + FVector::UpVector * bUp +
+                         FVector::DownVector * bDown;
+    CameraPositionAdjust(Disp);
 }
 
 void AEgoVehicle::PressNextCameraView()
@@ -144,6 +155,7 @@ void AEgoVehicle::PressReverse()
         return;
     bCanPressReverse = false; // don't press again until release
     bReverse = !bReverse;
+    UpdateWheelButton(Button_ABXY_A, bReverse);
 
     // negate to toggle bw + (forwards) and - (backwards)
     const int CurrentGear = this->GetVehicleMovementComponent()->GetTargetGear();

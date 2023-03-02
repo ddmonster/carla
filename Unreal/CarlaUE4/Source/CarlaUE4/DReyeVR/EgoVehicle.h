@@ -182,6 +182,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void CameraRight();
     void CameraUp();
     void CameraDown();
+    void CameraPositionAdjust(bool bForward, bool bRight, bool bBackwards, bool bLeft, bool bUp, bool bDown);
 
     // changing camera views
     void PressNextCameraView();
@@ -224,6 +225,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     ////////////////:STEERINGWHEEL:////////////////
     void ConstructSteeringWheel(); // needs to be called in the constructor
+    void DestroySteeringWheel();
     UPROPERTY(Category = Steering, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UStaticMeshComponent *SteeringWheel;
     void TickSteeringWheel(const float DeltaTime);
@@ -232,6 +234,13 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float MaxSteerAngleDeg;
     float MaxSteerVelocity;
     float SteeringAnimScale;
+    void InitWheelButtons();
+    void UpdateWheelButton(ADReyeVRCustomActor *Button, bool bEnabled);
+    class ADReyeVRCustomActor *Button_ABXY_A, *Button_ABXY_B, *Button_ABXY_X, *Button_ABXY_Y;
+    class ADReyeVRCustomActor *Button_DPad_Up, *Button_DPad_Down, *Button_DPad_Left, *Button_DPad_Right;
+    bool bInitializedButtons = false;
+    const FLinearColor ButtonNeutralCol = 0.3f * FLinearColor::White;
+    const FLinearColor ButtonPressedCol = 0.6f * FLinearColor::White;
 
     ////////////////:OTHER:////////////////
     void DebugLines() const;

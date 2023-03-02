@@ -130,6 +130,7 @@ class ADReyeVRPawn : public APawn
     struct DIJOYSTATE2 *Old = nullptr; // global "old" struct for the last state
     void LogLogitechPluginStruct(const struct DIJOYSTATE2 *Now);
     void LogitechWheelUpdate();      // for logitech wheel integration
+    void ManageButtonPresses();      // for managing button presses
     void ApplyForceFeedback() const; // for logitech wheel integration
     float WheelRotationLast, AccelerationPedalLast, BrakePedalLast;
 #endif

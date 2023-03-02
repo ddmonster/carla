@@ -132,6 +132,8 @@ void AEgoVehicle::BeginDestroy()
     if (EgoSensor)
         EgoSensor->Destroy();
 
+    DestroySteeringWheel();
+
     LOG("EgoVehicle has been destroyed");
 }
 
@@ -749,8 +751,85 @@ void AEgoVehicle::ConstructSteeringWheel()
     SteeringWheel->SetVisibility(true);
 }
 
+void AEgoVehicle::InitWheelButtons()
+{
+    if (SteeringWheel == nullptr || World == nullptr)
+        return;
+    // left buttons (dpad)
+    Button_DPad_Up = ADReyeVRCustomActor::CreateNew(SM_CONE, MAT_OPAQUE, World, "DPad_Up");       // top on left
+    Button_DPad_Right = ADReyeVRCustomActor::CreateNew(SM_CONE, MAT_OPAQUE, World, "DPad_Right"); // right on left
+    Button_DPad_Down = ADReyeVRCustomActor::CreateNew(SM_CONE, MAT_OPAQUE, World, "DPad_Down");   // bottom on left
+    Button_DPad_Left = ADReyeVRCustomActor::CreateNew(SM_CONE, MAT_OPAQUE, World, "DPad_Left");   // left on left
+    // right buttons (ABXY)
+    Button_ABXY_Y = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_OPAQUE, World, "ABXY_Y"); // top on right
+    Button_ABXY_B = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_OPAQUE, World, "ABXY_B"); // right on right
+    Button_ABXY_A = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_OPAQUE, World, "ABXY_A"); // bottom on right
+    Button_ABXY_X = ADReyeVRCustomActor::CreateNew(SM_SPHERE, MAT_OPAQUE, World, "ABXY_X"); // left on right
+
+    const FRotator PointLeft(0.f, 0.f, -90.f);
+    const FRotator PointRight(0.f, 0.f, 90.f);
+    const FRotator PointUp(0.f, 0.f, 0.f);
+    const FRotator PointDown(0.f, 0.f, 180.f);
+    const FVector LeftCenter(-7.f, -10.f, 4.f); // where the center of the left 4 buttons is
+    const FVector RightCenter(-7.f, 10.f, 4.f); // where the center of the right 4 buttons is
+
+    const float ButtonDist = 2.f; // increase to separate the buttons more
+    Button_DPad_Up->SetActorLocation(LeftCenter + ButtonDist * FVector::UpVector);
+    Button_DPad_Up->SetActorRotation(PointUp);
+    Button_DPad_Right->SetActorLocation(LeftCenter + ButtonDist * FVector::RightVector);
+    Button_DPad_Right->SetActorRotation(PointRight);
+    Button_DPad_Down->SetActorLocation(LeftCenter + ButtonDist * FVector::DownVector);
+    Button_DPad_Down->SetActorRotation(PointDown);
+    Button_DPad_Left->SetActorLocation(LeftCenter + ButtonDist * FVector::LeftVector);
+    Button_DPad_Left->SetActorRotation(PointLeft);
+
+    // (spheres don't need rotation)
+    Button_ABXY_Y->SetActorLocation(RightCenter + ButtonDist * FVector::UpVector);
+    Button_ABXY_B->SetActorLocation(RightCenter + ButtonDist * FVector::RightVector);
+    Button_ABXY_A->SetActorLocation(RightCenter + ButtonDist * FVector::DownVector);
+    Button_ABXY_X->SetActorLocation(RightCenter + ButtonDist * FVector::LeftVector);
+
+    // for applying the same properties on these actors
+    auto WheelButtons = {Button_ABXY_A,  Button_ABXY_B,    Button_ABXY_X,    Button_ABXY_Y,
+                         Button_DPad_Up, Button_DPad_Down, Button_DPad_Left, Button_DPad_Right};
+    for (auto *Button : WheelButtons)
+    {
+        check(Button != nullptr);
+        Button->Activate();
+        Button->SetActorScale3D(0.01f * FVector::OneVector);
+        Button->AttachToComponent(SteeringWheel, FAttachmentTransformRules::KeepRelativeTransform);
+        Button->MaterialParams.BaseColor = ButtonNeutralCol;
+        Button->MaterialParams.Emissive = ButtonNeutralCol;
+    }
+    bInitializedButtons = true;
+}
+
+void AEgoVehicle::UpdateWheelButton(ADReyeVRCustomActor *Button, bool bEnabled)
+{
+    if (Button == nullptr)
+        return;
+    Button->MaterialParams.BaseColor = bEnabled ? ButtonPressedCol : ButtonNeutralCol;
+    Button->MaterialParams.Emissive = bEnabled ? ButtonPressedCol : ButtonNeutralCol;
+}
+
+void AEgoVehicle::DestroySteeringWheel()
+{
+    auto WheelButtons = {Button_ABXY_A,  Button_ABXY_B,    Button_ABXY_X,    Button_ABXY_Y,
+                         Button_DPad_Up, Button_DPad_Down, Button_DPad_Left, Button_DPad_Right};
+    for (auto *Button : WheelButtons)
+    {
+        if (Button)
+        {
+            Button->Deactivate();
+            Button->Destroy();
+        }
+    }
+}
+
 void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 {
+    if (!bInitializedButtons)
+        InitWheelButtons();
     const FRotator CurrentRotation = SteeringWheel->GetRelativeRotation();
     const float RawSteering = GetVehicleInputs().Steering; // this is scaled in SetSteering
     const float TargetAngle = (RawSteering / ScaleSteeringInput) * SteeringAnimScale;
