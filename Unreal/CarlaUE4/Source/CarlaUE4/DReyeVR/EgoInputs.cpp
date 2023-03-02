@@ -155,7 +155,6 @@ void AEgoVehicle::PressReverse()
         return;
     bCanPressReverse = false; // don't press again until release
     bReverse = !bReverse;
-    UpdateWheelButton(Button_ABXY_A, bReverse);
 
     // negate to toggle bw + (forwards) and - (backwards)
     const int CurrentGear = this->GetVehicleMovementComponent()->GetTargetGear();

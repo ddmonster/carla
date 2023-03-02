@@ -482,6 +482,7 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     if (LogiUpdate() == false) // update the logitech wheel
         LOG_WARN("Logitech wheel %d failed to update!", WheelDeviceIdx);
     DIJOYSTATE2 *WheelState = LogiGetState(WheelDeviceIdx);
+    ensure(WheelState != nullptr);
     if (bLogLogitechWheel)
         LogLogitechPluginStruct(WheelState);
     /// NOTE: obtained these from LogitechWheelInputDevice.cpp:~111
@@ -532,15 +533,15 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     AccelerationPedalLast = AccelerationPedal;
     BrakePedalLast = BrakePedal;
 
-    ManageButtonPresses();
+    ManageButtonPresses(*WheelState);
 }
 
-void ADReyeVRPawn::ManageButtonPresses()
+void ADReyeVRPawn::ManageButtonPresses(const DIJOYSTATE2 &WheelState)
 {
-    const bool bABXY_A = WheelState->rgbButtons[0];
-    const bool bABXY_B = WheelState->rgbButtons[1];
-    const bool bABXY_X = WheelState->rgbButtons[2];
-    const bool bABXY_Y = WheelState->rgbButtons[3];
+    const bool bABXY_A = static_cast<bool>(WheelState.rgbButtons[0]);
+    const bool bABXY_B = static_cast<bool>(WheelState.rgbButtons[2]);
+    const bool bABXY_X = static_cast<bool>(WheelState.rgbButtons[1]);
+    const bool bABXY_Y = static_cast<bool>(WheelState.rgbButtons[3]);
 
     if (bABXY_A || bABXY_B || bABXY_X || bABXY_Y)
         EgoVehicle->PressReverse();
@@ -552,27 +553,27 @@ void ADReyeVRPawn::ManageButtonPresses()
     EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_X, bABXY_X);
     EgoVehicle->UpdateWheelButton(EgoVehicle->Button_ABXY_Y, bABXY_Y);
 
-    bool bTurnSignalR = WheelState->rgbButtons[4];
-    bool bTurnSignalL = WheelState->rgbButtons[5];
+    bool bTurnSignalR = static_cast<bool>(WheelState.rgbButtons[4]);
+    bool bTurnSignalL = static_cast<bool>(WheelState.rgbButtons[5]);
 
     if (bTurnSignalR)
         EgoVehicle->PressTurnSignalR();
     else
         EgoVehicle->ReleaseTurnSignalR();
 
-    if (bTurnSIgnalL)
+    if (bTurnSignalL)
         EgoVehicle->PressTurnSignalL();
     else
         EgoVehicle->ReleaseTurnSignalL();
 
-    // if (WheelState->rgbButtons[23]) // big red button on right side of g923
+    // if (WheelState.rgbButtons[23]) // big red button on right side of g923
 
-    const bool bDPad_Up = (WheelState->rgdwPOV[0] == 0);
-    const bool bDPad_Right = (WheelState->rgdwPOV[0] == 9000);
-    const bool bDPad_Down = (WheelState->rgdwPOV[0] == 18000);
-    const bool bDPad_Left = (WheelState->rgdwPOV[0] == 27000);
-    const bool bPositive = (WheelState->rgbButtons[19]);
-    const bool bNegative = (WheelState->rgbButtons[20]);
+    const bool bDPad_Up = (WheelState.rgdwPOV[0] == 0);
+    const bool bDPad_Right = (WheelState.rgdwPOV[0] == 9000);
+    const bool bDPad_Down = (WheelState.rgdwPOV[0] == 18000);
+    const bool bDPad_Left = (WheelState.rgdwPOV[0] == 27000);
+    const bool bPositive = static_cast<bool>(WheelState.rgbButtons[19]);
+    const bool bNegative = static_cast<bool>(WheelState.rgbButtons[20]);
 
     EgoVehicle->CameraPositionAdjust(bDPad_Up, bDPad_Right, bDPad_Down, bDPad_Left, bPositive, bNegative);
     EgoVehicle->UpdateWheelButton(EgoVehicle->Button_DPad_Up, bDPad_Up);

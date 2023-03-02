@@ -796,10 +796,12 @@ void AEgoVehicle::InitWheelButtons()
     {
         check(Button != nullptr);
         Button->Activate();
-        Button->SetActorScale3D(0.01f * FVector::OneVector);
+        Button->SetActorScale3D(0.015f * FVector::OneVector);
         Button->AttachToComponent(SteeringWheel, FAttachmentTransformRules::KeepRelativeTransform);
         Button->MaterialParams.BaseColor = ButtonNeutralCol;
         Button->MaterialParams.Emissive = ButtonNeutralCol;
+        Button->UpdateMaterial();
+        Button->SetActorTickEnabled(false); // don't tick these actors (for performance)
     }
     bInitializedButtons = true;
 }
@@ -810,6 +812,7 @@ void AEgoVehicle::UpdateWheelButton(ADReyeVRCustomActor *Button, bool bEnabled)
         return;
     Button->MaterialParams.BaseColor = bEnabled ? ButtonPressedCol : ButtonNeutralCol;
     Button->MaterialParams.Emissive = bEnabled ? ButtonPressedCol : ButtonNeutralCol;
+    Button->UpdateMaterial();
 }
 
 void AEgoVehicle::DestroySteeringWheel()

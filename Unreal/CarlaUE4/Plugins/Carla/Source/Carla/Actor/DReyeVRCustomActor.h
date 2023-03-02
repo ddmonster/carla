@@ -49,6 +49,7 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
 
     // function to dynamically change the material params of the object at runtime
     void AssignMat(const FString &Path);
+    void UpdateMaterial();
     struct DReyeVR::CustomActorData::MaterialParamsStruct MaterialParams;
 
   private:
