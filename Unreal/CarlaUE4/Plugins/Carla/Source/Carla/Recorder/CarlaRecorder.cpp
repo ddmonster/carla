@@ -280,15 +280,10 @@ void ACarlaRecorder::AddDReyeVRData()
   // Add the latest instance of the DReyeVR snapshot to our data
   DReyeVRAggData.Add(DReyeVRDataRecorder<DReyeVR::AggregateData>(ADReyeVRSensor::Data));
 
-  TArray<AActor *> FoundActors;
-  if (Episode != nullptr && Episode->GetWorld() != nullptr)
+  for (auto &ActiveCAs : ADReyeVRCustomActor::ActiveCustomActors)
   {
-      UGameplayStatics::GetAllActorsOfClass(Episode->GetWorld(), ADReyeVRCustomActor::StaticClass(), FoundActors);
-  }
-  for (AActor *A : FoundActors)
-  {
-    ADReyeVRCustomActor *CustomActor = Cast<ADReyeVRCustomActor>(A);
-    if (CustomActor != nullptr && CustomActor->IsActive())
+    ADReyeVRCustomActor *CustomActor = ActiveCAs.second;
+    if (CustomActor != nullptr && CustomActor->IsActive() && CustomActor->GetShouldRecord())
     {
       DReyeVRCustomActorData.Add(DReyeVRDataRecorder<DReyeVR::CustomActorData>(&(CustomActor->GetInternals())));
     }

@@ -39,6 +39,16 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
         return bIsActive;
     }
 
+    bool SetActorRecordEnabled(const bool bEnabled)
+    {
+        bShouldRecord = bEnabled;
+    }
+
+    const bool GetShouldRecord() const
+    {
+        return bShouldRecord;
+    }
+
     void Initialize(const FString &Name);
 
     void SetInternals(const DReyeVR::CustomActorData &In);
@@ -55,7 +65,8 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
   private:
     void BeginPlay() override;
     void BeginDestroy() override;
-    bool bIsActive = false; // initially deactivated
+    bool bIsActive = false;    // initially deactivated
+    bool bShouldRecord = true; // should record in the Carla Recorder/Replayer
 
     bool AssignSM(const FString &Path, UWorld *World);
 
