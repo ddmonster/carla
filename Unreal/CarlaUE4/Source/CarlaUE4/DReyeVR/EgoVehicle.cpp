@@ -349,7 +349,7 @@ FVector AEgoVehicle::GetCameraOffset() const
 }
 FVector AEgoVehicle::GetCameraPosn() const
 {
-    return GetCamera()->GetComponentLocation();
+    return GetCamera() ? GetCamera()->GetComponentLocation() : FVector::ZeroVector;
 }
 FVector AEgoVehicle::GetNextCameraPosn(const float DeltaSeconds) const
 {
@@ -358,7 +358,7 @@ FVector AEgoVehicle::GetNextCameraPosn(const float DeltaSeconds) const
 }
 FRotator AEgoVehicle::GetCameraRot() const
 {
-    return GetCamera()->GetComponentRotation();
+    return GetCamera() ? GetCamera()->GetComponentRotation() : FRotator::ZeroRotator;
 }
 const class AEgoSensor *AEgoVehicle::GetSensor() const
 {
