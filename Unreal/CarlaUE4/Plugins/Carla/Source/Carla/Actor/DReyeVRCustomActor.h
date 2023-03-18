@@ -39,7 +39,7 @@ class CARLA_API ADReyeVRCustomActor : public AActor // abstract class
         return bIsActive;
     }
 
-    bool SetActorRecordEnabled(const bool bEnabled)
+    void SetActorRecordEnabled(const bool bEnabled)
     {
         bShouldRecord = bEnabled;
     }
