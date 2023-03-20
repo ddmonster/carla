@@ -1,7 +1,7 @@
 #include "EgoSensor.h"
 
 #include "Carla/Game/CarlaStatics.h"    // GetCurrentEpisode
-#include "DReyeVRUtils.h"               // ReadConfigValue, ComputeClosestToRayIntersection
+#include "DReyeVRUtils.h"               // GeneralParams.Get, ComputeClosestToRayIntersection
 #include "EgoVehicle.h"                 // AEgoVehicle
 #include "Kismet/GameplayStatics.h"     // UGameplayStatics::ProjectWorldToScreen
 #include "Kismet/KismetMathLibrary.h"   // Sin, Cos, Normalize
@@ -43,25 +43,25 @@ AEgoSensor::AEgoSensor(const FObjectInitializer &ObjectInitializer) : Super(Obje
 
 void AEgoSensor::ReadConfigVariables()
 {
-    ReadConfigValue("EgoSensor", "StreamSensorData", bStreamData);
-    ReadConfigValue("EgoSensor", "MaxTraceLenM", MaxTraceLenM);
-    ReadConfigValue("EgoSensor", "DrawDebugFocusTrace", bDrawDebugFocusTrace);
+    GeneralParams.Get("EgoSensor", "StreamSensorData", bStreamData);
+    GeneralParams.Get("EgoSensor", "MaxTraceLenM", MaxTraceLenM);
+    GeneralParams.Get("EgoSensor", "DrawDebugFocusTrace", bDrawDebugFocusTrace);
 
     // variables corresponding to the action of screencapture during replay
-    ReadConfigValue("Replayer", "RecordAllShaders", bRecordAllShaders);
-    ReadConfigValue("Replayer", "RecordAllPoses", bRecordAllPoses);
-    ReadConfigValue("Replayer", "RecordFrames", bCaptureFrameData);
-    ReadConfigValue("Replayer", "FileFormatJPG", bFileFormatJPG);
-    ReadConfigValue("Replayer", "LinearGamma", bFrameCapForceLinearGamma);
-    ReadConfigValue("Replayer", "FrameWidth", FrameCapWidth);
-    ReadConfigValue("Replayer", "FrameHeight", FrameCapHeight);
-    ReadConfigValue("Replayer", "FrameDir", FrameCapLocation);
-    ReadConfigValue("Replayer", "FrameName", FrameCapFilename);
+    GeneralParams.Get("Replayer", "RecordAllShaders", bRecordAllShaders);
+    GeneralParams.Get("Replayer", "RecordAllPoses", bRecordAllPoses);
+    GeneralParams.Get("Replayer", "RecordFrames", bCaptureFrameData);
+    GeneralParams.Get("Replayer", "FileFormatJPG", bFileFormatJPG);
+    GeneralParams.Get("Replayer", "LinearGamma", bFrameCapForceLinearGamma);
+    GeneralParams.Get("Replayer", "FrameWidth", FrameCapWidth);
+    GeneralParams.Get("Replayer", "FrameHeight", FrameCapHeight);
+    GeneralParams.Get("Replayer", "FrameDir", FrameCapLocation);
+    GeneralParams.Get("Replayer", "FrameName", FrameCapFilename);
 
 #if USE_FOVEATED_RENDER
     // foveated rendering variables
-    ReadConfigValue("VariableRateShading", "Enabled", bEnableFovRender);
-    ReadConfigValue("VariableRateShading", "UsingEyeTracking", bUseEyeTrackingVRS);
+    GeneralParams.Get("VariableRateShading", "Enabled", bEnableFovRender);
+    GeneralParams.Get("VariableRateShading", "UsingEyeTracking", bUseEyeTrackingVRS);
 #endif
 }
 

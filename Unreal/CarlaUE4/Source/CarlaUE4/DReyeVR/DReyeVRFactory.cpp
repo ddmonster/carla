@@ -16,8 +16,7 @@
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
-    FString EgoVehicleBP_Str;
-    ReadConfigValue(MeshPathConfigDir, "VehicleBlueprint", EgoVehicleBP_Str);
+    FString EgoVehicleBP_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "VehicleBlueprint");
     static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(*EgoVehicleBP_Str);
     EgoVehicleBPClass = EgoVehicleBP.Object;
     ensure(EgoVehicleBPClass != nullptr);
@@ -29,7 +28,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     {
         FVehicleParameters Parameters;
         Parameters.Model = "Model3";
-        ReadConfigValue(MeshPathConfigDir, "VehicleBlueprint", Parameters.ObjectType);
+        Parameters.ObjectType = VehicleParams.Get<FString>("UnrealMeshPaths", "VehicleBlueprint");
         Parameters.Class = AEgoVehicle::StaticClass();
         Parameters.NumberOfWheels = 4;
 

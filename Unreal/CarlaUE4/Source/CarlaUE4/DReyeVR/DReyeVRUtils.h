@@ -13,138 +13,147 @@
 #include <string>
 #include <unordered_map>
 
-/// this is the file where we'll read all DReyeVR specific configs
-static const FString ConfigFilePath =
-    FPaths::Combine(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()), TEXT("Config"), TEXT("DReyeVRConfig.ini"));
-
-// path to the category in DReyeVRConfig.ini
-static const FString MeshPathConfigDir("UnrealMeshPaths");
-
-struct ParamString
+struct ConfigFile
 {
-    ParamString() = default;
-
-    FString DataStr = ""; // string representation of the data to parse into primitives
-    bool bIsDirty = true; // whether or not the data has been read (clean) or not (dirty)
-
-    template <typename T> inline T DecipherToType() const
+    ConfigFile(const FString &Path) : FilePath(Path)
     {
-        // supports FVector, FVector2D, FLinearColor, FQuat, and FRotator,
-        // basically any UE4 type that has a ::InitFromString method
-        T Ret;
-        if (Ret.InitFromString(DataStr) == false)
+        Update(); // ensures all the variables are updated upon construction
+    }
+
+    std::string CreateVariableConfigName(const FString &Section, const FString &Variable) const
+    {
+        const std::string SectionStdStr(TCHAR_TO_UTF8(*Section));
+        const std::string VariableStdStr(TCHAR_TO_UTF8(*Variable));
+        return CreateVariableConfigName(SectionStdStr, VariableStdStr);
+    }
+
+    std::string CreateVariableConfigName(const std::string &Section, const std::string &Variable) const
+    {
+        return Section + "/" + Variable; // concat with separator
+    }
+
+    template <typename T> void Get(const FString &Section, const FString &Variable, T &Value) const
+    {
+        // used to ensure the configs file has been read and contents updated
+        const std::string VariableName = CreateVariableConfigName(Section, Variable);
+        auto It = ParamsTable.find(VariableName);
+        if (It == ParamsTable.end())
         {
-            LOG_ERROR("Unable to decipher \"%s\" to a type", *DataStr);
+            LOG_ERROR("No variable matching \"%s\" found for type", *FString(VariableName.c_str()));
+            return;
         }
-        return Ret;
+        const ParamString Param = It->second;
+        Value = Param.DecipherToType<T>();
+
+        // enable this for debug purposes
+        // LOG("Read \"%s\" => %s", *FString(VariableName.c_str()), *Param.DataStr);
     }
 
-    template <> inline bool DecipherToType<bool>() const
+    template <typename T> T Get(const FString &Section, const FString &Variable) const
     {
-        return DataStr.ToBool();
+        T Value;
+        Get(Section, Variable, Value);
+        return Value;
     }
 
-    template <> inline int DecipherToType<int>() const
+    void Update() // reload the internally tracked table of params
     {
-        return FCString::Atoi(*DataStr);
-    }
-
-    template <> inline float DecipherToType<float>() const
-    {
-        return FCString::Atof(*DataStr);
-    }
-
-    template <> inline FString DecipherToType<FString>() const
-    {
-        return DataStr;
-    }
-
-    template <> inline FName DecipherToType<FName>() const
-    {
-        return FName(*DataStr);
-    }
-};
-
-static std::unordered_map<std::string, ParamString> Params = {};
-
-static std::string CreateVariableName(const std::string &Section, const std::string &Variable)
-{
-    return Section + "/" + Variable; // encoding the variable alongside its section
-}
-static std::string CreateVariableName(const FString &Section, const FString &Variable)
-{
-    return CreateVariableName(std::string(TCHAR_TO_UTF8(*Section)), std::string(TCHAR_TO_UTF8(*Variable)));
-}
-
-static void ReadDReyeVRConfig()
-{
-    /// TODO: add feature to "hot-reload" new params during runtime
-    LOG("Reading config from %s", *ConfigFilePath);
-    /// performs a single pass over the config file to collect all variables into Params
-    std::ifstream ConfigFile(TCHAR_TO_ANSI(*ConfigFilePath));
-    if (ConfigFile)
-    {
-        std::string Line;
-        std::string Section = "";
-        while (std::getline(ConfigFile, Line))
+        /// TODO: add feature to "hot-reload" new params during runtime
+        LOG("Reading config from %s", *FilePath);
+        /// performs a single pass over the config file to collect all variables into Params
+        std::ifstream ConfigFile(TCHAR_TO_ANSI(*FilePath));
+        if (ConfigFile)
         {
-            // std::string stdKey = std::string(TCHAR_TO_UTF8(*Key));
-            if (Line[0] == '#' || Line[0] == ';') // ignore comments
-                continue;
-            std::istringstream iss_Line(Line);
-            if (Line[0] == '[') // test section
+            std::string Line;
+            std::string Section = "";
+            while (std::getline(ConfigFile, Line))
             {
-                std::getline(iss_Line, Section, ']');
-                Section = Section.substr(1); // skip leading '['
-                continue;
-            }
-            std::string Key;
-            if (std::getline(iss_Line, Key, '=')) // gets left side of '=' into FileKey
-            {
-                std::string Value;
-                if (std::getline(iss_Line, Value, '#')) // gets left side of '#' for comments
+                // std::string stdKey = std::string(TCHAR_TO_UTF8(*Key));
+                if (Line[0] == '#' || Line[0] == ';') // ignore comments
+                    continue;
+                std::istringstream iss_Line(Line);
+                if (Line[0] == '[') // test section
                 {
-                    std::string VariableName = CreateVariableName(Section, Key);
-                    bool bHasQuotes = false;
-                    Params[VariableName].DataStr = FString(Value.c_str()).TrimStartAndEnd().TrimQuotes(&bHasQuotes);
+                    std::getline(iss_Line, Section, ']');
+                    Section = Section.substr(1); // skip leading '['
+                    continue;
+                }
+                std::string Key;
+                if (std::getline(iss_Line, Key, '=')) // gets left side of '=' into FileKey
+                {
+                    std::string Value;
+                    if (std::getline(iss_Line, Value, '#')) // gets left side of '#' for comments
+                    {
+                        const std::string VariableName = CreateVariableConfigName(Section, Key);
+                        bool bHasQuotes = false;
+                        ParamsTable[VariableName].DataStr =
+                            FString(Value.c_str()).TrimStartAndEnd().TrimQuotes(&bHasQuotes);
+                    }
                 }
             }
         }
+        else
+        {
+            LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
+        }
+        // for (auto &e : Params){
+        //     LOG_WARN("%s: %s", *FString(e.first.c_str()), *e.second);
+        // }
     }
-    else
-    {
-        LOG_ERROR("Unable to open the config file %s", *ConfigFilePath);
-    }
-    // for (auto &e : Params){
-    //     LOG_WARN("%s: %s", *FString(e.first.c_str()), *e.second);
-    // }
-}
 
-static void EnsureConfigsUpdated()
-{
-    // used to ensure the configs file has been read and contents updated
-    if (Params.size() == 0)
-        ReadDReyeVRConfig();
-}
-
-template <typename T> static void ReadConfigValue(const FString &Section, const FString &Variable, T &Value)
-{
-    EnsureConfigsUpdated();
-    const std::string VariableName = CreateVariableName(Section, Variable);
-    if (Params.find(VariableName) == Params.end())
+    struct ParamString
     {
-        LOG_ERROR("No variable matching \"%s\" found for type", *FString(VariableName.c_str()));
-        return;
-    }
-    auto &Param = Params[VariableName];
-    Value = Param.DecipherToType<T>();
+        ParamString() = default;
 
-    if (Param.bIsDirty)
-    {
-        LOG("Read \"%s\" => %s", *FString(VariableName.c_str()), *Param.DataStr);
-    }
-    Param.bIsDirty = false; // has just been read
-}
+        FString DataStr = ""; // string representation of the data to parse into primitives
+
+        template <typename T> inline T DecipherToType() const
+        {
+            // supports FVector, FVector2D, FLinearColor, FQuat, and FRotator,
+            // basically any UE4 type that has a ::InitFromString method
+            T Ret;
+            if (Ret.InitFromString(DataStr) == false)
+            {
+                LOG_ERROR("Unable to decipher \"%s\" to a type", *DataStr);
+            }
+            return Ret;
+        }
+
+        template <> inline bool DecipherToType<bool>() const
+        {
+            return DataStr.ToBool();
+        }
+
+        template <> inline int DecipherToType<int>() const
+        {
+            return FCString::Atoi(*DataStr);
+        }
+
+        template <> inline float DecipherToType<float>() const
+        {
+            return FCString::Atof(*DataStr);
+        }
+
+        template <> inline FString DecipherToType<FString>() const
+        {
+            return DataStr;
+        }
+
+        template <> inline FName DecipherToType<FName>() const
+        {
+            return FName(*DataStr);
+        }
+    };
+
+  private:
+    const FString FilePath;
+    std::unordered_map<std::string, ParamString> ParamsTable = {};
+};
+
+const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+static ConfigFile GeneralParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/DReyeVRConfig.ini")));
+static ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/Parameters"),
+                                                *GeneralParams.Get<FString>("EgoVehicle", TEXT("ParameterPath"))));
 
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
@@ -392,35 +401,27 @@ static size_t GetNumberOfShaders()
 static FPostProcessSettings CreatePostProcessingParams(const std::vector<FSensorShader> &Shaders)
 {
     // modifying from here: https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/FPostProcessSettings/
-    float TmpParam;
     FPostProcessSettings PP;
     PP.bOverride_VignetteIntensity = true;
-    ReadConfigValue("CameraParams", "VignetteIntensity", TmpParam);
-    PP.VignetteIntensity = TmpParam;
+    PP.VignetteIntensity = GeneralParams.Get<float>("CameraParams", "VignetteIntensity");
 
     PP.bOverride_ScreenPercentage = true;
-    ReadConfigValue("CameraParams", "ScreenPercentage", TmpParam);
-    PP.ScreenPercentage = TmpParam;
+    PP.ScreenPercentage = GeneralParams.Get<float>("CameraParams", "ScreenPercentage");
 
     PP.bOverride_BloomIntensity = true;
-    ReadConfigValue("CameraParams", "BloomIntensity", TmpParam);
-    PP.BloomIntensity = TmpParam;
+    PP.BloomIntensity = GeneralParams.Get<float>("CameraParams", "BloomIntensity");
 
     PP.bOverride_SceneFringeIntensity = true;
-    ReadConfigValue("CameraParams", "SceneFringeIntensity", TmpParam);
-    PP.SceneFringeIntensity = TmpParam;
+    PP.SceneFringeIntensity = GeneralParams.Get<float>("CameraParams", "SceneFringeIntensity");
 
     PP.bOverride_LensFlareIntensity = true;
-    ReadConfigValue("CameraParams", "LensFlareIntensity", TmpParam);
-    PP.LensFlareIntensity = TmpParam;
+    PP.LensFlareIntensity = GeneralParams.Get<float>("CameraParams", "LensFlareIntensity");
 
     PP.bOverride_GrainIntensity = true;
-    ReadConfigValue("CameraParams", "GrainIntensity", TmpParam);
-    PP.GrainIntensity = TmpParam;
+    PP.GrainIntensity = GeneralParams.Get<float>("CameraParams", "GrainIntensity");
 
     PP.bOverride_MotionBlurAmount = true;
-    ReadConfigValue("CameraParams", "MotionBlurIntensity", TmpParam);
-    PP.MotionBlurAmount = TmpParam;
+    PP.MotionBlurAmount = GeneralParams.Get<float>("CameraParams", "MotionBlurIntensity");
 
     // append shaders to this postprocess effect
     for (const FSensorShader &ShaderInfo : Shaders)

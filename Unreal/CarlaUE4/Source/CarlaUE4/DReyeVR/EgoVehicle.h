@@ -12,7 +12,7 @@
 #include "Components/SceneComponent.h"                // USceneComponent
 #include "CoreMinimal.h"                              // Unreal functions
 #include "DReyeVRGameMode.h"                          // ADReyeVRGameMode
-#include "DReyeVRUtils.h"                             // ReadConfigValue
+#include "DReyeVRUtils.h"                             // GeneralParams.Get
 #include "EgoSensor.h"                                // AEgoSensor
 #include "FlatHUD.h"                                  // ADReyeVRHUD
 #include "ImageUtils.h"                               // CreateTexture2D
@@ -219,7 +219,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     UPROPERTY(Category = "Dash", EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UTextRenderComponent *GearShifter;
     void UpdateDash();
-    FVector DashboardLocnInVehicle{110, 0, 105}; // can change via params
     bool bUseMPH;
     float SpeedometerScale; // scale from CM/s to MPH or KPH depending on bUseMPH
 
@@ -229,8 +228,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     UPROPERTY(Category = Steering, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UStaticMeshComponent *SteeringWheel;
     void TickSteeringWheel(const float DeltaTime);
-    FVector InitWheelLocation;
-    FRotator InitWheelRotation;
     float MaxSteerAngleDeg;
     float MaxSteerVelocity;
     float SteeringAnimScale;

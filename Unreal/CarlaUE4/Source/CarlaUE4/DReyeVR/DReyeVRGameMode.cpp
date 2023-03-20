@@ -53,17 +53,16 @@ ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
     };
 
     // read config variables
-    ReadConfigValue("Game", "AutomaticallySpawnEgo", bDoSpawnEgoVehicle);
-    ReadConfigValue("Game", "EgoVolumePercent", EgoVolumePercent);
-    ReadConfigValue("Game", "NonEgoVolumePercent", NonEgoVolumePercent);
-    ReadConfigValue("Game", "AmbientVolumePercent", AmbientVolumePercent);
-    ReadConfigValue("Game", "DoSpawnEgoVehicleTransform", bDoSpawnEgoVehicleTransform);
-    ReadConfigValue("Game", "SpawnEgoVehicleTransform", SpawnEgoVehicleTransform);
+    bDoSpawnEgoVehicle = GeneralParams.Get<bool>("Game", "AutomaticallySpawnEgo");
+    EgoVolumePercent = GeneralParams.Get<float>("Game", "EgoVolumePercent");
+    NonEgoVolumePercent = GeneralParams.Get<float>("Game", "NonEgoVolumePercent");
+    AmbientVolumePercent = GeneralParams.Get<float>("Game", "AmbientVolumePercent");
+    bDoSpawnEgoVehicleTransform = GeneralParams.Get<bool>("Game", "DoSpawnEgoVehicleTransform");
+    SpawnEgoVehicleTransform = GeneralParams.Get<FTransform>("Game", "SpawnEgoVehicleTransform");
 
     // Recorder/replayer
-    ReadConfigValue("Replayer", "UseCarlaSpectator", bUseCarlaSpectator);
-    bool bEnableReplayInterpolation = false;
-    ReadConfigValue("Replayer", "ReplayInterpolation", bEnableReplayInterpolation);
+    bUseCarlaSpectator = GeneralParams.Get<bool>("Replayer", "UseCarlaSpectator");
+    bool bEnableReplayInterpolation = GeneralParams.Get<bool>("Replayer", "ReplayInterpolation");
     bReplaySync = !bEnableReplayInterpolation; // synchronous => no interpolation!
 }
 

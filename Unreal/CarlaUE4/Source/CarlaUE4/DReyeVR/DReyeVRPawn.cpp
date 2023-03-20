@@ -30,26 +30,26 @@ ADReyeVRPawn::ADReyeVRPawn(const FObjectInitializer &ObjectInitializer) : Super(
 void ADReyeVRPawn::ReadConfigVariables()
 {
     // camera
-    ReadConfigValue("CameraParams", "FieldOfView", FieldOfView);
+    GeneralParams.Get("CameraParams", "FieldOfView", FieldOfView);
     /// NOTE: all the postprocessing params are used in DReyeVRUtils::CreatePostProcessingParams
 
     // input scaling
-    ReadConfigValue("VehicleInputs", "InvertMouseY", InvertMouseY);
-    ReadConfigValue("VehicleInputs", "ScaleMouseY", ScaleMouseY);
-    ReadConfigValue("VehicleInputs", "ScaleMouseX", ScaleMouseX);
+    GeneralParams.Get("VehicleInputs", "InvertMouseY", InvertMouseY);
+    GeneralParams.Get("VehicleInputs", "ScaleMouseY", ScaleMouseY);
+    GeneralParams.Get("VehicleInputs", "ScaleMouseX", ScaleMouseX);
 
     // HUD
-    ReadConfigValue("EgoVehicleHUD", "HUDScaleVR", HUDScaleVR);
-    ReadConfigValue("EgoVehicleHUD", "DrawFPSCounter", bDrawFPSCounter);
-    ReadConfigValue("EgoVehicleHUD", "DrawFlatReticle", bDrawFlatReticle);
-    ReadConfigValue("EgoVehicleHUD", "ReticleSize", ReticleSize);
-    ReadConfigValue("EgoVehicleHUD", "DrawGaze", bDrawGaze);
-    ReadConfigValue("EgoVehicleHUD", "DrawSpectatorReticle", bDrawSpectatorReticle);
-    ReadConfigValue("EgoVehicleHUD", "EnableSpectatorScreen", bEnableSpectatorScreen);
+    GeneralParams.Get("EgoVehicleHUD", "HUDScaleVR", HUDScaleVR);
+    GeneralParams.Get("EgoVehicleHUD", "DrawFPSCounter", bDrawFPSCounter);
+    GeneralParams.Get("EgoVehicleHUD", "DrawFlatReticle", bDrawFlatReticle);
+    GeneralParams.Get("EgoVehicleHUD", "ReticleSize", ReticleSize);
+    GeneralParams.Get("EgoVehicleHUD", "DrawGaze", bDrawGaze);
+    GeneralParams.Get("EgoVehicleHUD", "DrawSpectatorReticle", bDrawSpectatorReticle);
+    GeneralParams.Get("EgoVehicleHUD", "EnableSpectatorScreen", bEnableSpectatorScreen);
 
     // wheel hardware
-    ReadConfigValue("Hardware", "DeviceIdx", WheelDeviceIdx);
-    ReadConfigValue("Hardware", "LogUpdates", bLogLogitechWheel);
+    GeneralParams.Get("Hardware", "DeviceIdx", WheelDeviceIdx);
+    GeneralParams.Get("Hardware", "LogUpdates", bLogLogitechWheel);
 }
 
 void ADReyeVRPawn::ConstructCamera()

@@ -51,36 +51,33 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 
 void AEgoVehicle::ReadConfigVariables()
 {
-    ReadConfigValue("EgoVehicle", "DashLocation", DashboardLocnInVehicle);
-    ReadConfigValue("EgoVehicle", "SpeedometerInMPH", bUseMPH);
-    ReadConfigValue("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
-    ReadConfigValue("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
+    GeneralParams.Get("EgoVehicle", "SpeedometerInMPH", bUseMPH);
+    GeneralParams.Get("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
+    GeneralParams.Get("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
     // mirrors
     auto InitMirrorParams = [](const FString &Name, struct MirrorParams &Params) {
         Params.Name = Name;
-        ReadConfigValue("Mirrors", Params.Name + "MirrorEnabled", Params.Enabled);
-        ReadConfigValue("Mirrors", Params.Name + "MirrorTransform", Params.MirrorTransform);
-        ReadConfigValue("Mirrors", Params.Name + "ReflectionTransform", Params.ReflectionTransform);
-        ReadConfigValue("Mirrors", Params.Name + "ScreenPercentage", Params.ScreenPercentage);
+        VehicleParams.Get("Mirrors", Params.Name + "MirrorEnabled", Params.Enabled);
+        VehicleParams.Get("Mirrors", Params.Name + "MirrorTransform", Params.MirrorTransform);
+        VehicleParams.Get("Mirrors", Params.Name + "ReflectionTransform", Params.ReflectionTransform);
+        VehicleParams.Get("Mirrors", Params.Name + "ScreenPercentage", Params.ScreenPercentage);
     };
     InitMirrorParams("Rear", RearMirrorParams);
     InitMirrorParams("Left", LeftMirrorParams);
     InitMirrorParams("Right", RightMirrorParams);
     // rear mirror chassis
-    ReadConfigValue("Mirrors", "RearMirrorChassisTransform", RearMirrorChassisTransform);
+    VehicleParams.Get("Mirrors", "RearMirrorChassisTransform", RearMirrorChassisTransform);
     // steering wheel
-    ReadConfigValue("SteeringWheel", "InitLocation", InitWheelLocation);
-    ReadConfigValue("SteeringWheel", "InitRotation", InitWheelRotation);
-    ReadConfigValue("SteeringWheel", "MaxSteerAngleDeg", MaxSteerAngleDeg);
-    ReadConfigValue("SteeringWheel", "SteeringScale", SteeringAnimScale);
+    VehicleParams.Get("SteeringWheel", "MaxSteerAngleDeg", MaxSteerAngleDeg);
+    VehicleParams.Get("SteeringWheel", "SteeringScale", SteeringAnimScale);
     // other/cosmetic
-    ReadConfigValue("EgoVehicle", "DrawDebugEditor", bDrawDebugEditor);
+    GeneralParams.Get("EgoVehicle", "DrawDebugEditor", bDrawDebugEditor);
     // inputs
-    ReadConfigValue("VehicleInputs", "ScaleSteeringDamping", ScaleSteeringInput);
-    ReadConfigValue("VehicleInputs", "ScaleThrottleInput", ScaleThrottleInput);
-    ReadConfigValue("VehicleInputs", "ScaleBrakeInput", ScaleBrakeInput);
+    GeneralParams.Get("VehicleInputs", "ScaleSteeringDamping", ScaleSteeringInput);
+    GeneralParams.Get("VehicleInputs", "ScaleThrottleInput", ScaleThrottleInput);
+    GeneralParams.Get("VehicleInputs", "ScaleBrakeInput", ScaleBrakeInput);
     // replay
-    ReadConfigValue("Replayer", "CameraFollowHMD", bCameraFollowHMD);
+    GeneralParams.Get("Replayer", "CameraFollowHMD", bCameraFollowHMD);
 }
 
 void AEgoVehicle::BeginPlay()
@@ -262,18 +259,15 @@ void AEgoVehicle::ConstructCameraRoot()
     };
     for (FString &Key : CameraPoses)
     {
-        FVector Location;
-        FRotator Rotation;
-        ReadConfigValue("CameraPose", Key + "Loc", Location);
-        ReadConfigValue("CameraPose", Key + "Rot", Rotation);
+        FVector Location = VehicleParams.Get<FVector>("CameraPose", Key + "Loc");
+        FRotator Rotation = VehicleParams.Get<FRotator>("CameraPose", Key + "Rot");
         // converting FString to std::string for hashing
         FTransform Transform = FTransform(Rotation, Location, FVector::OneVector);
         CameraTransforms.push_back(std::make_pair(Key, Transform));
     }
 
     // assign the starting camera root pose to the given starting pose
-    FString StartingPose;
-    ReadConfigValue("CameraPose", "StartingPose", StartingPose);
+    FString StartingPose = VehicleParams.Get<FString>("CameraPose", "StartingPose");
     SetCameraRootPose(StartingPose);
 }
 
@@ -538,16 +532,14 @@ void AEgoVehicle::ConstructMirrors()
     class USkeletalMeshComponent *VehicleMesh = GetMesh();
     /// Rear mirror
     {
-        FString RearSM_Str;
-        ReadConfigValue(MeshPathConfigDir, "MirrorRear", RearSM_Str);
+        FString RearSM_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "MirrorRear");
         static ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
         RearMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorSM")));
         RearMirrorSM->SetStaticMesh(RearSM.Object);
         RearReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RearMirrorParams.Name + "Refl")));
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
-        FString RearSMChassis_Str;
-        ReadConfigValue(MeshPathConfigDir, "MirrorRearHolder", RearSMChassis_Str);
+        FString RearSMChassis_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "MirrorRearHolder");
         static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
         RearMirrorChassisSM =
             CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorChassisSM")));
@@ -564,8 +556,7 @@ void AEgoVehicle::ConstructMirrors()
     }
     /// Left mirror
     {
-        FString MirrorLeft_Str;
-        ReadConfigValue(MeshPathConfigDir, "MirrorLeft", MirrorLeft_Str);
+        FString MirrorLeft_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "MirrorLeft");
         static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
         LeftMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(LeftMirrorParams.Name + "MirrorSM")));
         LeftMirrorSM->SetStaticMesh(LeftSM.Object);
@@ -574,8 +565,7 @@ void AEgoVehicle::ConstructMirrors()
     }
     /// Right mirror
     {
-        FString MirrorRight_Str;
-        ReadConfigValue(MeshPathConfigDir, "MirrorRight", MirrorRight_Str);
+        FString MirrorRight_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "MirrorRight");
         static ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
         RightMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RightMirrorParams.Name + "MirrorSM")));
         RightMirrorSM->SetStaticMesh(RightSM.Object);
@@ -595,16 +585,14 @@ void AEgoVehicle::ConstructEgoSounds()
     ensureMsgf(EngineRevSound != nullptr, TEXT("Vehicle engine rev should be initialized!"));
     ensureMsgf(CrashSound != nullptr, TEXT("Vehicle crash sound should be initialized!"));
 
-    FString GearShift_Str;
-    ReadConfigValue(MeshPathConfigDir, "GearShift", GearShift_Str);
+    FString GearShift_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "GearShift");
     static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(*GearShift_Str);
     GearShiftSound = CreateDefaultSubobject<UAudioComponent>(TEXT("GearShift"));
     GearShiftSound->SetupAttachment(GetRootComponent());
     GearShiftSound->bAutoActivate = false;
     GearShiftSound->SetSound(GearSound.Object);
 
-    FString TurnSignal_Str;
-    ReadConfigValue(MeshPathConfigDir, "TurnSignal", TurnSignal_Str);
+    FString TurnSignal_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "TurnSignal");
     static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(*TurnSignal_Str);
     TurnSignalSound = CreateDefaultSubobject<UAudioComponent>(TEXT("TurnSignal"));
     TurnSignalSound->SetupAttachment(GetRootComponent());
@@ -639,6 +627,7 @@ void AEgoVehicle::SetVolume(const float VolumeIn)
 
 void AEgoVehicle::ConstructDashText() // dashboard text (speedometer, turn signals, gear shifter)
 {
+    const FVector DashboardLocnInVehicle = VehicleParams.Get<FVector>("Dashboard", "DashLocation");
     // Create speedometer
     Speedometer = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speedometer"));
     Speedometer->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
@@ -745,14 +734,13 @@ void AEgoVehicle::UpdateDash()
 
 void AEgoVehicle::ConstructSteeringWheel()
 {
-    FString SteeringWheel_Str;
-    ReadConfigValue(MeshPathConfigDir, "SteeringWheel", SteeringWheel_Str);
+    FString SteeringWheel_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "SteeringWheel");
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
     SteeringWheel = CreateDefaultSubobject<UStaticMeshComponent>(FName("SteeringWheel"));
     SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
     SteeringWheel->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
-    SteeringWheel->SetRelativeLocation(InitWheelLocation);
-    SteeringWheel->SetRelativeRotation(InitWheelRotation);
+    SteeringWheel->SetRelativeLocation(VehicleParams.Get<FVector>("SteeringWheel", "InitLocation"));
+    SteeringWheel->SetRelativeRotation(VehicleParams.Get<FRotator>("SteeringWheel", "InitRotation"));
     SteeringWheel->SetGenerateOverlapEvents(false); // don't collide with itself
     SteeringWheel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SteeringWheel->SetVisibility(true);
