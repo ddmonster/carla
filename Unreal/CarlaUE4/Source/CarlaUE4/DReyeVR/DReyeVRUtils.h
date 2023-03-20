@@ -152,8 +152,9 @@ struct ConfigFile
 
 const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 static ConfigFile GeneralParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/DReyeVRConfig.ini")));
-static ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/Parameters"),
-                                                *GeneralParams.Get<FString>("EgoVehicle", TEXT("ParameterPath"))));
+static ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle"),
+                                                *GeneralParams.Get<FString>("EgoVehicle", TEXT("VehicleType")),
+                                                TEXT("Config.ini")));
 
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
