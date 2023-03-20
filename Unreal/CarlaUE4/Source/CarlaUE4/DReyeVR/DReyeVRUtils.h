@@ -17,6 +17,9 @@
 static const FString ConfigFilePath =
     FPaths::Combine(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()), TEXT("Config"), TEXT("DReyeVRConfig.ini"));
 
+// path to the category in DReyeVRConfig.ini
+static const FString MeshPathConfigDir("UnrealMeshPaths");
+
 struct ParamString
 {
     ParamString() = default;
@@ -76,7 +79,7 @@ static std::string CreateVariableName(const FString &Section, const FString &Var
 static void ReadDReyeVRConfig()
 {
     /// TODO: add feature to "hot-reload" new params during runtime
-    LOG_WARN("Reading config from %s", *ConfigFilePath);
+    LOG("Reading config from %s", *ConfigFilePath);
     /// performs a single pass over the config file to collect all variables into Params
     std::ifstream ConfigFile(TCHAR_TO_ANSI(*ConfigFilePath));
     if (ConfigFile)

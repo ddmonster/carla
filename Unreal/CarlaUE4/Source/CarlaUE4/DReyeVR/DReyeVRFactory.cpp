@@ -6,8 +6,6 @@
 #include "EgoSensor.h"                                 // AEgoSensor
 #include "EgoVehicle.h"                                // AEgoVehicle
 
-#define EgoVehicleBP_Str "/Game/DReyeVR/EgoVehicle/BP_model3.BP_model3_C"
-
 // instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
 // => harplab.dreyevr_vehicle.model3 & harplab.dreyevr_sensor.ego_sensor
 // in PythonAPI use world.get_actors().filter("harplab.dreyevr_vehicle.*") or
@@ -18,8 +16,9 @@
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
-    // get ego vehicle bp (can use UTF8_TO_TCHAR if making EgoVehicleBP_Str a variable)
-    static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(TEXT(EgoVehicleBP_Str));
+    FString EgoVehicleBP_Str;
+    ReadConfigValue(MeshPathConfigDir, "VehicleBlueprint", EgoVehicleBP_Str);
+    static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(*EgoVehicleBP_Str);
     EgoVehicleBPClass = EgoVehicleBP.Object;
     ensure(EgoVehicleBPClass != nullptr);
 }
@@ -30,7 +29,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     {
         FVehicleParameters Parameters;
         Parameters.Model = "Model3";
-        Parameters.ObjectType = EgoVehicleBP_Str;
+        ReadConfigValue(MeshPathConfigDir, "VehicleBlueprint", Parameters.ObjectType);
         Parameters.Class = AEgoVehicle::StaticClass();
         Parameters.NumberOfWheels = 4;
 

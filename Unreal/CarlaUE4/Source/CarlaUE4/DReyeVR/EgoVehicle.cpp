@@ -538,15 +538,17 @@ void AEgoVehicle::ConstructMirrors()
     class USkeletalMeshComponent *VehicleMesh = GetMesh();
     /// Rear mirror
     {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(
-            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RearMirror_model3.RearMirror_model3'"));
+        FString RearSM_Str;
+        ReadConfigValue(MeshPathConfigDir, "MirrorRear", RearSM_Str);
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
         RearMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorSM")));
         RearMirrorSM->SetStaticMesh(RearSM.Object);
         RearReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RearMirrorParams.Name + "Refl")));
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(
-            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RearMirror_Mesh_model3.RearMirror_Mesh_model3'"));
+        FString RearSMChassis_Str;
+        ReadConfigValue(MeshPathConfigDir, "MirrorRearHolder", RearSMChassis_Str);
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
         RearMirrorChassisSM =
             CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RearMirrorParams.Name + "MirrorChassisSM")));
         RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
@@ -562,8 +564,9 @@ void AEgoVehicle::ConstructMirrors()
     }
     /// Left mirror
     {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(
-            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/LeftMirror_model3.LeftMirror_model3'"));
+        FString MirrorLeft_Str;
+        ReadConfigValue(MeshPathConfigDir, "MirrorLeft", MirrorLeft_Str);
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
         LeftMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(LeftMirrorParams.Name + "MirrorSM")));
         LeftMirrorSM->SetStaticMesh(LeftSM.Object);
         LeftReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(LeftMirrorParams.Name + "Refl")));
@@ -571,8 +574,9 @@ void AEgoVehicle::ConstructMirrors()
     }
     /// Right mirror
     {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(
-            TEXT("StaticMesh'/Game/DReyeVR/EgoVehicle/model3/Mirrors/RightMirror_model3.RightMirror_model3'"));
+        FString MirrorRight_Str;
+        ReadConfigValue(MeshPathConfigDir, "MirrorRight", MirrorRight_Str);
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
         RightMirrorSM = CreateDefaultSubobject<UStaticMeshComponent>(FName(*(RightMirrorParams.Name + "MirrorSM")));
         RightMirrorSM->SetStaticMesh(RightSM.Object);
         RightReflection = CreateDefaultSubobject<UPlanarReflectionComponent>(FName(*(RightMirrorParams.Name + "Refl")));
@@ -591,15 +595,17 @@ void AEgoVehicle::ConstructEgoSounds()
     ensureMsgf(EngineRevSound != nullptr, TEXT("Vehicle engine rev should be initialized!"));
     ensureMsgf(CrashSound != nullptr, TEXT("Vehicle crash sound should be initialized!"));
 
-    static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(
-        TEXT("SoundWave'/Game/DReyeVR/Sounds/GearShift.GearShift'"));
+    FString GearShift_Str;
+    ReadConfigValue(MeshPathConfigDir, "GearShift", GearShift_Str);
+    static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(*GearShift_Str);
     GearShiftSound = CreateDefaultSubobject<UAudioComponent>(TEXT("GearShift"));
     GearShiftSound->SetupAttachment(GetRootComponent());
     GearShiftSound->bAutoActivate = false;
     GearShiftSound->SetSound(GearSound.Object);
 
-    static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(
-        TEXT("SoundWave'/Game/DReyeVR/Sounds/TurnSignal.TurnSignal'"));
+    FString TurnSignal_Str;
+    ReadConfigValue(MeshPathConfigDir, "TurnSignal", TurnSignal_Str);
+    static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(*TurnSignal_Str);
     TurnSignalSound = CreateDefaultSubobject<UAudioComponent>(TEXT("TurnSignal"));
     TurnSignalSound->SetupAttachment(GetRootComponent());
     TurnSignalSound->bAutoActivate = false;
@@ -739,8 +745,9 @@ void AEgoVehicle::UpdateDash()
 
 void AEgoVehicle::ConstructSteeringWheel()
 {
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(TEXT(
-        "StaticMesh'/Game/DReyeVR/EgoVehicle/model3/SteeringWheel/Wheel_StaticMeshl_model3.Wheel_StaticMeshl_model3'"));
+    FString SteeringWheel_Str;
+    ReadConfigValue(MeshPathConfigDir, "SteeringWheel", SteeringWheel_Str);
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
     SteeringWheel = CreateDefaultSubobject<UStaticMeshComponent>(FName("SteeringWheel"));
     SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
     SteeringWheel->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
