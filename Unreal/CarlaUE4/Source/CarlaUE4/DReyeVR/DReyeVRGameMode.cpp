@@ -148,7 +148,6 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
 
     // finalize the EgoVehicle by installing the DReyeVR_Pawn to control it
     check(EgoVehiclePtr != nullptr);
-    LOG_ERROR("EGO VEHICLE HAS BEEN SET UP")
     return (EgoVehiclePtr != nullptr);
 }
 

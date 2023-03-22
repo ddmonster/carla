@@ -27,7 +27,7 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     FActorDefinition EgoVehicleDef;
     {
         FVehicleParameters Parameters;
-        Parameters.Model = "Model3";
+        Parameters.Model = GeneralParams.Get<FString>("EgoVehicle", "VehicleType");
         Parameters.ObjectType = VehicleParams.Get<FString>("UnrealMeshPaths", "VehicleBlueprint");
         Parameters.Class = AEgoVehicle::StaticClass();
         Parameters.NumberOfWheels = 4;

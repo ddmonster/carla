@@ -625,6 +625,9 @@ void AEgoVehicle::SetVolume(const float VolumeIn)
 
 void AEgoVehicle::ConstructDashText() // dashboard text (speedometer, turn signals, gear shifter)
 {
+    const bool bEnableDashBoard = VehicleParams.Get<bool>("Dashboard", "Enabled");
+    if (!bEnableDashBoard)
+        return;
     const FVector DashboardLocnInVehicle = VehicleParams.Get<FVector>("Dashboard", "DashLocation");
     // Create speedometer
     Speedometer = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speedometer"));
@@ -669,6 +672,8 @@ void AEgoVehicle::ConstructDashText() // dashboard text (speedometer, turn signa
 
 void AEgoVehicle::UpdateDash()
 {
+    if (!Speedometer || !TurnSignals || !GearShifter) // uninitialized
+        return;
     // Draw text components
     float XPH; // miles-per-hour or km-per-hour
     if (EgoSensor->IsReplaying())
@@ -732,6 +737,9 @@ void AEgoVehicle::UpdateDash()
 
 void AEgoVehicle::ConstructSteeringWheel()
 {
+    const bool bEnableSteeringWheel = VehicleParams.Get<bool>("SteeringWheel", "Enabled");
+    if (!bEnableSteeringWheel)
+        return;
     FString SteeringWheel_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "SteeringWheel");
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
     SteeringWheel = CreateDefaultSubobject<UStaticMeshComponent>(FName("SteeringWheel"));
@@ -825,6 +833,8 @@ void AEgoVehicle::DestroySteeringWheel()
 
 void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 {
+    if (!SteeringWheel)
+        return;
     if (!bInitializedButtons)
         InitWheelButtons();
     const FRotator CurrentRotation = SteeringWheel->GetRelativeRotation();
