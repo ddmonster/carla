@@ -21,8 +21,8 @@
 ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
 {
     // initialize stuff here
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bStartWithTickEnabled = true;
+    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bStartWithTickEnabled = false;
 
     // initialize default classes
     this->HUDClass = ADReyeVRHUD::StaticClass();
@@ -222,9 +222,6 @@ void ADReyeVRGameMode::Tick(float DeltaSeconds)
         // Initialize recorder/replayer
         SetupReplayer(); // once this is successfully run, it no longer gets executed
     }
-
-    if (EgoVehiclePtr)
-        EgoVehiclePtr->Tick(DeltaSeconds);
 
     DrawBBoxes();
 }

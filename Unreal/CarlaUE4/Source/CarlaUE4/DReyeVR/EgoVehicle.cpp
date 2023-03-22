@@ -22,8 +22,9 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
     ReadConfigVariables();
 
     // this actor ticks AFTER the physics simulation is done
-    PrimaryActorTick.bCanEverTick = false;
-    PrimaryActorTick.bStartWithTickEnabled = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
+    PrimaryActorTick.bAllowTickOnDedicatedServer = true;
     PrimaryActorTick.TickGroup = TG_PostPhysics;
 
     // Set up the root position to be the this mesh
@@ -157,6 +158,9 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 
     // Ensure appropriate autopilot functionality is accessible from EgoVehicle
     TickAutopilot();
+
+    // Update the world level
+    TickGame(DeltaSeconds);
 
     // Play sound that requires constant ticking
     TickSounds();
@@ -877,6 +881,12 @@ void AEgoVehicle::SetGame(ADReyeVRGameMode *Game)
 ADReyeVRGameMode *AEgoVehicle::GetGame()
 {
     return DReyeVRGame;
+}
+
+void AEgoVehicle::TickGame(float DeltaSeconds)
+{
+    if (this->DReyeVRGame != nullptr)
+        DReyeVRGame->Tick(DeltaSeconds);
 }
 
 /// ========================================== ///

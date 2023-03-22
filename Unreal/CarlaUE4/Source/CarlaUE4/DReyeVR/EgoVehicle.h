@@ -205,6 +205,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UAudioComponent *TurnSignalSound; // good for turn signals
 
     ////////////////:LEVEL:////////////////
+    void TickGame(float DeltaSeconds);
     class ADReyeVRGameMode *DReyeVRGame;
 
     ////////////////:DASH:////////////////
