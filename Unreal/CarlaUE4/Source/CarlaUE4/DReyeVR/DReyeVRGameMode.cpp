@@ -21,8 +21,8 @@
 ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
 {
     // initialize stuff here
-    PrimaryActorTick.bCanEverTick = false;
-    PrimaryActorTick.bStartWithTickEnabled = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     // initialize default classes
     this->HUDClass = ADReyeVRHUD::StaticClass();
@@ -148,6 +148,7 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
 
     // finalize the EgoVehicle by installing the DReyeVR_Pawn to control it
     check(EgoVehiclePtr != nullptr);
+    LOG_ERROR("EGO VEHICLE HAS BEEN SET UP")
     return (EgoVehiclePtr != nullptr);
 }
 
@@ -222,6 +223,9 @@ void ADReyeVRGameMode::Tick(float DeltaSeconds)
         // Initialize recorder/replayer
         SetupReplayer(); // once this is successfully run, it no longer gets executed
     }
+
+    if (EgoVehiclePtr)
+        EgoVehiclePtr->Tick(DeltaSeconds);
 
     DrawBBoxes();
 }
