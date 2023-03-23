@@ -267,47 +267,42 @@ void AEgoVehicle::ConstructRigidBody()
     /// NOTE: this must be run in the constructors!
 
     // load skeletal mesh (static mesh)
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(
-        TEXT("SkeletalMesh'/Game/DReyeVR/EgoVehicle/model3/Mesh/SkeletalMesh_model3.SkeletalMesh_model3'"));
-    // original: "SkeletalMesh'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_v2.SM_TeslaM3_v2'"
+    const FString SkeletalMeshPath = VehicleParams.Get<FString>("RigidBody", "SkeletalMesh");
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(*SkeletalMeshPath);
     USkeletalMesh *SkeletalMesh = CarMesh.Object;
     if (SkeletalMesh == nullptr)
     {
-        LOG_ERROR("Unable to load skeletal mesh!");
+        LOG_ERROR("Unable to load skeletal mesh! (\"%s\")", *SkeletalMeshPath);
         return;
     }
 
     // load skeleton (for animations)
-    static ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(
-        TEXT("Skeleton'/Game/DReyeVR/EgoVehicle/model3/Mesh/Skeleton_model3.Skeleton_model3'"));
-    // original:
-    // "Skeleton'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_lights_body_Skeleton.SM_TeslaM3_lights_body_Skeleton'"
+    const FString SkeletonPath = VehicleParams.Get<FString>("RigidBody", "Skeleton");
+    static ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(*SkeletonPath);
     USkeleton *Skeleton = CarSkeleton.Object;
     if (Skeleton == nullptr)
     {
-        LOG_ERROR("Unable to load skeleton!");
+        LOG_ERROR("Unable to load skeleton! (\"%s\")", *SkeletonPath);
         return;
     }
 
     // load animations bp
-    static ConstructorHelpers::FClassFinder<UObject> AnimBPClass(
-        TEXT("/Game/DReyeVR/EgoVehicle/model3/Mesh/Animation_model3.Animation_model3_C"));
-    // original: "/Game/Carla/Static/Car/4Wheeled/Tesla/Tesla_Animation.Tesla_Animation_C"
-    auto AnimInstance = AnimBPClass.Class;
-    if (!AnimBPClass.Succeeded())
+    const FString AnimationPath = VehicleParams.Get<FString>("RigidBody", "AnimationBP");
+    static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarAnimation(*AnimationPath);
+    UAnimBlueprint *AnimInstance = CarAnimation.Object;
+    if (AnimInstance == nullptr)
     {
-        LOG_ERROR("Unable to load Animation!");
+        LOG_ERROR("Unable to load animation blueprint! (\"%s\")", *AnimationPath);
         return;
     }
 
     // load physics asset
-    static ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(
-        TEXT("PhysicsAsset'/Game/DReyeVR/EgoVehicle/model3/Mesh/Physics_model3.Physics_model3'"));
-    // original: "PhysicsAsset'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_PhysicsAsset.SM_TeslaM3_PhysicsAsset'"
+    const FString PhysicsAssetPath = VehicleParams.Get<FString>("RigidBody", "PhysicsAsset");
+    static ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(*PhysicsAssetPath);
     UPhysicsAsset *PhysicsAsset = CarPhysics.Object;
     if (PhysicsAsset == nullptr)
     {
-        LOG_ERROR("Unable to load PhysicsAsset!");
+        LOG_ERROR("Unable to load PhysicsAsset! (\"%s\")", *PhysicsAssetPath);
         return;
     }
 
@@ -320,7 +315,7 @@ void AEgoVehicle::ConstructRigidBody()
     check(Mesh != nullptr);
     Mesh->SetSkeletalMesh(SkeletalMesh, true);
     Mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-    Mesh->SetAnimInstanceClass(AnimInstance);
+    Mesh->SetAnimInstanceClass(AnimInstance->GeneratedClass);
     Mesh->SetPhysicsAsset(PhysicsAsset);
     Mesh->RecreatePhysicsState();
     this->GetVehicleMovementComponent()->RecreatePhysicsState();
@@ -328,36 +323,73 @@ void AEgoVehicle::ConstructRigidBody()
     // sanity checks
     ensure(Mesh->GetPhysicsAsset() != nullptr);
 
-    // set up wheels
+    SetupWheels();
+
+    SetupEngine();
+
+    LOG("Successfully created EgoVehicle rigid body");
+}
+
+bool AEgoVehicle::IsTwoWheeledVehicle_Implementation()
+{
+    return bIs2Wheeled;
+}
+
+void AEgoVehicle::SetupWheels()
+{
+    // set up wheels (assume 4w, but if not then try 2w)
     UWheeledVehicleMovementComponent4W *Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
     check(Vehicle4W != nullptr);
-    check(Vehicle4W->WheelSetups.Num() == 4);
-    // Wheels/Tyres
+    check(Vehicle4W->WheelSetups.Num() == 4); // even 2wheeledvehicles have 4 wheels in carla, they just fake it
+
     /// TODO: ensure the wheels bonename matches the Carla SkeletalMesh
     // Setup the wheels
-    Vehicle4W->WheelSetups[0].WheelClass = UVehicleWheel::StaticClass();
-    Vehicle4W->WheelSetups[0].BoneName = FName("Wheel_Front_Left");
-    // Vehicle4W->WheelSetups[0].AdditionalOffset = FVector(0.f, -8.f, 0.f);
+    if (!IsTwoWheeledVehicle_Implementation()) // 4wheeledvehicle
+    {
+        LOG("Initializing 4-wheeled-vehicle");
+        Vehicle4W->WheelSetups[0].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[0].BoneName = FName("Wheel_Front_Left");
 
-    Vehicle4W->WheelSetups[1].WheelClass = UVehicleWheel::StaticClass();
-    Vehicle4W->WheelSetups[1].BoneName = FName("Wheel_Front_Right");
-    // Vehicle4W->WheelSetups[1].AdditionalOffset = FVector(0.f, 8.f, 0.f);
+        Vehicle4W->WheelSetups[1].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[1].BoneName = FName("Wheel_Front_Right");
 
-    Vehicle4W->WheelSetups[2].WheelClass = UVehicleWheel::StaticClass();
-    Vehicle4W->WheelSetups[2].BoneName = FName("Wheel_Rear_Left");
-    Vehicle4W->WheelSetups[2].bDisableSteering = true;
-    // Vehicle4W->WheelSetups[2].AdditionalOffset = FVector(0.f, -8.f, 0.f);
+        Vehicle4W->WheelSetups[2].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[2].BoneName = FName("Wheel_Rear_Left");
+        Vehicle4W->WheelSetups[2].bDisableSteering = true;
 
-    Vehicle4W->WheelSetups[3].WheelClass = UVehicleWheel::StaticClass();
-    Vehicle4W->WheelSetups[3].BoneName = FName("Wheel_Rear_Right");
-    Vehicle4W->WheelSetups[3].bDisableSteering = true;
-    // Vehicle4W->WheelSetups[3].AdditionalOffset = FVector(0.f, 8.f, 0.f);
+        Vehicle4W->WheelSetups[3].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[3].BoneName = FName("Wheel_Rear_Right");
+        Vehicle4W->WheelSetups[3].bDisableSteering = true;
+    }
+    else // 2wheeledVehicle
+    {
+        LOG("Initializing 2-wheeled-vehicle"); // the wheels are named differently for some reason
+        Vehicle4W->WheelSetups[0].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[0].BoneName = FName("Wheel_F_L");
+
+        Vehicle4W->WheelSetups[1].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[1].BoneName = FName("Wheel_F_R");
+
+        Vehicle4W->WheelSetups[2].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[2].BoneName = FName("Wheel_R_L");
+        Vehicle4W->WheelSetups[2].bDisableSteering = true;
+
+        Vehicle4W->WheelSetups[3].WheelClass = UVehicleWheel::StaticClass();
+        Vehicle4W->WheelSetups[3].BoneName = FName("Wheel_R_R");
+        Vehicle4W->WheelSetups[3].bDisableSteering = true;
+    }
 
     // Adjust the tire loading
     Vehicle4W->MinNormalizedTireLoad = 0.0f;
     Vehicle4W->MinNormalizedTireLoadFiltered = 0.2f;
     Vehicle4W->MaxNormalizedTireLoad = 2.0f;
     Vehicle4W->MaxNormalizedTireLoadFiltered = 2.0f;
+}
+
+void AEgoVehicle::SetupEngine()
+{
+    UWheeledVehicleMovementComponent4W *Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+    check(Vehicle4W != nullptr);
 
     // Engine
     // Torque setup
@@ -382,8 +414,6 @@ void AEgoVehicle::ConstructRigidBody()
 
     // Automatic gearbox
     Vehicle4W->TransmissionSetup.bUseGearAutoBox = true;
-
-    LOG("Successfully created EgoVehicle rigid body");
 }
 
 FVehiclePhysicsControl AEgoVehicle::GetVehiclePhysicsControl() const

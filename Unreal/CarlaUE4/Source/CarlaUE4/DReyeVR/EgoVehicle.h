@@ -76,6 +76,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 
     virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const override;
     virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale) override;
+    virtual bool IsTwoWheeledVehicle_Implementation() override;
 
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
@@ -90,7 +91,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UWorld *World;
 
   private:
+    ////////////////:STATIC:////////////////
+    bool bIs2Wheeled = false;
     void ConstructRigidBody();
+    void SetupEngine();
+    void SetupWheels();
 
     ////////////////:CAMERA:////////////////
     void ConstructCameraRoot(); // needs to be called in the constructor

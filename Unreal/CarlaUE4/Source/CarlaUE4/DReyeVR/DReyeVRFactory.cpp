@@ -27,31 +27,24 @@ TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
     // GeneralParams.Get<FString>("EgoVehicle", TEXT("VehicleType"))
     TArray<FActorDefinition> Definitions;
 
-    const auto Vehicles = {"model3", "Mustang66", "JeepWranglerRubicon", "Vespa"};
-
-    for (const std::string &VehicleName : Vehicles)
+    FActorDefinition EgoVehicleDef;
     {
-        FActorDefinition EgoVehicleDef;
-        {
-            FVehicleParameters Parameters;
-            Parameters.Model = FString(VehicleName.c_str());
-            Parameters.ObjectType = GeneralParams.Get<FString>("EgoVehicle", "VehicleType"); // type of vehicle
-            Parameters.Class = AEgoVehicle::StaticClass();
-            Parameters.NumberOfWheels = 4;
+        FVehicleParameters Parameters;
+        Parameters.Model = "ego_vehicle";
+        Parameters.ObjectType = GeneralParams.Get<FString>("EgoVehicle", "VehicleType"); // type of vehicle
+        Parameters.Class = AEgoVehicle::StaticClass();
+        Parameters.NumberOfWheels = 4;
 
-            ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
-        }
-        Definitions.Add(EgoVehicleDef);
+        ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
     }
 
     FActorDefinition EgoSensorDef;
     {
         const FString Id = "Ego_Sensor";
         ADReyeVRFactory::MakeSensorDefinition(Id, EgoSensorDef);
-        Definitions.Add(EgoSensorDef);
     }
 
-    return Definitions;
+    return {EgoVehicleDef, EgoSensorDef};
 }
 
 // copied and modified from UActorBlueprintFunctionLibrary
@@ -161,7 +154,6 @@ FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform
         // check if an EgoVehicle already exists, if so, don't spawn another.
         /// NOTE: multi-ego-vehicle is not officially supported by DReyeVR, but it could be an interesting extension
         SpawnedActor = SpawnSingleton(ActorDescription.Class, ActorDescription.Id, SpawnAtTransform, [&]() {
-            // EgoVehicle needs the special EgoVehicleBPClass since they depend on the EgoVehicle Blueprint
             return World->SpawnActor<AEgoVehicle>(ActorDescription.Class, SpawnAtTransform, SpawnParameters);
         });
     }

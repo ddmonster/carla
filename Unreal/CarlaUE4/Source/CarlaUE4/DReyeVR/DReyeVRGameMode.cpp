@@ -283,6 +283,7 @@ void ADReyeVRGameMode::PossessEgoVehicle()
 
     LOG("Possessing DReyeVR EgoVehicle");
     Player->Possess(DReyeVR_Pawn);
+    DReyeVR_Pawn->BeginEgoVehicle(EgoVehiclePtr, GetWorld()); // to re-enable inputs
 }
 
 void ADReyeVRGameMode::PossessSpectator()

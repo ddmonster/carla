@@ -18,13 +18,13 @@ const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::Pr
 struct ConfigFile
 {
     // default empty constructor is the model3 vehicle
-    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/model3/Config.ini")))
+    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/TeslaModel3/Config.ini")))
     {
     }
 
     ConfigFile(const FString &Path) : FilePath(Path)
     {
-        Update(); // ensures all the variables are updated upon construction
+        bSuccessfulUpdate = Update(); // ensures all the variables are updated upon construction
     }
 
     std::string CreateVariableConfigName(const FString &Section, const FString &Variable) const
@@ -63,7 +63,20 @@ struct ConfigFile
         return Value;
     }
 
-    void Update() // reload the internally tracked table of params
+    template <typename T>
+    T GetConstrained(const FString &Section, const FString &Variable, const std::unordered_set<T> &Options,
+                     const T &DefaultValue) const
+    {
+        T Value = Get<T>(Section, Variable);
+        if (Options.find(Value) == Options.end())
+        {
+            // not found within the constrained available options
+            Value = DefaultValue;
+        }
+        return Value;
+    }
+
+    bool Update() // reload the internally tracked table of params
     {
         /// TODO: add feature to "hot-reload" new params during runtime
         LOG("Reading config from %s", *FilePath);
@@ -102,10 +115,17 @@ struct ConfigFile
         else
         {
             LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
+            return false;
         }
         // for (auto &e : Params){
         //     LOG_WARN("%s: %s", *FString(e.first.c_str()), *e.second);
         // }
+        return true;
+    }
+
+    bool bIsValid() const
+    {
+        return bSuccessfulUpdate;
     }
 
     struct ParamString
@@ -153,7 +173,8 @@ struct ConfigFile
     };
 
   private:
-    const FString FilePath;
+    FString FilePath; // const except for overwrite
+    bool bSuccessfulUpdate = false;
     std::unordered_map<std::string, ParamString> ParamsTable = {};
 };
 
