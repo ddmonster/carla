@@ -309,7 +309,6 @@ void AEgoVehicle::ConstructRigidBody()
     // contrary to https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/USkeletalMesh/SetSkeleton/
     SkeletalMesh->Skeleton = Skeleton;
     SkeletalMesh->PhysicsAsset = PhysicsAsset;
-    SkeletalMesh->Build();
 
     USkeletalMeshComponent *Mesh = GetMesh();
     check(Mesh != nullptr);

@@ -780,7 +780,7 @@ void AEgoVehicle::DestroySteeringWheel()
 
 void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 {
-    if (!SteeringWheel || !GetMesh() || !GetMesh()->GetAnimInstance())
+    if (!SteeringWheel)
         return;
     if (!bInitializedButtons)
         InitWheelButtons();
@@ -792,7 +792,7 @@ void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
     {
         NewRotation.Roll = TargetAngle;
     }
-    else
+    else if (GetMesh() && GetMesh()->GetAnimInstance())
     {
         float WheelAngleDeg = GetWheelSteerAngle(EVehicleWheelLocation::Front_Wheel);
         // float MaxWheelAngle = GetMaximumSteerAngle();
