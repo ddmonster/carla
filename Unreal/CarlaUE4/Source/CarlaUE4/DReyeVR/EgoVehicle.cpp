@@ -780,7 +780,7 @@ void AEgoVehicle::DestroySteeringWheel()
 
 void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
 {
-    if (!SteeringWheel)
+    if (!SteeringWheel || !GetMesh() || !GetMesh()->GetAnimInstance())
         return;
     if (!bInitializedButtons)
         InitWheelButtons();
