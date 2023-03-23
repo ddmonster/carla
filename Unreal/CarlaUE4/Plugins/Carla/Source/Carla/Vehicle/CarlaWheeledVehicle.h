@@ -147,7 +147,7 @@ public:
   }
 
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
-  FVehiclePhysicsControl GetVehiclePhysicsControl() const;
+  virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const;
 
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
   void RestoreVehiclePhysicsControl();
@@ -241,7 +241,7 @@ public:
 
   TArray<float> GetWheelsFrictionScale();
 
-  void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale);
+  virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale);
 
   void SetCarlaMovementComponent(UBaseCarlaMovementComponent* MoementComponent);
 

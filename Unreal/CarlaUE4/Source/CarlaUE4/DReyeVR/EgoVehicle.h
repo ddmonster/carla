@@ -74,11 +74,17 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void NextCameraView();
     void PrevCameraView();
 
+    virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const override;
+    virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale) override;
+
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void BeginDestroy() override;
+
+    // override vehicles with custom params
+    struct ConfigFile VehicleParams;
 
     // World variables
     class UWorld *World;
@@ -144,10 +150,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     ////////////////:INPUTS:////////////////
     /// NOTE: since there are so many functions here, they are defined in EgoInputs.cpp
     struct DReyeVR::UserInputs VehicleInputs; // struct for user inputs
-    // Vehicle control functions
-    void SetSteering(const float SteeringInput);
-    void SetThrottle(const float ThrottleInput);
-    void SetBrake(const float BrakeInput);
+    // Vehicle control functions (additive for multiple input modalities (kbd/logi))
+    void AddSteering(float SteeringInput);
+    void AddThrottle(float ThrottleInput);
+    void AddBrake(float BrakeInput);
+    void TickVehicleInputs();
     bool bReverse;
 
     // "button presses" should have both a "Press" and "Release" function
@@ -169,10 +176,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void ReleaseTurnSignalR();
     float RightSignalTimeToDie; // how long until the blinkers go out
     bool bCanPressTurnSignalR = true;
-    // handbrake
-    void PressHandbrake();
-    void ReleaseHandbrake();
-    bool bCanPressHandbrake = true;
 
     // Camera control functions (offset by some amount)
     void CameraPositionAdjust(const FVector &Disp);

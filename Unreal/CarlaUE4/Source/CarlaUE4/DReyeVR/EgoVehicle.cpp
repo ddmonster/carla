@@ -26,6 +26,7 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
     PrimaryActorTick.bStartWithTickEnabled = true;
     PrimaryActorTick.bAllowTickOnDedicatedServer = true;
     PrimaryActorTick.TickGroup = TG_PostPhysics;
+    AIControllerClass = AWheeledVehicleAIController::StaticClass();
 
     // Set up the root position to be the this mesh
     SetRootComponent(GetMesh());
@@ -57,7 +58,7 @@ void AEgoVehicle::ReadConfigVariables()
     GeneralParams.Get("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
     GeneralParams.Get("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
     // mirrors
-    auto InitMirrorParams = [](const FString &Name, struct MirrorParams &Params) {
+    auto InitMirrorParams = [this](const FString &Name, struct MirrorParams &Params) {
         Params.Name = Name;
         VehicleParams.Get("Mirrors", Params.Name + "MirrorEnabled", Params.Enabled);
         VehicleParams.Get("Mirrors", Params.Name + "MirrorTransform", Params.MirrorTransform);
@@ -164,80 +165,9 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 
     // Play sound that requires constant ticking
     TickSounds();
-}
 
-void AEgoVehicle::ConstructRigidBody()
-{
-#if 0
-    /// TODO: re-enable this code once spawning from DReyeVR needs to be done without a hardcoded blueprint asset
-    ///       to see this effect remove the reference to EgoVehicleBPClass in DReyeVRFactory.cpp once implemented
-
-    // https://forums.unrealengine.com/t/cannot-create-vehicle-updatedcomponent-has-not-initialized-its-rigid-body-actor/461662
-    /// NOTE: this must be run in the constructors!
-
-    // load skeletal mesh (static mesh)
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT(
-        "SkeletalMesh'/Game/DReyeVR/EgoVehicle/model3/Mesh/SkeletalMesh_model3.SkeletalMesh_model3'"));
-    // original: "SkeletalMesh'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_v2.SM_TeslaM3_v2'"
-    USkeletalMesh *SkeletalMesh = CarMesh.Object;
-    if (SkeletalMesh == nullptr)
-    {
-        LOG_ERROR("Unable to load skeletal mesh!");
-        return;
-    }
-
-    // load skeleton (for animations)
-    static ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(
-        TEXT("Skeleton'/Game/DReyeVR/EgoVehicle/model3/Mesh/Skeleton_model3.Skeleton_model3'"));
-    // original:
-    // "Skeleton'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_lights_body_Skeleton.SM_TeslaM3_lights_body_Skeleton'"
-    USkeleton *Skeleton = CarSkeleton.Object;
-    if (Skeleton == nullptr)
-    {
-        LOG_ERROR("Unable to load skeleton!");
-        return;
-    }
-
-    // load animations bp
-    static ConstructorHelpers::FClassFinder<UObject> AnimBPClass(
-        TEXT("/Game/DReyeVR/EgoVehicle/model3/Mesh/Animation_model3.Animation_model3_C"));
-    // original: "/Game/Carla/Static/Car/4Wheeled/Tesla/Tesla_Animation.Tesla_Animation_C"
-    auto AnimInstance = AnimBPClass.Class;
-    if (!AnimBPClass.Succeeded())
-    {
-        LOG_ERROR("Unable to load Animation!");
-        return;
-    }
-
-    // load physics asset
-    static ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(TEXT(
-        "PhysicsAsset'/Game/DReyeVR/EgoVehicle/model3/Mesh/Physics_model3.Physics_model3'"));
-    // original: "PhysicsAsset'/Game/Carla/Static/Car/4Wheeled/Tesla/SM_TeslaM3_PhysicsAsset.SM_TeslaM3_PhysicsAsset'"
-    UPhysicsAsset *PhysicsAsset = CarPhysics.Object;
-    if (PhysicsAsset == nullptr)
-    {
-        LOG_ERROR("Unable to load PhysicsAsset!");
-        return;
-    }
-
-    // contrary to https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/USkeletalMesh/SetSkeleton/
-    SkeletalMesh->Skeleton = Skeleton;
-    SkeletalMesh->PhysicsAsset = PhysicsAsset;
-    SkeletalMesh->Build();
-
-    USkeletalMeshComponent *Mesh = GetMesh();
-    check(Mesh != nullptr);
-    Mesh->SetSkeletalMesh(SkeletalMesh, true);
-    Mesh->SetAnimInstanceClass(AnimInstance);
-    Mesh->SetPhysicsAsset(PhysicsAsset);
-    Mesh->RecreatePhysicsState();
-    this->GetVehicleMovementComponent()->RecreatePhysicsState();
-
-    // sanity checks
-    ensure(Mesh->GetPhysicsAsset() != nullptr);
-
-    LOG("Successfully created EgoVehicle rigid body");
-#endif
+    // Tick vehicle controls
+    TickVehicleInputs();
 }
 
 /// ========================================== ///
@@ -368,17 +298,21 @@ const class AEgoSensor *AEgoVehicle::GetSensor() const
 void AEgoVehicle::InitAIPlayer()
 {
     this->SpawnDefaultController(); // spawns default (AI) controller and gets possessed by it
-    auto PlayerController = this->GetController();
+    auto PlayerController = GetController();
     ensure(PlayerController != nullptr);
     AI_Player = Cast<AWheeledVehicleAIController>(PlayerController);
-    ensure(AI_Player != nullptr);
+    check(AI_Player != nullptr);
+    // AI_Player->SetActorTickEnabled(false);
 }
 
 void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
 {
+    if (!AI_Player)
+        return;
     bAutopilotEnabled = AutopilotOn;
     AI_Player->SetAutopilot(bAutopilotEnabled);
     AI_Player->SetStickyControl(bAutopilotEnabled);
+    AI_Player->SetActorTickEnabled(bAutopilotEnabled); // only tick when active
 }
 
 bool AEgoVehicle::GetAutopilotStatus() const

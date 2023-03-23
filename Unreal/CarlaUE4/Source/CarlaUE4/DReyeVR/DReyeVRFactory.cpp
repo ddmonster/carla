@@ -16,32 +16,42 @@
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
-    FString EgoVehicleBP_Str = VehicleParams.Get<FString>("UnrealMeshPaths", "VehicleBlueprint");
-    static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(*EgoVehicleBP_Str);
-    EgoVehicleBPClass = EgoVehicleBP.Object;
-    ensure(EgoVehicleBPClass != nullptr);
+    // FString EgoVehicleBP_Str("/Game/DReyeVR/EgoVehicle/BP_EgoVehicle.BP_EgoVehicle_C");
+    // static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(*EgoVehicleBP_Str);
+    // EgoVehicleBPClass = EgoVehicleBP.Object;
+    // ensure(EgoVehicleBPClass != nullptr);
 }
 
 TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
 {
-    FActorDefinition EgoVehicleDef;
-    {
-        FVehicleParameters Parameters;
-        Parameters.Model = GeneralParams.Get<FString>("EgoVehicle", "VehicleType");
-        Parameters.ObjectType = VehicleParams.Get<FString>("UnrealMeshPaths", "VehicleBlueprint");
-        Parameters.Class = AEgoVehicle::StaticClass();
-        Parameters.NumberOfWheels = 4;
+    // GeneralParams.Get<FString>("EgoVehicle", TEXT("VehicleType"))
+    TArray<FActorDefinition> Definitions;
 
-        ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
+    const auto Vehicles = {"model3", "Mustang66", "JeepWranglerRubicon", "Vespa"};
+
+    for (const std::string &VehicleName : Vehicles)
+    {
+        FActorDefinition EgoVehicleDef;
+        {
+            FVehicleParameters Parameters;
+            Parameters.Model = FString(VehicleName.c_str());
+            Parameters.ObjectType = GeneralParams.Get<FString>("EgoVehicle", "VehicleType"); // type of vehicle
+            Parameters.Class = AEgoVehicle::StaticClass();
+            Parameters.NumberOfWheels = 4;
+
+            ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
+        }
+        Definitions.Add(EgoVehicleDef);
     }
 
     FActorDefinition EgoSensorDef;
     {
         const FString Id = "Ego_Sensor";
         ADReyeVRFactory::MakeSensorDefinition(Id, EgoSensorDef);
+        Definitions.Add(EgoSensorDef);
     }
 
-    return {EgoVehicleDef, EgoSensorDef};
+    return Definitions;
 }
 
 // copied and modified from UActorBlueprintFunctionLibrary
@@ -152,7 +162,7 @@ FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform
         /// NOTE: multi-ego-vehicle is not officially supported by DReyeVR, but it could be an interesting extension
         SpawnedActor = SpawnSingleton(ActorDescription.Class, ActorDescription.Id, SpawnAtTransform, [&]() {
             // EgoVehicle needs the special EgoVehicleBPClass since they depend on the EgoVehicle Blueprint
-            return World->SpawnActor<AEgoVehicle>(EgoVehicleBPClass, SpawnAtTransform, SpawnParameters);
+            return World->SpawnActor<AEgoVehicle>(ActorDescription.Class, SpawnAtTransform, SpawnParameters);
         });
     }
     else if (ActorDescription.Class == AEgoSensor::StaticClass())

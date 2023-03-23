@@ -13,8 +13,15 @@
 #include <string>
 #include <unordered_map>
 
+const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+
 struct ConfigFile
 {
+    // default empty constructor is the model3 vehicle
+    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/model3/Config.ini")))
+    {
+    }
+
     ConfigFile(const FString &Path) : FilePath(Path)
     {
         Update(); // ensures all the variables are updated upon construction
@@ -150,11 +157,7 @@ struct ConfigFile
     std::unordered_map<std::string, ParamString> ParamsTable = {};
 };
 
-const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 static ConfigFile GeneralParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/DReyeVRConfig.ini")));
-static ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle"),
-                                                *GeneralParams.Get<FString>("EgoVehicle", TEXT("VehicleType")),
-                                                TEXT("Config.ini")));
 
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {

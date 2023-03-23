@@ -522,10 +522,9 @@ void ADReyeVRPawn::LogitechWheelUpdate()
         }
         else
         {
-            // take over the vehicle control completely
-            EgoVehicle->SetSteering(WheelRotation);
-            EgoVehicle->SetThrottle(AccelerationPedal);
-            EgoVehicle->SetBrake(BrakePedal);
+            EgoVehicle->AddSteering(WheelRotation);
+            EgoVehicle->AddThrottle(AccelerationPedal);
+            EgoVehicle->AddBrake(BrakePedal);
         }
     }
     // save the last values for the wheel & pedals
@@ -632,10 +631,6 @@ void ADReyeVRPawn::SetupPlayerInputComponent(UInputComponent *PlayerInputCompone
     check(InputComponent);
 
     /// NOTE: an Action is a digital input, an Axis is an analog input
-    // steering and throttle analog inputs (axes)
-    PlayerInputComponent->BindAxis("Steer_DReyeVR", this, &ADReyeVRPawn::SetSteeringKbd);
-    PlayerInputComponent->BindAxis("Throttle_DReyeVR", this, &ADReyeVRPawn::SetThrottleKbd);
-    PlayerInputComponent->BindAxis("Brake_DReyeVR", this, &ADReyeVRPawn::SetBrakeKbd);
     /// Mouse X and Y input for looking up and turning
     PlayerInputComponent->BindAxis("MouseLookUp_DReyeVR", this, &ADReyeVRPawn::MouseLookUp);
     PlayerInputComponent->BindAxis("MouseTurn_DReyeVR", this, &ADReyeVRPawn::MouseTurn);
@@ -647,6 +642,10 @@ void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputCom
     // this function sets up the direct relay mechanisms to call EgoVehicle input functions
     check(PlayerInputComponent != nullptr);
     check(EV != nullptr);
+    // steering and throttle analog inputs (axes)
+    PlayerInputComponent->BindAxis("Steer_DReyeVR", EV, &AEgoVehicle::AddSteering);
+    PlayerInputComponent->BindAxis("Throttle_DReyeVR", EV, &AEgoVehicle::AddThrottle);
+    PlayerInputComponent->BindAxis("Brake_DReyeVR", EV, &AEgoVehicle::AddBrake);
     // button actions (press & release)
     PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressReverse);
     PlayerInputComponent->BindAction("ToggleReverse_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseReverse);
@@ -654,8 +653,6 @@ void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputCom
     PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseTurnSignalL);
     PlayerInputComponent->BindAction("TurnSignalLeft_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressTurnSignalL);
     PlayerInputComponent->BindAction("TurnSignalRight_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseTurnSignalR);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressHandbrake);
-    PlayerInputComponent->BindAction("HoldHandbrake_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseHandbrake);
     // camera view adjustments
     PlayerInputComponent->BindAction("NextCameraView_DReyeVR", IE_Pressed, EV, &AEgoVehicle::PressNextCameraView);
     PlayerInputComponent->BindAction("NextCameraView_DReyeVR", IE_Released, EV, &AEgoVehicle::ReleaseNextCameraView);
@@ -671,45 +668,6 @@ void ADReyeVRPawn::SetupEgoVehicleInputComponent(UInputComponent *PlayerInputCom
     PlayerInputComponent->BindAction("CameraRight_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraRight);
     PlayerInputComponent->BindAction("CameraUp_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraUp);
     PlayerInputComponent->BindAction("CameraDown_DReyeVR", IE_Pressed, EV, &AEgoVehicle::CameraDown);
-}
-
-#define CHECK_EGO_VEHICLE(FUNCTION)                                                                                    \
-    if (EgoVehicle)                                                                                                    \
-        FUNCTION;                                                                                                      \
-    else                                                                                                               \
-        LOG_ERROR("EgoVehicle is NULL!");
-
-void ADReyeVRPawn::SetThrottleKbd(const float ThrottleInput)
-{
-    if (ThrottleInput != 0)
-    {
-        bOverrideInputsWithKbd = true;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetThrottle(ThrottleInput))
-    }
-}
-
-void ADReyeVRPawn::SetBrakeKbd(const float BrakeInput)
-{
-    if (BrakeInput != 0)
-    {
-        bOverrideInputsWithKbd = true;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetBrake(BrakeInput))
-    }
-}
-
-void ADReyeVRPawn::SetSteeringKbd(const float SteeringInput)
-{
-    if (SteeringInput != 0)
-    {
-        bOverrideInputsWithKbd = true;
-        CHECK_EGO_VEHICLE(EgoVehicle->SetSteering(SteeringInput))
-    }
-    else
-    {
-        // so the steering wheel does go to 0 when letting go
-        if (EgoVehicle != nullptr)
-            EgoVehicle->VehicleInputs.Steering = 0;
-    }
 }
 
 /// ========================================== ///
