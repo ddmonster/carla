@@ -15,11 +15,6 @@
 
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
-    // https://forums.unrealengine.com/t/cdo-constructor-failed-to-find-thirdperson-c-template-mannequin-animbp/99003
-    // FString EgoVehicleBP_Str("/Game/DReyeVR/EgoVehicle/BP_EgoVehicle.BP_EgoVehicle_C");
-    // static ConstructorHelpers::FObjectFinder<UClass> EgoVehicleBP(*EgoVehicleBP_Str);
-    // EgoVehicleBPClass = EgoVehicleBP.Object;
-    // ensure(EgoVehicleBPClass != nullptr);
 }
 
 TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
