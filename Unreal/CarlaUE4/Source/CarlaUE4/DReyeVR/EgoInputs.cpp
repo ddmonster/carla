@@ -323,9 +323,6 @@ void AEgoVehicle::ConstructRigidBody()
     // sanity checks
     ensure(Mesh->GetPhysicsAsset() != nullptr);
 
-    // set the bounding box of the vehiclecomponent to reflect the skeleton
-    ConstructCollisionHandler();
-
     SetupWheels();
 
     SetupEngine();

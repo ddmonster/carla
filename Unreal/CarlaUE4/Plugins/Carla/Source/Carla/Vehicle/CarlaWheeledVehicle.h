@@ -268,8 +268,11 @@ protected:
   // sounds (DReyeVR)
   void ConstructSounds();
   void TickSounds();
-  const FVector EngineLocnInVehicle{180.f, 0.f, 70.f};
+  UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+  FVector EngineLocnInVehicle{180.f, 0.f, 70.f};
+  UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
   class UAudioComponent *EngineRevSound = nullptr;  // driver feedback on throttle
+  UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
   class UAudioComponent *CrashSound = nullptr; // crashing with another actor
   double CollisionCooldownTime = 0.0;
   // can add more sounds here... like a horn maybe?

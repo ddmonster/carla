@@ -445,7 +445,7 @@ void ADReyeVRGameMode::SetupReplayer()
         Replayer->SetSyncMode(bReplaySync);
         if (bReplaySync)
         {
-            LOG_WARN("Replay operating in frame-wise (1:1) synchronous mode (no replay interpolation)");
+            LOG("Replay operating in frame-wise (1:1) synchronous mode (no replay interpolation)");
         }
         bRecorderInitiated = true;
     }

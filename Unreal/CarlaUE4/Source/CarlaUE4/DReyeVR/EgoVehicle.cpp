@@ -525,36 +525,83 @@ void AEgoVehicle::ConstructMirrors()
 
 void AEgoVehicle::ConstructEgoSounds()
 {
+    // shouldn't override this method in ACarlaWHeeledVehicle because it will be
+    // used in the constructor and calling virtual methods in constructor is bad:
+    // https://stackoverflow.com/questions/962132/calling-virtual-functions-inside-constructors
+
     // Initialize ego-centric audio components
-    // See ACarlaWheeledVehicle::ConstructSounds for all Vehicle sounds
-    ensureMsgf(EngineRevSound != nullptr, TEXT("Vehicle engine rev should be initialized!"));
-    ensureMsgf(CrashSound != nullptr, TEXT("Vehicle crash sound should be initialized!"));
+    {
+        if (EngineRevSound != nullptr)
+            EngineRevSound->DestroyComponent(); // from the parent class (default sound)
+        FString EngineRev_Str = VehicleParams.Get<FString>("Sounds", "EngineRev");
+        static ConstructorHelpers::FObjectFinder<USoundCue> EngineCueObj(*EngineRev_Str);
+        if (EngineCueObj.Succeeded())
+        {
+            EngineRevSound = CreateDefaultSubobject<UAudioComponent>(FName("EngineRevSoundEgo"));
+            EngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
+            EngineRevSound->bAutoActivate = true;                // start playing on begin
+            EngineRevSound->SetSound(EngineCueObj.Object);       // using this sound
+            EngineLocnInVehicle = VehicleParams.Get<FVector>("Sounds", "EngineLocn");
+            EngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
+            EngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
+            EngineRevSound->bAutoDestroy = false; // No automatic destroy, persist along with vehicle
+            check(EngineRevSound != nullptr);
+        }
+    }
 
-    FString GearShift_Str = VehicleParams.Get<FString>("Sounds", "GearShift");
-    static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(*GearShift_Str);
-    GearShiftSound = CreateDefaultSubobject<UAudioComponent>(TEXT("GearShift"));
-    GearShiftSound->SetupAttachment(GetRootComponent());
-    GearShiftSound->bAutoActivate = false;
-    GearShiftSound->SetSound(GearSound.Object);
+    {
+        if (CrashSound != nullptr)
+            CrashSound->DestroyComponent(); // from the parent class (default sound)
+        FString CrashSound_Str = VehicleParams.Get<FString>("Sounds", "Crash");
+        static ConstructorHelpers::FObjectFinder<USoundCue> CarCrashCue(*CrashSound_Str);
+        if (CarCrashCue.Succeeded())
+        {
+            CrashSound = CreateDefaultSubobject<UAudioComponent>(TEXT("CarCrashEgo"));
+            CrashSound->SetupAttachment(GetRootComponent());
+            CrashSound->bAutoActivate = false;
+            CrashSound->SetSound(CarCrashCue.Object);
+            CrashSound->bAutoDestroy = false;
+            check(CrashSound != nullptr);
+        }
+    }
 
-    FString TurnSignal_Str = VehicleParams.Get<FString>("Sounds", "TurnSignal");
-    static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(*TurnSignal_Str);
-    TurnSignalSound = CreateDefaultSubobject<UAudioComponent>(TEXT("TurnSignal"));
-    TurnSignalSound->SetupAttachment(GetRootComponent());
-    TurnSignalSound->bAutoActivate = false;
-    TurnSignalSound->SetSound(TurnSignalSoundWave.Object);
+    {
+        FString GearShift_Str = VehicleParams.Get<FString>("Sounds", "GearShift");
+        static ConstructorHelpers::FObjectFinder<USoundWave> GearSound(*GearShift_Str);
+        if (GearSound.Succeeded())
+        {
+            GearShiftSound = CreateDefaultSubobject<UAudioComponent>(TEXT("GearShift"));
+            GearShiftSound->SetupAttachment(GetRootComponent());
+            GearShiftSound->bAutoActivate = false;
+            GearShiftSound->SetSound(GearSound.Object);
+            check(GearShiftSound != nullptr);
+        }
+    }
+
+    {
+        FString TurnSignal_Str = VehicleParams.Get<FString>("Sounds", "TurnSignal");
+        static ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(*TurnSignal_Str);
+        if (TurnSignalSoundWave.Succeeded())
+        {
+            TurnSignalSound = CreateDefaultSubobject<UAudioComponent>(TEXT("TurnSignal"));
+            TurnSignalSound->SetupAttachment(GetRootComponent());
+            TurnSignalSound->bAutoActivate = false;
+            TurnSignalSound->SetSound(TurnSignalSoundWave.Object);
+            check(TurnSignalSound != nullptr);
+        }
+    }
 }
 
 void AEgoVehicle::PlayGearShiftSound(const float DelayBeforePlay) const
 {
-    if (this->GearShiftSound)
+    if (GearShiftSound != nullptr)
         GearShiftSound->Play(DelayBeforePlay);
 }
 
 void AEgoVehicle::PlayTurnSignalSound(const float DelayBeforePlay) const
 {
-    if (this->TurnSignalSound)
-        this->TurnSignalSound->Play(DelayBeforePlay);
+    if (TurnSignalSound != nullptr)
+        TurnSignalSound->Play(DelayBeforePlay);
 }
 
 void AEgoVehicle::SetVolume(const float VolumeIn)

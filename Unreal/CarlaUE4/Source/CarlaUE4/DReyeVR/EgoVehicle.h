@@ -84,7 +84,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void BeginDestroy() override;
 
-    // override vehicles with custom params
+    // custom configuration file for vehicle-specific parameters
     struct ConfigFile VehicleParams;
 
     // World variables
