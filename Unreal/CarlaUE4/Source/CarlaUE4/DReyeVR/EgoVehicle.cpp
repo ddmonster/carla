@@ -63,7 +63,6 @@ void AEgoVehicle::ReadConfigVariables()
     }
     bIs2Wheeled = VehicleParams.Get<bool>("Metaparams", "Is2Wheeled");
 
-    GeneralParams.Get("EgoVehicle", "SpeedometerInMPH", bUseMPH);
     GeneralParams.Get("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
     GeneralParams.Get("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
     // mirrors
@@ -84,6 +83,7 @@ void AEgoVehicle::ReadConfigVariables()
     VehicleParams.Get("SteeringWheel", "SteeringScale", SteeringAnimScale);
     // other/cosmetic
     GeneralParams.Get("EgoVehicle", "DrawDebugEditor", bDrawDebugEditor);
+    GeneralParams.Get("EgoVehicle", "EnableWheelButtons", bEnableWheelFaceButtons);
     // inputs
     GeneralParams.Get("VehicleInputs", "ScaleSteeringDamping", ScaleSteeringInput);
     GeneralParams.Get("VehicleInputs", "ScaleThrottleInput", ScaleThrottleInput);
@@ -572,55 +572,58 @@ void AEgoVehicle::SetVolume(const float VolumeIn)
 
 void AEgoVehicle::ConstructDashText() // dashboard text (speedometer, turn signals, gear shifter)
 {
-    const bool bEnableDashBoard = VehicleParams.Get<bool>("Dashboard", "Enabled");
-    if (!bEnableDashBoard)
-        return;
-    const FVector DashboardLocnInVehicle = VehicleParams.Get<FVector>("Dashboard", "DashLocation");
     // Create speedometer
-    Speedometer = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speedometer"));
-    Speedometer->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-    Speedometer->SetRelativeLocation(DashboardLocnInVehicle);
-    Speedometer->SetRelativeRotation(FRotator(0.f, 180.f, 0.f)); // need to flip it to get the text in driver POV
-    Speedometer->SetTextRenderColor(FColor::Red);
-    Speedometer->SetText(FText::FromString("0"));
-    Speedometer->SetXScale(1.f);
-    Speedometer->SetYScale(1.f);
-    Speedometer->SetWorldSize(10); // scale the font with this
-    Speedometer->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-    Speedometer->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
-    SpeedometerScale = CmPerSecondToXPerHour(bUseMPH);
+    if (VehicleParams.Get<bool>("Dashboard", "SpeedometerEnabled"))
+    {
+        Speedometer = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speedometer"));
+        Speedometer->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+        Speedometer->SetRelativeTransform(VehicleParams.Get<FTransform>("Dashboard", "SpeedometerTransform"));
+        Speedometer->SetTextRenderColor(FColor::Red);
+        Speedometer->SetText(FText::FromString("0"));
+        Speedometer->SetXScale(1.f);
+        Speedometer->SetYScale(1.f);
+        Speedometer->SetWorldSize(10); // scale the font with this
+        Speedometer->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
+        Speedometer->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+        SpeedometerScale = CmPerSecondToXPerHour(GeneralParams.Get<bool>("EgoVehicle", "SpeedometerInMPH"));
+        check(Speedometer != nullptr);
+    }
 
     // Create turn signals
-    TurnSignals = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TurnSignals"));
-    TurnSignals->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-    TurnSignals->SetRelativeLocation(DashboardLocnInVehicle + FVector(0, 11.f, -5.f));
-    TurnSignals->SetRelativeRotation(FRotator(0.f, 180.f, 0.f)); // need to flip it to get the text in driver POV
-    TurnSignals->SetTextRenderColor(FColor::Red);
-    TurnSignals->SetText(FText::FromString(""));
-    TurnSignals->SetXScale(1.f);
-    TurnSignals->SetYScale(1.f);
-    TurnSignals->SetWorldSize(10); // scale the font with this
-    TurnSignals->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-    TurnSignals->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+    if (VehicleParams.Get<bool>("Dashboard", "TurnSignalsEnabled"))
+    {
+        TurnSignals = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TurnSignals"));
+        TurnSignals->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+        TurnSignals->SetRelativeTransform(VehicleParams.Get<FTransform>("Dashboard", "TurnSignalsTransform"));
+        TurnSignals->SetTextRenderColor(FColor::Red);
+        TurnSignals->SetText(FText::FromString(""));
+        TurnSignals->SetXScale(1.f);
+        TurnSignals->SetYScale(1.f);
+        TurnSignals->SetWorldSize(10); // scale the font with this
+        TurnSignals->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
+        TurnSignals->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+        check(TurnSignals != nullptr);
+    }
 
     // Create gear shifter
-    GearShifter = CreateDefaultSubobject<UTextRenderComponent>(TEXT("GearShifter"));
-    GearShifter->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-    GearShifter->SetRelativeLocation(DashboardLocnInVehicle + FVector(0, 15.f, 0));
-    GearShifter->SetRelativeRotation(FRotator(0.f, 180.f, 0.f)); // need to flip it to get the text in driver POV
-    GearShifter->SetTextRenderColor(FColor::Red);
-    GearShifter->SetText(FText::FromString("D"));
-    GearShifter->SetXScale(1.f);
-    GearShifter->SetYScale(1.f);
-    GearShifter->SetWorldSize(10); // scale the font with this
-    GearShifter->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-    GearShifter->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+    if (VehicleParams.Get<bool>("Dashboard", "GearShifterEnabled"))
+    {
+        GearShifter = CreateDefaultSubobject<UTextRenderComponent>(TEXT("GearShifter"));
+        GearShifter->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+        GearShifter->SetRelativeTransform(VehicleParams.Get<FTransform>("Dashboard", "GearShifterTransform"));
+        GearShifter->SetTextRenderColor(FColor::Red);
+        GearShifter->SetText(FText::FromString("D"));
+        GearShifter->SetXScale(1.f);
+        GearShifter->SetYScale(1.f);
+        GearShifter->SetWorldSize(10); // scale the font with this
+        GearShifter->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
+        GearShifter->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+        check(GearShifter != nullptr);
+    }
 }
 
 void AEgoVehicle::UpdateDash()
 {
-    if (!Speedometer || !TurnSignals || !GearShifter) // uninitialized
-        return;
     // Draw text components
     float XPH; // miles-per-hour or km-per-hour
     if (EgoSensor->IsReplaying())
@@ -651,10 +654,13 @@ void AEgoVehicle::UpdateDash()
         XPH = GetVehicleForwardSpeed() * SpeedometerScale; // FwdSpeed is in cm/s
     }
 
-    const FString Data = FString::FromInt(int(FMath::RoundHalfFromZero(XPH)));
-    Speedometer->SetText(FText::FromString(Data));
+    if (Speedometer != nullptr)
+    {
+        const FString Data = FString::FromInt(int(FMath::RoundHalfFromZero(XPH)));
+        Speedometer->SetText(FText::FromString(Data));
+    }
 
-    if (bEnableTurnSignalAction)
+    if (bEnableTurnSignalAction && TurnSignals != nullptr)
     {
         // Draw the signals
         float Now = GetWorld()->GetTimeSeconds();
@@ -671,11 +677,11 @@ void AEgoVehicle::UpdateDash()
         TurnSignals->SetText(FText::FromString(TurnSignalStr));
     }
 
-    // Draw the gear shifter
-    if (bReverse) // backwards
-        GearShifter->SetText(FText::FromString("R"));
-    else
-        GearShifter->SetText(FText::FromString("D"));
+    if (GearShifter != nullptr)
+    {
+        // Draw the gear shifter
+        GearShifter->SetText(bReverse ? FText::FromString("R") : FText::FromString("D"));
+    }
 }
 
 /// ========================================== ///
@@ -701,7 +707,7 @@ void AEgoVehicle::ConstructSteeringWheel()
 
 void AEgoVehicle::InitWheelButtons()
 {
-    if (SteeringWheel == nullptr || World == nullptr)
+    if (SteeringWheel == nullptr || World == nullptr || bEnableWheelFaceButtons == false)
         return;
     // left buttons (dpad)
     Button_DPad_Up = ADReyeVRCustomActor::CreateNew(SM_CONE, MAT_OPAQUE, World, "DPad_Up");       // top on left

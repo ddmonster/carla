@@ -227,8 +227,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     UPROPERTY(Category = "Dash", EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UTextRenderComponent *GearShifter;
     void UpdateDash();
-    bool bUseMPH;
-    float SpeedometerScale; // scale from CM/s to MPH or KPH depending on bUseMPH
+    float SpeedometerScale = CmPerSecondToXPerHour(true); // scale from CM/s to MPH or KPH (default MPH)
 
     ////////////////:STEERINGWHEEL:////////////////
     void ConstructSteeringWheel(); // needs to be called in the constructor
@@ -239,6 +238,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float MaxSteerAngleDeg;
     float MaxSteerVelocity;
     float SteeringAnimScale;
+    // wheel face buttons
+    bool bEnableWheelFaceButtons = false;
     void InitWheelButtons();
     void UpdateWheelButton(ADReyeVRCustomActor *Button, bool bEnabled);
     class ADReyeVRCustomActor *Button_ABXY_A, *Button_ABXY_B, *Button_ABXY_X, *Button_ABXY_Y;

@@ -1,5 +1,6 @@
 #include "EgoVehicle.h"
 #include "Math/NumericLimits.h" // TNumericLimits<float>::Max
+#include "TireConfig.h"         // UTireConfig
 #include <string>               // std::string, std::wstring
 
 ////////////////:INPUTS:////////////////
@@ -322,6 +323,9 @@ void AEgoVehicle::ConstructRigidBody()
     // sanity checks
     ensure(Mesh->GetPhysicsAsset() != nullptr);
 
+    // set the bounding box of the vehiclecomponent to reflect the skeleton
+    ConstructCollisionHandler();
+
     SetupWheels();
 
     SetupEngine();
@@ -472,7 +476,18 @@ FVehiclePhysicsControl AEgoVehicle::GetVehiclePhysicsControl() const
 
 void AEgoVehicle::SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale)
 {
-    /// TODO: implement correctly
-    // currently have a crash when parent calls:
-    // Vehicle4W->Wheels[i]->TireConfig->SetFrictionScale(WheelsFrictionScale[i]);
+    // add safety guarantee for initializing the TireConfig variable
+    UWheeledVehicleMovementComponent4W *Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+    check(Vehicle4W != nullptr);
+    check(Vehicle4W->Wheels.Num() == WheelsFrictionScale.Num());
+
+    for (int32 i = 0; i < Vehicle4W->Wheels.Num(); ++i)
+    {
+        check(Vehicle4W->Wheels[i] != nullptr);
+        if (Vehicle4W->Wheels[i]->TireConfig == nullptr)
+        {
+            Vehicle4W->Wheels[i]->TireConfig = NewObject<UTireConfig>();
+        }
+        Vehicle4W->Wheels[i]->TireConfig->SetFrictionScale(WheelsFrictionScale[i]);
+    }
 }
