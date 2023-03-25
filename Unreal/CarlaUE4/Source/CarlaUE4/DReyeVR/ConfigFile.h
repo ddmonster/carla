@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream> // std::ifstream
+#include <istream> // std::istream
 #include <sstream> // std::istringstream
 #include <string>
 #include <unordered_map>
@@ -11,11 +12,16 @@ struct ConfigFile
     // default empty constructor is the model3 vehicle
     ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/TeslaModel3/Config.ini")))
     {
+        // simple sanity check to ensure exporting and importing the same config file works as intended
+        // (exporting self and creating a new import should be equal to self)
+        static bool bSanityCheck = this->CompareEqual(ConfigFile::Import(this->Export()), true);
+        check(bSanityCheck);
     }
 
     ConfigFile(const FString &Path) : FilePath(Path)
     {
-        bSuccessfulUpdate = Update(); // ensures all the variables are updated upon construction
+        /// TODO: add feature to "hot-reload" new params during runtime
+        bSuccessfulUpdate = ReadFile(); // ensures all the variables are updated upon construction
     }
 
     template <typename T> bool Get(const FString &Section, const FString &Variable, T &Value) const
@@ -44,57 +50,6 @@ struct ConfigFile
             Value = DefaultValue;
         }
         return Value;
-    }
-
-    bool Update() // reload the internally tracked table of params
-    {
-        /// TODO: add feature to "hot-reload" new params during runtime
-        LOG("Reading config from %s", *FilePath);
-        /// performs a single pass over the config file to collect all variables into Params
-        std::ifstream MatchingFile(TCHAR_TO_ANSI(*FilePath));
-        if (MatchingFile)
-        {
-            std::string Line;
-            std::string Section = "";
-            while (std::getline(MatchingFile, Line))
-            {
-                // std::string stdKey = std::string(TCHAR_TO_UTF8(*Key));
-                if (Line[0] == '#' || Line[0] == ';') // ignore comments
-                    continue;
-                std::istringstream iss_Line(Line);
-                if (Line[0] == '[') // test section
-                {
-                    std::getline(iss_Line, Section, ']');
-                    Section = Section.substr(1); // skip leading '['
-                    continue;
-                }
-                std::string Key;
-                if (std::getline(iss_Line, Key, '=')) // gets left side of '=' into FileKey
-                {
-                    std::string Value;
-                    if (std::getline(iss_Line, Value, '#')) // gets left side of '#' for comments
-                    {
-                        // ensure there is a section (create one if necesary) to store this key:value pair
-                        if (Sections.find(Section) == Sections.end())
-                        {
-                            Sections.insert({Section, IniSection(Section)});
-                        }
-                        check(Sections.find(Section) != Sections.end());
-                        auto &CorrespondingSection = Sections.find(Section)->second;
-                        CorrespondingSection.Entries.insert({Key, ParamString(Value)});
-                    }
-                }
-            }
-        }
-        else
-        {
-            LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
-            return false;
-        }
-        // for (auto &e : Params){
-        //     LOG_WARN("%s: %s", *FString(e.first.c_str()), *e.second);
-        // }
-        return true;
     }
 
     bool bIsValid() const
@@ -167,7 +122,13 @@ struct ConfigFile
                 }
             }
         }
-        return bIsDifferent;
+        return !bIsDifferent;
+    }
+
+    static ConfigFile Import(const std::string &Configuration)
+    {
+        // takes a flattened INI configuration file as parameter and reads it into a ConfigFile class
+        return ConfigFile(Configuration);
     }
 
     std::string Export() const
@@ -191,6 +152,59 @@ struct ConfigFile
             oss << std::endl;
         }
         return oss.str();
+    }
+
+  private:
+    bool ReadFile()
+    {
+        check(FilePath != nullptr);
+        LOG("Reading config from %s", *FilePath);
+        std::ifstream MatchingFile(TCHAR_TO_ANSI(*FilePath), std::ios::in);
+        if (MatchingFile)
+        {
+            return Update(MatchingFile);
+        }
+        LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
+        return false;
+    }
+
+    bool Update(std::istream &InputStream) // reload the internally tracked table of params
+    {
+        /// performs a single pass over the config stream to collect all variables into Params
+        std::string Line;
+        std::string Section = "";
+        while (std::getline(InputStream, Line))
+        {
+            if (InputStream.bad()) // IO error
+                return false;
+            // std::string stdKey = std::string(TCHAR_TO_UTF8(*Key));
+            if (Line[0] == '#' || Line[0] == ';') // ignore comments
+                continue;
+            std::istringstream iss_Line(Line);
+            if (Line[0] == '[') // test section
+            {
+                std::getline(iss_Line, Section, ']');
+                Section = Section.substr(1); // skip leading '['
+                continue;
+            }
+            std::string Key;
+            if (std::getline(iss_Line, Key, '=')) // gets left side of '=' into FileKey
+            {
+                std::string Value;
+                if (std::getline(iss_Line, Value, '#')) // gets left side of '#' for comments
+                {
+                    // ensure there is a section (create one if necesary) to store this key:value pair
+                    if (Sections.find(Section) == Sections.end())
+                    {
+                        Sections.insert({Section, IniSection(Section)});
+                    }
+                    check(Sections.find(Section) != Sections.end());
+                    auto &CorrespondingSection = Sections.find(Section)->second;
+                    CorrespondingSection.Entries.insert({Key, ParamString(Value)});
+                }
+            }
+        }
+        return true;
     }
 
   private:
@@ -249,11 +263,18 @@ struct ConfigFile
         {
         }
 
-        std::string SectionHeader;                      // typically what is contained in [Sections]
+        std::string SectionHeader;                            // typically what is contained in [Sections]
         std::unordered_map<std::string, ParamString> Entries; // everything else
     };
 
   private:
+    // construct a ConfigFile by passing in the entire contents of the config file (rather than the path to read)
+    ConfigFile(const std::string &ConfigurationContents) : FilePath("")
+    {
+        std::istringstream iss(ConfigurationContents);
+        bSuccessfulUpdate = Update(iss);
+    }
+
     // using std::string variant for internal use (FString for user-facing)
     template <typename T> bool GetValue(const std::string &SectionName, const std::string &VariableName, T &Value) const
     {
