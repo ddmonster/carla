@@ -14,8 +14,8 @@ struct ConfigFile
     {
         // simple sanity check to ensure exporting and importing the same config file works as intended
         // (exporting self and creating a new import should be equal to self)
-        static bool bSanityCheck = this->CompareEqual(ConfigFile::Import(this->Export()), true);
-        check(bSanityCheck);
+        static bool bSanityCheck = this->IsEqual(ConfigFile::Import(this->Export()));
+        ensureMsgf(bSanityCheck, TEXT("Sanity check for ConfigFile import/export failed!"));
     }
 
     ConfigFile(const FString &Path) : FilePath(Path)
@@ -57,9 +57,15 @@ struct ConfigFile
         return bSuccessfulUpdate;
     }
 
-    bool CompareEqual(const ConfigFile &Other, bool bPrintWarning = false) const
+    bool IsEqual(const ConfigFile &Other, bool bPrintWarning = false) const
     {
-        // only checkinf that this is a perfect subset of Other
+        // calculates if A subset B and B subset A
+        return this->IsSubset(Other, bPrintWarning) && Other.IsSubset(*this, bPrintWarning);
+    }
+
+    bool IsSubset(const ConfigFile &Other, bool bPrintWarning = false) const
+    {
+        // only checking that this is a perfect subset of Other
         // => Other can contain data that this config does not have
         // (if you want perfect equality, do A.CompareEqual(B) && B.CompareEqual(A))
         struct Comparison
@@ -107,7 +113,7 @@ struct ConfigFile
         // print differences
         if (bPrintWarning && bIsDifferent)
         {
-            LOG_WARN("Found config differences this(\"%s\") and Other(\"%s\")", *FilePath, *Other.FilePath);
+            LOG_WARN("Found config differences this {\"%s\"} and Other {\"%s\"}", *FilePath, *Other.FilePath);
             for (const Comparison &Comp : Diff)
             {
                 if (Comp.bIsMissing)
@@ -117,7 +123,7 @@ struct ConfigFile
                 }
                 else
                 {
-                    LOG_WARN("This [%s] \"%s\" (%s) does not match (%s)", *FString(Comp.SectionName.c_str()),
+                    LOG_WARN("This [%s] \"%s\" {%s} does not match {%s}", *FString(Comp.SectionName.c_str()),
                              *FString(Comp.VariableName.c_str()), *Comp.ThisValue, *Comp.OtherValue);
                 }
             }
@@ -134,7 +140,8 @@ struct ConfigFile
     std::string Export() const
     {
         std::ostringstream oss;
-        oss << "# This is an exported config file originally from \"" << TCHAR_TO_UTF8(*FilePath) << "\"" << std::endl
+        oss << std::endl
+            << "# This is an exported config file originally from \"" << TCHAR_TO_UTF8(*FilePath) << "\"" << std::endl
             << std::endl;
         for (const auto &SectionData : Sections)
         {
