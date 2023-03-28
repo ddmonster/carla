@@ -373,6 +373,10 @@ void AEgoSensor::SetEgoVehicle(class AEgoVehicle *NewEgoVehicle)
     Vehicle = NewEgoVehicle;
     Camera = Vehicle->GetCamera();
     check(Vehicle);
+
+    // Also check that the ConfigFileData variable can be written to with Vehicle params
+    check(ConfigFile);
+    ConfigFile->Set(Vehicle->GetVehicleParams().Export()); // track this config file once
 }
 
 void AEgoSensor::SetGame(class ADReyeVRGameMode *GameIn)

@@ -32,6 +32,7 @@ class CARLA_API ADReyeVRSensor : public ASensor
     // everything stored in the sensor is held in this struct
     /// TODO: make this non-static and use a smarter scheme for cross-class communication
     static class DReyeVR::AggregateData *Data;
+    static struct DReyeVR::ConfigFileData *ConfigFile;
 
     class DReyeVR::AggregateData *GetData()
     {

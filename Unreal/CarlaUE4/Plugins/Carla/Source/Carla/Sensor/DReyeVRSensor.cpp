@@ -13,13 +13,17 @@
 #include "carla/sensor/s11n/DReyeVRSerializer.h" // DReyeVRSerializer::Data
 
 class DReyeVR::AggregateData *ADReyeVRSensor::Data = nullptr;
+struct DReyeVR::ConfigFileData *ADReyeVRSensor::ConfigFile = nullptr;
 bool ADReyeVRSensor::bIsReplaying = false; // initially not replaying
 
 ADReyeVRSensor::ADReyeVRSensor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
     // no need for any other initialization
     PrimaryActorTick.bCanEverTick = true;
-    ADReyeVRSensor::Data = new DReyeVR::AggregateData();
+    if (ADReyeVRSensor::Data == nullptr)
+        ADReyeVRSensor::Data = new DReyeVR::AggregateData();
+    if (ADReyeVRSensor::ConfigFile == nullptr)
+        ADReyeVRSensor::ConfigFile = new DReyeVR::ConfigFileData();
 }
 
 FActorDefinition ADReyeVRSensor::GetSensorDefinition()

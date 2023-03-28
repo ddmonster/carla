@@ -234,6 +234,30 @@ FString EyeTracker::ToString() const
 }
 
 /// ========================================== ///
+/// ------------:CONFIGFILEDATA:-------------- ///
+/// ========================================== ///
+
+void ConfigFileData::Set(const std::string &Contents)
+{
+    ConfigFileContents = FString(Contents.c_str());
+}
+
+void ConfigFileData::Read(std::ifstream &InFile)
+{
+    ReadFString(InFile, ConfigFileContents);
+}
+
+void ConfigFileData::Write(std::ofstream &OutFile) const
+{
+    WriteFString(OutFile, ConfigFileContents);
+}
+
+FString ConfigFileData::ToString() const
+{
+    return ConfigFileContents;
+}
+
+/// ========================================== ///
 /// -------------:AGGREGATEDATA:-------------- ///
 /// ========================================== ///
 
@@ -443,8 +467,8 @@ void AggregateData::UpdateVehicle(const FVector &NewVehicleLoc, const FRotator &
 }
 
 void AggregateData::Update(int64_t NewTimestamp, const struct EyeTracker &NewEyeData,
-                                  const struct EgoVariables &NewEgoVars, const struct FocusInfo &NewFocus,
-                                  const struct UserInputs &NewInputs)
+                           const struct EgoVariables &NewEgoVars, const struct FocusInfo &NewFocus,
+                           const struct UserInputs &NewInputs)
 {
     TimestampCarlaUE4 = NewTimestamp;
     EyeTrackerData = NewEyeData;

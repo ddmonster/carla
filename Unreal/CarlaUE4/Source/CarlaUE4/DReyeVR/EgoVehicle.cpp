@@ -300,6 +300,11 @@ const class AEgoSensor *AEgoVehicle::GetSensor() const
     return const_cast<const class AEgoSensor *>(EgoSensor);
 }
 
+const struct ConfigFile &AEgoVehicle::GetVehicleParams() const
+{
+    return VehicleParams;
+}
+
 /// ========================================== ///
 /// ---------------:AIPLAYER:----------------- ///
 /// ========================================== ///
