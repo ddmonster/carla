@@ -180,20 +180,30 @@ void ADReyeVRPawn::InitReticleTexture()
 
 void ADReyeVRPawn::InitSpectator()
 {
-    if (bIsHMDConnected)
+    if (!bIsHMDConnected)
+        return;
+    // see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/XRDevelopment/VR/DevelopVR/VRSpectatorScreen/
+    auto SpectatorScreenMode = ESpectatorScreenMode::Disabled; // black window
+    if (bEnableSpectatorScreen)
     {
-        if (bEnableSpectatorScreen)
+        // draws the left eye view cropped to the entire window
+        SpectatorScreenMode = ESpectatorScreenMode::SingleEyeCroppedToFill;
+        if (bDrawSpectatorReticle)
         {
             InitReticleTexture(); // generate array of pixel values
-            check(ReticleTexture);
-            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::TexturePlusEye);
-            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenTexture(ReticleTexture);
-        }
-        else
-        {
-            UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::Disabled);
+            if (ReticleTexture != nullptr)
+            {
+                // draws the full screen view of the left eye (same as SingleEyeCroppedToFill) plus a texture overlaid
+                SpectatorScreenMode = ESpectatorScreenMode::TexturePlusEye;
+                UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenTexture(ReticleTexture);
+            }
+            else
+            {
+                LOG_ERROR("Reticle texture is null! Unable to use for spectator screen");
+            }
         }
     }
+    UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(SpectatorScreenMode);
 }
 
 void ADReyeVRPawn::TickSpectatorScreen(float DeltaSeconds)

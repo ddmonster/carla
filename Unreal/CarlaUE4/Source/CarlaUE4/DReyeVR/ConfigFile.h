@@ -173,7 +173,7 @@ struct ConfigFile
         std::ifstream MatchingFile(TCHAR_TO_ANSI(*FilePath), std::ios::in);
         if (MatchingFile)
         {
-            return Update(MatchingFile, bVerbose);
+            return Update(MatchingFile);
         }
         LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
         return false;
