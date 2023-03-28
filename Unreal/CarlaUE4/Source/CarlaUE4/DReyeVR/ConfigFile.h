@@ -10,7 +10,8 @@ const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::Pr
 struct ConfigFile
 {
     // default empty constructor is the model3 vehicle
-    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/TeslaModel3/Config.ini")))
+    ConfigFile()
+        : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/TeslaModel3/Config.ini")), false)
     {
         // simple sanity check to ensure exporting and importing the same config file works as intended
         // (exporting self and creating a new import should be equal to self)
@@ -18,10 +19,10 @@ struct ConfigFile
         ensureMsgf(bSanityCheck, TEXT("Sanity check for ConfigFile import/export failed!"));
     }
 
-    ConfigFile(const FString &Path) : FilePath(Path)
+    ConfigFile(const FString &Path, bool bVerbose = true) : FilePath(Path)
     {
         /// TODO: add feature to "hot-reload" new params during runtime
-        bSuccessfulUpdate = ReadFile(); // ensures all the variables are updated upon construction
+        bSuccessfulUpdate = ReadFile(bVerbose); // ensures all the variables are updated upon construction
     }
 
     template <typename T> bool Get(const FString &Section, const FString &Variable, T &Value) const
@@ -162,14 +163,17 @@ struct ConfigFile
     }
 
   private:
-    bool ReadFile()
+    bool ReadFile(bool bVerbose)
     {
         check(FilePath != nullptr);
-        LOG("Reading config from %s", *FilePath);
+        if (bVerbose)
+        {
+            LOG("Reading config from %s", *FilePath);
+        }
         std::ifstream MatchingFile(TCHAR_TO_ANSI(*FilePath), std::ios::in);
         if (MatchingFile)
         {
-            return Update(MatchingFile);
+            return Update(MatchingFile, bVerbose);
         }
         LOG_ERROR("Unable to open the config file \"%s\"", *FilePath);
         return false;
