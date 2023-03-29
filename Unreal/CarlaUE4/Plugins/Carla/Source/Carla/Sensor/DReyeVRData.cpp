@@ -239,22 +239,22 @@ FString EyeTracker::ToString() const
 
 void ConfigFileData::Set(const std::string &Contents)
 {
-    ConfigFileContents = FString(Contents.c_str());
+    StringContents = FString(Contents.c_str());
 }
 
 void ConfigFileData::Read(std::ifstream &InFile)
 {
-    ReadFString(InFile, ConfigFileContents);
+    ReadFString(InFile, StringContents);
 }
 
 void ConfigFileData::Write(std::ofstream &OutFile) const
 {
-    WriteFString(OutFile, ConfigFileContents);
+    WriteFString(OutFile, StringContents);
 }
 
 FString ConfigFileData::ToString() const
 {
-    return ConfigFileContents;
+    return StringContents;
 }
 
 /// ========================================== ///
@@ -506,11 +506,6 @@ FString AggregateData::ToString() const
     print += FString::Printf(TEXT("  [DReyeVR]EgoVariables:%s,\n"), *EgoVars.ToString());
     print += FString::Printf(TEXT("  [DReyeVR]UserInputs:%s,\n"), *Inputs.ToString());
     return print;
-}
-
-std::string AggregateData::GetUniqueName() const
-{
-    return "DReyeVRSensorAggregateData";
 }
 
 /// ========================================== ///

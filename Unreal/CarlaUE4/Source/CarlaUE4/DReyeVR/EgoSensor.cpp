@@ -563,6 +563,17 @@ void AEgoSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const do
     ADReyeVRSensor::UpdateData(RecorderData, Per);
 }
 
+void AEgoSensor::UpdateData(const DReyeVR::ConfigFileData &RecordedParams, const double Per)
+{
+    // compare the incoming (recording) ConfigFile with our current (live) one
+    const std::string RecordingExport = TCHAR_TO_UTF8(*RecordedParams.ToString());
+    const struct ConfigFile Recorded = ConfigFile::Import(RecordingExport);
+    const auto &LiveConfig = Vehicle->GetVehicleParams();
+
+    bool bPrintWarnings = true;
+    LiveConfig.IsSubset(Recorded, bPrintWarnings); // don't care if Recorded has entries that we dont
+}
+
 void AEgoSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)
 {
     if (DReyeVRGame)

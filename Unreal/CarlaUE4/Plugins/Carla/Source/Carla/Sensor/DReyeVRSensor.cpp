@@ -13,7 +13,7 @@
 #include "carla/sensor/s11n/DReyeVRSerializer.h" // DReyeVRSerializer::Data
 
 class DReyeVR::AggregateData *ADReyeVRSensor::Data = nullptr;
-struct DReyeVR::ConfigFileData *ADReyeVRSensor::ConfigFile = nullptr;
+class DReyeVR::ConfigFileData *ADReyeVRSensor::ConfigFile = nullptr;
 bool ADReyeVRSensor::bIsReplaying = false; // initially not replaying
 
 ADReyeVRSensor::ADReyeVRSensor(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
@@ -195,9 +195,16 @@ void ADReyeVRSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, cons
     }
 }
 
+void ADReyeVRSensor::UpdateData(const class DReyeVR::ConfigFileData &RecorderData, const double Per)
+{
+    // should be implemented in the EgoSensor (child) impl
+    unimplemented();
+}
+
 void ADReyeVRSensor::UpdateData(const class DReyeVR::CustomActorData &RecorderData, const double Per)
 {
-    // should be implemented in the child class impl
+    // should be implemented in the EgoSensor (child) impl
+    unimplemented();
 }
 
 void ADReyeVRSensor::StopReplaying()

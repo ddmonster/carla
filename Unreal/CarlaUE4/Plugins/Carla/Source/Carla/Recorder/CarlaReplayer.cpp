@@ -404,7 +404,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
       // DReyeVR eye logging data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVR):
         if (bFrameFound)
-          ProcessDReyeVRData<DReyeVRDataRecorder<DReyeVR::AggregateData>>(Per, Time, true);
+          ProcessDReyeVR_Data(Per, Time);
         else
           SkipPacket();
         break;
@@ -412,7 +412,15 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
       // DReyeVR eye logging data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVRCustomActor):
         if (bFrameFound)
-          ProcessDReyeVRData<DReyeVRDataRecorder<DReyeVR::CustomActorData>>(Per, Time, false);
+          ProcessDReyeVR_CustomActorData(Per, Time);
+        else
+          SkipPacket();
+        break;
+      
+      // DReyeVR eye logging data
+      case static_cast<char>(CarlaRecorderPacketId::DReyeVRConfigFile):
+        if (bFrameFound)
+          ProcessDReyeVR_ConfigFileData(Per, Time);
         else
           SkipPacket();
         break;
@@ -647,45 +655,63 @@ void CarlaReplayer::ProcessWeather(void)
   }
 }
 
-template <typename T> void CarlaReplayer::ProcessDReyeVRData(double Per, double DeltaTime, bool bShouldBeOnlyOne)
+void CarlaReplayer::ProcessDReyeVR_Data(double Per, double DeltaTime)
 {
+  using T = struct DReyeVRDataRecorder<DReyeVR::AggregateData>;
   uint16_t Total;
-  // custom DReyeVR packets
-
-  // read Total DReyeVR events
+  // read number of DReyeVR entries
   ReadValue<uint16_t>(File, Total); // read number of events
-
-  Visited.clear();
+  check(Total == 1); // should be only one Agg data
   for (uint16_t i = 0; i < Total; ++i)
   {
-    T DReyeVRDataInstance;
-    DReyeVRDataInstance.Read(File);
-    Helper.ProcessReplayerDReyeVRData<T>(DReyeVRDataInstance, Per);
-    if (!bShouldBeOnlyOne)
+    T Instance;
+    Instance.Read(File);
+    Helper.ProcessReplayerDReyeVRData<T>(Instance, Per);
+  }
+}
+
+void CarlaReplayer::ProcessDReyeVR_ConfigFileData(double Per, double DeltaTime)
+{
+  using T = struct DReyeVRDataRecorder<DReyeVR::ConfigFileData>;
+  uint16_t Total;
+  // read number of DReyeVR entries
+  ReadValue<uint16_t>(File, Total); // read number of events
+  check(Total == 1); // should be only one ConfigFile data
+  for (uint16_t i = 0; i < Total; ++i)
+  {
+    T Instance;
+    Instance.Read(File);
+    Helper.ProcessReplayerDReyeVRData<T>(Instance, Per);
+  }
+}
+
+void CarlaReplayer::ProcessDReyeVR_CustomActorData(double Per, double DeltaTime)
+{
+  using T = struct DReyeVRDataRecorder<DReyeVR::CustomActorData>;
+  uint16_t Total;
+  ReadValue<uint16_t>(File, Total); // read number of events
+  CustomActorsVisited.clear();
+  for (uint16_t i = 0; i < Total; ++i)
+  {
+    T Instance;
+    Instance.Read(File);
+    Helper.ProcessReplayerDReyeVRData<T>(Instance, Per);
+    auto Name = Instance.GetUniqueName();
+    CustomActorsVisited.insert(Name); // to track lifetime
+  }
+
+  for (auto It = ADReyeVRCustomActor::ActiveCustomActors.begin(); It != ADReyeVRCustomActor::ActiveCustomActors.end();){
+    const std::string &ActiveActorName = It->first;
+    if (CustomActorsVisited.find(ActiveActorName) == CustomActorsVisited.end()) // currently alive actor who was not visited... time to disable
     {
-      auto Name = DReyeVRDataInstance.GetUniqueName();
-      Visited.insert(Name);
+      // now this has to be garbage collected
+      auto Next = std::next(It, 1); // iterator following the last removed element
+      It->second->Deactivate();
+      It = Next;
     }
-  }
-  if (bShouldBeOnlyOne)
-  {
-    check(Total == 1);
-  }
-  else
-  {
-    for (auto It = ADReyeVRCustomActor::ActiveCustomActors.begin(); It != ADReyeVRCustomActor::ActiveCustomActors.end();){
-      const std::string &ActiveActorName = It->first;
-      if (Visited.find(ActiveActorName) == Visited.end()) // currently alive actor who was not visited... time to disable
-      {
-        // now this has to be garbage collected
-        auto Next = std::next(It, 1); // iterator following the last removed element
-        It->second->Deactivate();
-        It = Next;
-      }
-      else
-      {
-        ++It; // increment iterator if not erased
-      }
+    else
+    {
+      ++It; // increment iterator if not erased
     }
   }
 }

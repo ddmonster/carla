@@ -168,8 +168,10 @@ private:
   void ProcessWeather(void);
 
   // DReyeVR recordings
-  template <typename T> void ProcessDReyeVRData(double Per, double DeltaTime, bool bShouldBeOnlyOne);
-  std::unordered_set<std::string> Visited = {};
+  void ProcessDReyeVR_Data(double Per, double DeltaTime);
+  void ProcessDReyeVR_ConfigFileData(double Per, double DeltaTime);
+  void ProcessDReyeVR_CustomActorData(double Per, double DeltaTime);
+  std::unordered_set<std::string> CustomActorsVisited = {};
 
   // For restarting the recording with the same params
   struct LastReplayStruct
