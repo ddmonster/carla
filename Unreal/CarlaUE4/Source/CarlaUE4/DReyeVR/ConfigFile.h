@@ -10,8 +10,7 @@ const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::Pr
 struct ConfigFile
 {
     // default empty constructor is the model3 vehicle
-    ConfigFile()
-        : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle/TeslaModel3/Config.ini")), false)
+    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles/TeslaModel3.ini")), false)
     {
         // simple sanity check to ensure exporting and importing the same config file works as intended
         // (exporting self and creating a new import should be equal to self)

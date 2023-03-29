@@ -55,8 +55,7 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 void AEgoVehicle::ReadConfigVariables()
 {
     const FString VehicleType = GeneralParams.Get<FString>("EgoVehicle", "VehicleType");
-    auto Params =
-        ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Content/DReyeVR/EgoVehicle"), VehicleType, TEXT("Config.ini")));
+    auto Params = ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), VehicleType + ".ini"));
     if (Params.bIsValid())
     {
         VehicleParams = Params; // overwrite
