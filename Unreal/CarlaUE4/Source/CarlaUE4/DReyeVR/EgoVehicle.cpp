@@ -744,7 +744,7 @@ void AEgoVehicle::ConstructSteeringWheel()
     const bool bEnableSteeringWheel = VehicleParams.Get<bool>("SteeringWheel", "Enabled");
     if (!bEnableSteeringWheel)
         return;
-    FString SteeringWheel_Str = VehicleParams.Get<FString>("SteeringWheel", "SteeringWheel");
+    FString SteeringWheel_Str = VehicleParams.Get<FString>("SteeringWheel", "StaticMesh");
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
     SteeringWheel = CreateDefaultSubobject<UStaticMeshComponent>(FName("SteeringWheel"));
     SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
@@ -849,7 +849,7 @@ void AEgoVehicle::TickSteeringWheel(const float DeltaTime)
     {
         NewRotation.Roll = TargetAngle;
     }
-    else if (GetMesh() && GetMesh()->GetAnimInstance())
+    else if (GetMesh() && Cast<UVehicleAnimInstance>(GetMesh()->GetAnimInstance()) != nullptr)
     {
         float WheelAngleDeg = GetWheelSteerAngle(EVehicleWheelLocation::Front_Wheel);
         // float MaxWheelAngle = GetMaximumSteerAngle();
