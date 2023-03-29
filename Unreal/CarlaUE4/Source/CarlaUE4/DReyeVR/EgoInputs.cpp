@@ -289,13 +289,32 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load animations bp
     const FString AnimationPath = VehicleParams.Get<FString>("RigidBody", "AnimationBP");
+    UClass *AnimInstanceClass = nullptr;
+    /// NOTE: for some reason the UAnimBlueprint is unable to be loaded in package mode (but it does in Editor)
+    // so in package mode we instead perform a class search
+#if WITH_EDITOR
     static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarAnimation(*AnimationPath);
-    UAnimBlueprint *AnimInstance = CarAnimation.Object;
+    auto *AnimInstance = CarAnimation.Object;
     if (AnimInstance == nullptr)
     {
         LOG_ERROR("Unable to load animation blueprint! (\"%s\")", *AnimationPath);
         return;
     }
+    AnimInstanceClass = AnimInstance->GeneratedClass;
+#else
+    // format should be /Game/.../type.type_C (remove prefix, quotes, and add "_C" suffix)
+    const TCHAR *NoneStr = *FString(""); // replace with empty string ("")
+    FString AnimationPathObj = AnimationPath.Replace(*FString("AnimBlueprint"), NoneStr, ESearchCase::CaseSensitive);
+    AnimationPathObj = AnimationPathObj.Replace(*FString("'"), NoneStr, ESearchCase::CaseSensitive);
+    AnimationPathObj += "_C"; // to force class type
+    ConstructorHelpers::FClassFinder<UObject> FoundClass(*AnimationPathObj);
+    if (!FoundClass.Succeeded())
+    {
+        LOG_ERROR("Unable to load Animation!");
+        return;
+    }
+    AnimInstanceClass = FoundClass.Class;
+#endif
 
     // load physics asset
     const FString PhysicsAssetPath = VehicleParams.Get<FString>("RigidBody", "PhysicsAsset");
@@ -315,7 +334,7 @@ void AEgoVehicle::ConstructRigidBody()
     check(Mesh != nullptr);
     Mesh->SetSkeletalMesh(SkeletalMesh, true);
     Mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-    Mesh->SetAnimInstanceClass(AnimInstance->GeneratedClass);
+    Mesh->SetAnimInstanceClass(AnimInstanceClass);
     Mesh->SetPhysicsAsset(PhysicsAsset);
     Mesh->RecreatePhysicsState();
     this->GetVehicleMovementComponent()->RecreatePhysicsState();
