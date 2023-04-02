@@ -376,7 +376,9 @@ void AEgoSensor::SetEgoVehicle(class AEgoVehicle *NewEgoVehicle)
 
     // Also check that the ConfigFileData variable can be written to with Vehicle params
     check(ConfigFile);
-    ConfigFile->Set(Vehicle->GetVehicleParams().Export()); // track this config file once
+    // track both the VehicleParams and GeneralParams
+    const auto ConfigFileStr = Vehicle->GetVehicleParams().Export() + GeneralParams.Export();
+    ConfigFile->Set(ConfigFileStr); // track this config file once
 }
 
 void AEgoSensor::SetGame(class ADReyeVRGameMode *GameIn)
@@ -568,7 +570,11 @@ void AEgoSensor::UpdateData(const DReyeVR::ConfigFileData &RecordedParams, const
     // compare the incoming (recording) ConfigFile with our current (live) one
     const std::string RecordingExport = TCHAR_TO_UTF8(*RecordedParams.ToString());
     const struct ConfigFile Recorded = ConfigFile::Import(RecordingExport);
-    const auto &LiveConfig = Vehicle->GetVehicleParams();
+
+    // includes both the vehicle params and general params
+    struct ConfigFile LiveConfig;
+    LiveConfig.Insert(Vehicle->GetVehicleParams());
+    LiveConfig.Insert(GeneralParams);
 
     bool bPrintWarnings = true;
     LiveConfig.IsSubset(Recorded, bPrintWarnings); // don't care if Recorded has entries that we dont

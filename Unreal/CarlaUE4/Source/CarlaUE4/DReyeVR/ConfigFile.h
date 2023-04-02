@@ -131,6 +131,13 @@ struct ConfigFile
         return !bIsDifferent;
     }
 
+    void Insert(const ConfigFile &Other)
+    {
+        FilePath += ";" + Other.FilePath;
+        Sections.insert(Other.Sections.begin(), Other.Sections.end());
+        bSuccessfulUpdate = true;
+    }
+
     static ConfigFile Import(const std::string &Configuration)
     {
         // takes a flattened INI configuration file as parameter and reads it into a ConfigFile class
