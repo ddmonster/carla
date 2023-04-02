@@ -388,7 +388,7 @@ std::string ACarlaRecorder::Start(std::string Name, FString MapName, bool Additi
   // add current weather for start of recording
   AddStartingWeather();
 
-  // add DReyeVR config files
+  // add DReyeVR config files (only at the beginning of recording)
   DReyeVRConfigFileData.Add(ADReyeVRSensor::ConfigFile);
 
   return std::string(Filename);
@@ -469,8 +469,13 @@ void ACarlaRecorder::Write(double DeltaSeconds)
   // custom DReyeVR Actor data write
   DReyeVRCustomActorData.Write(File);
 
-  // DReyeVR configuration/parameters
-  DReyeVRConfigFileData.Write(File);
+  // only write this once (at the beginning)
+  static bool bWroteConfigFile = false;
+  if (!bWroteConfigFile) {
+    // DReyeVR configuration/parameters
+    DReyeVRConfigFileData.Write(File);
+    bWroteConfigFile = true;
+  }
 
   // weather state
   Weathers.Write(File);

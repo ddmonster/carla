@@ -401,7 +401,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
         ProcessWeather();
         break;
 
-      // DReyeVR eye logging data
+      // DReyeVR ego sensor data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVR):
         if (bFrameFound)
           ProcessDReyeVR_Data(Per, Time);
@@ -409,7 +409,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
           SkipPacket();
         break;
 
-      // DReyeVR eye logging data
+      // DReyeVR custom actor data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVRCustomActor):
         if (bFrameFound)
           ProcessDReyeVR_CustomActorData(Per, Time);
@@ -417,7 +417,7 @@ void CarlaReplayer::ProcessToTime(double Time, bool IsFirstTime)
           SkipPacket();
         break;
       
-      // DReyeVR eye logging data
+      // DReyeVR config file data
       case static_cast<char>(CarlaRecorderPacketId::DReyeVRConfigFile):
         if (bFrameFound)
           ProcessDReyeVR_ConfigFileData(Per, Time);
