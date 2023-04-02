@@ -20,7 +20,7 @@ if ${MAC_OS}; then
   # ARCH="arm64" # for building the PythonAPI
   # for OSX apple silicon build (building x86 & using rosetta2)
   # NOTE: UE4 wants use of macos 10.14, but 12.1 works fine
-  export ARCH_TARGET="-target ${ARCH}-apple-macos10.14"
+  export ARCH_TARGET="-target ${ARCH}-apple-macos13.2"
   export OS_FLAGS=" -nostdinc++" # for macos
   export OS_STDLIB="-stdlib=libc++"
   # for cmake -arch flag: https://cmake.org/cmake/help/latest/prop_tgt/OSX_ARCHITECTURES.html#prop_tgt:OSX_ARCHITECTURES
