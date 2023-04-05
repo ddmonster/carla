@@ -38,10 +38,3 @@ class ADReyeVRFactory : public ACarlaActorFactory
 
     TMap<FString, UClass *> BP_Classes;
 };
-
-// instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
-// => harplab.dreyevr_vehicle.model3 & harplab.dreyevr_sensor.ego_sensor
-// in PythonAPI use world.get_actors().filter("harplab.dreyevr_vehicle.*") or
-// world.get_blueprint_library().filter("harplab.dreyevr_sensor.*") and you won't accidentally get these actors when
-// performing filter("vehicle.*") or filter("sensor.*")
-static const FString DReyeVRCategory("HarpLab");

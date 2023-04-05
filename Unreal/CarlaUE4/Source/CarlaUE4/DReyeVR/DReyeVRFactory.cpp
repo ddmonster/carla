@@ -3,6 +3,7 @@
 #include "Carla/Actor/ActorBlueprintFunctionLibrary.h" // UActorBlueprintFunctionLibrary
 #include "Carla/Actor/VehicleParameters.h"             // FVehicleParameters
 #include "Carla/Game/CarlaEpisode.h"                   // UCarlaEpisode
+#include "DReyeVRUtils.h"                              // DReyeVRCategory
 #include "EgoSensor.h"                                 // AEgoSensor
 #include "EgoVehicle.h"                                // AEgoVehicle
 

@@ -10,6 +10,13 @@
 #include "ImageWriteTask.h"                // FImageWriteTask
 #include <carla/image/CityScapesPalette.h> // CityScapesPalette
 
+// instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
+// => harplab.dreyevr_vehicle.model3 & harplab.dreyevr_sensor.ego_sensor
+// in PythonAPI use world.get_actors().filter("harplab.dreyevr_vehicle.*") or
+// world.get_blueprint_library().filter("harplab.dreyevr_sensor.*") and you won't accidentally get these actors when
+// performing filter("vehicle.*") or filter("sensor.*")
+static const FString DReyeVRCategory("HarpLab");
+
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
     // searches through the registers actors (definitions) to find one with the matching class type
@@ -49,7 +56,9 @@ static FActorDefinition FindEgoVehicleDefinition(const UCarlaEpisode *Episode)
     bool bFoundDef = false;
     for (const auto &Defn : Episode->GetActorDefinitions())
     {
-        if (Defn.Id.ToLower().Contains(LoadVehicle.ToLower()))
+        const auto &LowerId = Defn.Id.ToLower(); // perform string comparisons on lowercase (ignore case)
+        // contains both the DReyeVR category (HarpLab) and specific EgoVehicle
+        if (LowerId.Contains(DReyeVRCategory.ToLower()) && LowerId.Contains(LoadVehicle.ToLower()))
         {
             LOG("Found appropriate definition for \"%s\" registered at UId: %d as \"%s\"", //
                 *LoadVehicle, Defn.UId, *Defn.Id);
