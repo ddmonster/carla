@@ -54,6 +54,7 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 
 void AEgoVehicle::ReadConfigVariables()
 {
+    // this matches the BP_XYZ (XYZ) part of the blueprint, or "Vehicle" if just an EgoVehicle
     VehicleType = GetClass()->GetDisplayNameText().ToString();
     VehicleType.RemoveSpacesInline();
     VehicleType.ReplaceInline(*FString("Ego"), *FString(""), ESearchCase::CaseSensitive); // all start w/ EgoXYZ
@@ -156,8 +157,6 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    LOG("Is valid: %d", int(VRCameraRoot != nullptr));
-
     // Get the current data from the AEgoSensor and use it
     UpdateSensor(DeltaSeconds);
 
@@ -190,13 +189,13 @@ void AEgoVehicle::Tick(float DeltaSeconds)
 /// ----------------:CAMERA:------------------ ///
 /// ========================================== ///
 
-template <typename T> T *AEgoVehicle::CreateEgoObject(const FString &Name)
+template <typename T> T *AEgoVehicle::CreateEgoObject(const FString &Name, const FString &Suffix)
 {
-    // create default subobject with this name and suffix by EgoVehicle type
+    // create default subobject with this name and (optionally) add a suffix
     // https://docs.unrealengine.com/4.26/en-US/API/Runtime/CoreUObject/UObject/UObject/CreateDefaultSubobject/2/
     // see also: https://dev.epicgames.com/community/snippets/0bk/actor-component-creation
     // if the blueprint gets corrupted (ex. object details no longer visible), reparent to BaseVehiclePawn then back
-    return UObject::CreateDefaultSubobject<T>(FName(*(Name + "_" + GetVehicleType())));
+    return UObject::CreateDefaultSubobject<T>(FName(*(Name + Suffix)));
 }
 
 void AEgoVehicle::ConstructCameraRoot()

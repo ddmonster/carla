@@ -4,6 +4,9 @@
 #include "Carla/Actor/CarlaActorFactory.h"
 #include "Carla/Actor/VehicleParameters.h"
 
+#include <string>
+#include <vector>
+
 #include "DReyeVRFactory.generated.h"
 
 /// Factory in charge of spawning DReyeVR actors.
@@ -22,5 +25,23 @@ class ADReyeVRFactory : public ACarlaActorFactory
     void MakeVehicleDefinition(const FVehicleParameters &Parameters, FActorDefinition &Definition);
     void MakeSensorDefinition(const FString &Id, FActorDefinition &Definition);
 
+    // place the names of all your new custom EgoVehicle types here:
+    /// IMPORTANT: make sure these match the ConfigFile AND Blueprint!!
+    // We expect Config/EgoVehicle/XYZ.ini and Content/DReyeVR/EgoVehicles/XYZ/BP_XYZ.uasset
+    const std::vector<std::string> VehicleTypes = {
+        "TeslaM3",   // Tesla Model 3 (Default)
+        "Mustang66", // Mustang66
+        "Jeep",      // JeepWranglerRubicon
+        "Vespa"      // Vespa (2WheeledVehicles)
+        // add more here
+    };
+
     TMap<FString, UClass *> BP_Classes;
 };
+
+// instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
+// => harplab.dreyevr_vehicle.model3 & harplab.dreyevr_sensor.ego_sensor
+// in PythonAPI use world.get_actors().filter("harplab.dreyevr_vehicle.*") or
+// world.get_blueprint_library().filter("harplab.dreyevr_sensor.*") and you won't accidentally get these actors when
+// performing filter("vehicle.*") or filter("sensor.*")
+static const FString DReyeVRCategory("HarpLab");

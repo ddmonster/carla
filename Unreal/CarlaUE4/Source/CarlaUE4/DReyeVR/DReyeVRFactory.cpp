@@ -6,18 +6,11 @@
 #include "EgoSensor.h"                                 // AEgoSensor
 #include "EgoVehicle.h"                                // AEgoVehicle
 
-// instead of vehicle.dreyevr.model3 or sensor.dreyevr.ego_sensor, we use "harplab" for category
-// => harplab.dreyevr_vehicle.model3 & harplab.dreyevr_sensor.ego_sensor
-// in PythonAPI use world.get_actors().filter("harplab.dreyevr_vehicle.*") or
-// world.get_blueprint_library().filter("harplab.dreyevr_sensor.*") and you won't accidentally get these actors when
-// performing filter("vehicle.*") or filter("sensor.*")
-#define CATEGORY TEXT("HARPLab")
-
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
-    std::vector<FString> VehicleTypes = {"TeslaM3", "Mustang66", "Jeep", "Vespa"};
-    for (const FString &Name : VehicleTypes)
+    for (const std::string &NameStdStr : VehicleTypes)
     {
+        const FString Name = FString(NameStdStr.c_str());
         ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), Name + ".ini"));
         FString BP_Path;
         if (VehicleParams.bIsValid() && VehicleParams.Get<FString>("Blueprint", "Path", BP_Path))
@@ -76,7 +69,7 @@ FActorDefinition MakeGenericDefinition(const FString &Category, const FString &T
 void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters, FActorDefinition &Definition)
 {
     // assign the ID/Tags with category (ex. "vehicle.tesla.model3" => "harplab.dreyevr.model3")
-    Definition = MakeGenericDefinition(CATEGORY, TEXT("DReyeVR_Vehicle"), Parameters.Model);
+    Definition = MakeGenericDefinition(DReyeVRCategory, TEXT("DReyeVR_Vehicle"), Parameters.Model);
     Definition.Class = Parameters.Class;
 
     FActorVariation ActorRole;
@@ -124,7 +117,7 @@ void ADReyeVRFactory::MakeVehicleDefinition(const FVehicleParameters &Parameters
 
 void ADReyeVRFactory::MakeSensorDefinition(const FString &Id, FActorDefinition &Definition)
 {
-    Definition = MakeGenericDefinition(CATEGORY, TEXT("DReyeVR_Sensor"), Id);
+    Definition = MakeGenericDefinition(DReyeVRCategory, TEXT("DReyeVR_Sensor"), Id);
     Definition.Class = AEgoSensor::StaticClass();
 }
 
