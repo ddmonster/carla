@@ -269,7 +269,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load skeletal mesh (static mesh)
     const FString SkeletalMeshPath = VehicleParams.Get<FString>("RigidBody", "SkeletalMesh");
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(*SkeletalMeshPath);
+    ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(*SkeletalMeshPath);
     USkeletalMesh *SkeletalMesh = CarMesh.Object;
     if (SkeletalMesh == nullptr)
     {
@@ -279,7 +279,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load skeleton (for animations)
     const FString SkeletonPath = VehicleParams.Get<FString>("RigidBody", "Skeleton");
-    static ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(*SkeletonPath);
+    ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(*SkeletonPath);
     USkeleton *Skeleton = CarSkeleton.Object;
     if (Skeleton == nullptr)
     {
@@ -293,7 +293,7 @@ void AEgoVehicle::ConstructRigidBody()
     /// NOTE: for some reason the UAnimBlueprint is unable to be loaded in package mode (but it does in Editor)
     // so in package mode we instead perform a class search
 #if WITH_EDITOR
-    static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarAnimation(*AnimationPath);
+    ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarAnimation(*AnimationPath);
     auto *AnimInstance = CarAnimation.Object;
     if (AnimInstance == nullptr)
     {
@@ -318,7 +318,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     // load physics asset
     const FString PhysicsAssetPath = VehicleParams.Get<FString>("RigidBody", "PhysicsAsset");
-    static ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(*PhysicsAssetPath);
+    ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(*PhysicsAssetPath);
     UPhysicsAsset *PhysicsAsset = CarPhysics.Object;
     if (PhysicsAsset == nullptr)
     {
@@ -346,7 +346,7 @@ void AEgoVehicle::ConstructRigidBody()
 
     SetupEngine();
 
-    LOG("Successfully created EgoVehicle rigid body");
+    LOG("Successfully created EgoVehicle (%s) rigid body", *GetVehicleType());
 }
 
 bool AEgoVehicle::IsTwoWheeledVehicle_Implementation()

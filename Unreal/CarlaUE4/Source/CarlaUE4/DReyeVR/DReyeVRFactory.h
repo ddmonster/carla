@@ -22,5 +22,5 @@ class ADReyeVRFactory : public ACarlaActorFactory
     void MakeVehicleDefinition(const FVehicleParameters &Parameters, FActorDefinition &Definition);
     void MakeSensorDefinition(const FString &Id, FActorDefinition &Definition);
 
-    class UClass *EgoVehicleBPClass = nullptr;
+    TMap<FString, UClass *> BP_Classes;
 };

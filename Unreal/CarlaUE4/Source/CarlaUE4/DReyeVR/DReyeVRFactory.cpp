@@ -15,31 +15,51 @@
 
 ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : Super(ObjectInitializer)
 {
+    std::vector<FString> VehicleTypes = {"TeslaM3", "Mustang66", "Jeep", "Vespa"};
+    for (const FString &Name : VehicleTypes)
+    {
+        ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), Name + ".ini"));
+        FString BP_Path;
+        if (VehicleParams.bIsValid() && VehicleParams.Get<FString>("Blueprint", "Path", BP_Path))
+        {
+            ConstructorHelpers::FObjectFinder<UClass> BlueprintObject(*BP_Path);
+            BP_Classes.Add(Name, BlueprintObject.Object);
+        }
+        else
+        {
+            LOG_WARN("Unable to load custom EgoVehicle \"%s\"", *Name);
+            BP_Classes.Add(Name, AEgoVehicle::StaticClass());
+        }
+    }
 }
 
 TArray<FActorDefinition> ADReyeVRFactory::GetDefinitions()
 {
-    // GeneralParams.Get<FString>("EgoVehicle", TEXT("VehicleType"))
     TArray<FActorDefinition> Definitions;
 
-    FActorDefinition EgoVehicleDef;
+    for (auto &BP_Class_pair : BP_Classes)
     {
+        FActorDefinition Def;
         FVehicleParameters Parameters;
-        Parameters.Model = "ego_vehicle";
-        Parameters.ObjectType = GeneralParams.Get<FString>("EgoVehicle", "VehicleType"); // type of vehicle
-        Parameters.Class = AEgoVehicle::StaticClass();
+        Parameters.Model = BP_Class_pair.Key; // vehicle type
+        /// TODO: BP_Path??
+        Parameters.ObjectType = BP_Class_pair.Key;
+        Parameters.Class = BP_Class_pair.Value;
+        /// TODO: manage number of wheels? (though carla's 2-wheeled are just secret 4-wheeled)
         Parameters.NumberOfWheels = 4;
 
-        ADReyeVRFactory::MakeVehicleDefinition(Parameters, EgoVehicleDef);
+        ADReyeVRFactory::MakeVehicleDefinition(Parameters, Def);
+        Definitions.Add(Def);
     }
 
     FActorDefinition EgoSensorDef;
     {
-        const FString Id = "Ego_Sensor";
+        const FString Id = "ego_sensor";
         ADReyeVRFactory::MakeSensorDefinition(Id, EgoSensorDef);
+        Definitions.Add(EgoSensorDef);
     }
 
-    return {EgoVehicleDef, EgoSensorDef};
+    return Definitions;
 }
 
 // copied and modified from UActorBlueprintFunctionLibrary
@@ -144,13 +164,23 @@ FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform
         return SpawnedSingleton;
     };
 
-    if (ActorDescription.Class == AEgoVehicle::StaticClass())
+    if (UClass::FindCommonBase(ActorDescription.Class, AEgoVehicle::StaticClass()) ==
+        AEgoVehicle::StaticClass()) // is EgoVehicle or derived class
     {
-        // check if an EgoVehicle already exists, if so, don't spawn another.
+        // see if this requested actor description is one of the available EgoVehicles
         /// NOTE: multi-ego-vehicle is not officially supported by DReyeVR, but it could be an interesting extension
-        SpawnedActor = SpawnSingleton(ActorDescription.Class, ActorDescription.Id, SpawnAtTransform, [&]() {
-            return World->SpawnActor<AEgoVehicle>(ActorDescription.Class, SpawnAtTransform, SpawnParameters);
-        });
+        for (const auto &AvailableEgoVehicles : BP_Classes)
+        {
+            const FString &Name = AvailableEgoVehicles.Key;
+            if (ActorDescription.Id.ToLower().Contains(Name.ToLower())) // contains name
+            {
+                // check if an EgoVehicle already exists, if so, don't spawn another.
+                SpawnedActor = SpawnSingleton(ActorDescription.Class, ActorDescription.Id, SpawnAtTransform, [&]() {
+                    auto *Class = AvailableEgoVehicles.Value;
+                    return World->SpawnActor<AEgoVehicle>(Class, SpawnAtTransform, SpawnParameters);
+                });
+            }
+        }
     }
     else if (ActorDescription.Class == AEgoSensor::StaticClass())
     {
@@ -162,6 +192,11 @@ FActorSpawnResult ADReyeVRFactory::SpawnActor(const FTransform &SpawnAtTransform
     else
     {
         LOG_ERROR("Unknown actor class in DReyeVR factory!");
+    }
+
+    if (SpawnedActor == nullptr)
+    {
+        LOG_WARN("Unable to spawn DReyeVR actor (\"%s\")", *ActorDescription.Id)
     }
     return FActorSpawnResult(SpawnedActor);
 }

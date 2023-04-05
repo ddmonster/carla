@@ -10,7 +10,6 @@
 #include "ImageWriteTask.h"                // FImageWriteTask
 #include <carla/image/CityScapesPalette.h> // CityScapesPalette
 
-
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
     // searches through the registers actors (definitions) to find one with the matching class type
@@ -23,6 +22,37 @@ static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const U
         if (Defn.Class == ClassType)
         {
             LOG("Found appropriate definition registered at UId: %d as \"%s\"", Defn.UId, *Defn.Id);
+            FoundDefinition = Defn;
+            bFoundDef = true;
+            break; // assumes the first is the ONLY one matching this class (Ex. EgoVehicle, EgoSensor)
+        }
+    }
+    if (!bFoundDef)
+    {
+        LOG_ERROR("Unable to find appropriate definition in registry!");
+    }
+    return FoundDefinition;
+}
+
+static FActorDefinition FindEgoVehicleDefinition(const UCarlaEpisode *Episode)
+{
+
+    FString LoadVehicle = "TeslaM3"; // default vehicle
+    if (GeneralParams.Get<FString>("EgoVehicle", "VehicleType", LoadVehicle))
+    {
+        LOG("Loading new default EgoVehicle: \"%s\"", *LoadVehicle);
+    }
+    // searches through the registers actors (definitions) to find one with the matching class type
+    check(Episode != nullptr);
+
+    FActorDefinition FoundDefinition;
+    bool bFoundDef = false;
+    for (const auto &Defn : Episode->GetActorDefinitions())
+    {
+        if (Defn.Id.ToLower().Contains(LoadVehicle.ToLower()))
+        {
+            LOG("Found appropriate definition for \"%s\" registered at UId: %d as \"%s\"", //
+                *LoadVehicle, Defn.UId, *Defn.Id);
             FoundDefinition = Defn;
             bFoundDef = true;
             break; // assumes the first is the ONLY one matching this class (Ex. EgoVehicle, EgoSensor)

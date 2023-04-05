@@ -25,7 +25,7 @@
 class ADReyeVRGameMode;
 class ADReyeVRPawn;
 
-UCLASS()
+UCLASS(Abstract) // technically shouldn't be spawned alone, defaults to the TeslaM3 blueprint
 class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 {
     GENERATED_BODY()
@@ -47,6 +47,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void SetVolume(const float VolumeIn);
 
     // Getters
+    const FString &GetVehicleType() const;
     FVector GetCameraOffset() const;
     FVector GetCameraPosn() const;
     FVector GetNextCameraPosn(const float DeltaSeconds) const;
@@ -91,34 +92,36 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     // World variables
     class UWorld *World;
 
-  private:
-    ////////////////:STATIC:////////////////
+  protected: // static
     bool bIs2Wheeled = false;
     void ConstructRigidBody();
     void SetupEngine();
     void SetupWheels();
+    template <typename T> T *CreateEgoObject(const FString &Name);
 
-    ////////////////:CAMERA:////////////////
-    void ConstructCameraRoot(); // needs to be called in the constructor
-    UPROPERTY(Category = Camera, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    FString VehicleType; // initially empty (set in GetVehicleType())
+
+  protected: // camera
+    UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
+    void ConstructCameraRoot();                                   // needs to be called in the constructor
     FTransform CameraPose, CameraPoseOffset;                      // camera pose (location & rotation) and manual offset
     std::vector<std::pair<FString, FTransform>> CameraTransforms; // collection of named transforms from params
     size_t CurrentCameraTransformIdx = 0;
     bool bCameraFollowHMD = true; // disable this (in params) to replay without following the player's HMD (replay-only)
 
-    ////////////////:SENSOR:////////////////
+  protected: // sensor
     void ReplayTick();
     void InitSensor();
     class AEgoSensor *EgoSensor; // custom sensor helper that holds logic for extracting useful data
     void UpdateSensor(const float DeltaTime);
 
-    ///////////////:DREYEVRPAWN://///////////
+  protected: // pawn
     class ADReyeVRPawn *Pawn = nullptr;
 
-    ////////////////:MIRRORS:////////////////
+  protected: // mirrors
     void ConstructMirrors();
     struct MirrorParams
     {
@@ -147,13 +150,13 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UStaticMeshComponent *RearMirrorChassisSM;
     FTransform RearMirrorChassisTransform;
 
-    ////////////////:AICONTROLLER:////////////////
+  protected: // AI controller
     class AWheeledVehicleAIController *AI_Player = nullptr;
     void InitAIPlayer();
     bool bAutopilotEnabled = false;
     void TickAutopilot();
 
-    ////////////////:INPUTS:////////////////
+  protected: // inputs
     /// NOTE: since there are so many functions here, they are defined in EgoInputs.cpp
     struct DReyeVR::UserInputs VehicleInputs; // struct for user inputs
     // Vehicle control functions (additive for multiple input modalities (kbd/logi))
@@ -206,18 +209,18 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float ScaleThrottleInput;
     float ScaleBrakeInput;
 
-    ////////////////:SOUNDS:////////////////
-    void ConstructEgoSounds(); // needs to be called in the constructor
+  protected: // sounds
     UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UAudioComponent *GearShiftSound; // nice for toggling reverse
     UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UAudioComponent *TurnSignalSound; // good for turn signals
+    void ConstructEgoSounds();              // needs to be called in the constructor
 
-    ////////////////:LEVEL:////////////////
+  protected: // gamemode/level
     void TickGame(float DeltaSeconds);
     class ADReyeVRGameMode *DReyeVRGame;
 
-    ////////////////:DASH:////////////////
+  protected: // dashboard
     // Text Render components (Like the HUD but part of the mesh and works in VR)
     void ConstructDashText(); // needs to be called in the constructor
     UPROPERTY(Category = "Dash", EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -230,11 +233,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void UpdateDash();
     float SpeedometerScale = CmPerSecondToXPerHour(true); // scale from CM/s to MPH or KPH (default MPH)
 
-    ////////////////:STEERINGWHEEL:////////////////
-    void ConstructSteeringWheel(); // needs to be called in the constructor
-    void DestroySteeringWheel();
+  protected: // steering wheel
     UPROPERTY(Category = Steering, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UStaticMeshComponent *SteeringWheel;
+    void ConstructSteeringWheel(); // needs to be called in the constructor
+    void DestroySteeringWheel();
     void TickSteeringWheel(const float DeltaTime);
     float MaxSteerAngleDeg;
     float MaxSteerVelocity;
@@ -249,7 +252,32 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     const FLinearColor ButtonNeutralCol = 0.2f * FLinearColor::White;
     const FLinearColor ButtonPressedCol = 0.9f * FLinearColor::White;
 
-    ////////////////:OTHER:////////////////
+  protected: // other
     void DebugLines() const;
     bool bDrawDebugEditor = false;
+};
+
+// implementation classes for specific EgoVehicles (parameterized by config files)
+UCLASS()
+class CARLAUE4_API AEgoTeslaM3 : public AEgoVehicle
+{
+    GENERATED_BODY()
+};
+
+UCLASS()
+class CARLAUE4_API AEgoMustang66 : public AEgoVehicle
+{
+    GENERATED_BODY()
+};
+
+UCLASS()
+class CARLAUE4_API AEgoVespa : public AEgoVehicle
+{
+    GENERATED_BODY()
+};
+
+UCLASS()
+class CARLAUE4_API AEgoJeep : public AEgoVehicle
+{
+    GENERATED_BODY()
 };

@@ -557,7 +557,7 @@ void ADReyeVRGameMode::SpawnEgoVehicle(const FTransform &SpawnPt)
 {
     UCarlaEpisode *Episode = UCarlaStatics::GetCurrentEpisode(GetWorld());
     check(Episode != nullptr);
-    FActorDefinition EgoVehicleDefn = FindDefnInRegistry(Episode, AEgoVehicle::StaticClass());
+    FActorDefinition EgoVehicleDefn = FindEgoVehicleDefinition(Episode);
     FActorDescription DReyeVRDescr;
     { // create a Description from the Definition to spawn the actor
         DReyeVRDescr.UId = EgoVehicleDefn.UId;
