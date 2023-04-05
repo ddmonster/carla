@@ -195,7 +195,12 @@ template <typename T> T *AEgoVehicle::CreateEgoObject(const FString &Name, const
     // https://docs.unrealengine.com/4.26/en-US/API/Runtime/CoreUObject/UObject/UObject/CreateDefaultSubobject/2/
     // see also: https://dev.epicgames.com/community/snippets/0bk/actor-component-creation
     // if the blueprint gets corrupted (ex. object details no longer visible), reparent to BaseVehiclePawn then back
-    return UObject::CreateDefaultSubobject<T>(FName(*(Name + Suffix)));
+    T *Ret = UObject::CreateDefaultSubobject<T>(FName(*(Name + Suffix)));
+    // disabling tick for these objects by default
+    Ret->SetComponentTickEnabled(false);
+    Ret->PrimaryComponentTick.bCanEverTick = false;
+    Ret->PrimaryComponentTick.bStartWithTickEnabled = false;
+    return Ret;
 }
 
 void AEgoVehicle::ConstructCameraRoot()
@@ -762,18 +767,19 @@ void AEgoVehicle::UpdateDash()
 void AEgoVehicle::ConstructSteeringWheel()
 {
     const bool bEnableSteeringWheel = VehicleParams.Get<bool>("SteeringWheel", "Enabled");
-    if (!bEnableSteeringWheel)
-        return;
     FString SteeringWheel_Str = VehicleParams.Get<FString>("SteeringWheel", "StaticMesh");
-    ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
     SteeringWheel = CreateEgoObject<UStaticMeshComponent>("SteeringWheel");
-    SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
+    if (!SteeringWheel_Str.IsEmpty())
+    {
+        ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
+        SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
+    }
     SteeringWheel->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
     SteeringWheel->SetRelativeLocation(VehicleParams.Get<FVector>("SteeringWheel", "InitLocation"));
     SteeringWheel->SetRelativeRotation(VehicleParams.Get<FRotator>("SteeringWheel", "InitRotation"));
     SteeringWheel->SetGenerateOverlapEvents(false); // don't collide with itself
     SteeringWheel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    SteeringWheel->SetVisibility(true);
+    SteeringWheel->SetVisibility(bEnableSteeringWheel);
 }
 
 void AEgoVehicle::InitWheelButtons()
