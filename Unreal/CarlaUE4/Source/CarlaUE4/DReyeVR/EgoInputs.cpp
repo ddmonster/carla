@@ -264,6 +264,14 @@ void AEgoVehicle::TickVehicleInputs()
 void AEgoVehicle::ConstructRigidBody()
 {
 
+    // if you'd like to manage everything in code, you can specify all the paths for the rigid body
+    // components (skeletal mesh, skeleton, animation, and physics asset) then you should not include
+    // a Blueprint path to work on. If you do, we assume you are already working in the Editor so there
+    // is no need for us to re-assign these parameters here.
+    const FString BlueprintPath = VehicleParams.Get<FString>("Blueprint", "Path");
+    if (!BlueprintPath.IsEmpty())
+        return; // already working in the editor with a blueprint
+
     // https://forums.unrealengine.com/t/cannot-create-vehicle-updatedcomponent-has-not-initialized-its-rigid-body-actor/461662
     /// NOTE: this must be run in the constructors!
 
