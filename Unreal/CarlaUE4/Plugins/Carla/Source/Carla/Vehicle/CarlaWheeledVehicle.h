@@ -125,7 +125,7 @@ public:
 
   /// Get the maximum angle at which the front wheel can steer.
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
-  float GetMaximumSteerAngle() const;
+  virtual float GetMaximumSteerAngle() const;
 
   /// @}
   // ===========================================================================
@@ -260,6 +260,7 @@ public:
   // ===========================================================================
   /// @{
 
+  virtual void Tick(float DeltaTime) override; // called once per frame
 protected:
 
   virtual void BeginPlay() override;
@@ -267,9 +268,10 @@ protected:
 
   // sounds (DReyeVR)
   void ConstructSounds();
-  void TickSounds();
+  virtual void TickSounds(float DeltaSeconds);
   UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
   FVector EngineLocnInVehicle{180.f, 0.f, 70.f};
+  // need to disable these for EgoVehicle to have our own Ego versions
   UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
   class UAudioComponent *EngineRevSound = nullptr;  // driver feedback on throttle
   UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -278,6 +280,7 @@ protected:
   // can add more sounds here... like a horn maybe?
   
   // collisions (DReyeVR)
+  bool EnableCollisionForActor(AActor *OtherActor);
   void ConstructCollisionHandler(); // needs to be called in the constructor
   UFUNCTION()
   void OnOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,

@@ -178,9 +178,6 @@ void AEgoVehicle::Tick(float DeltaSeconds)
     // Update the world level
     TickGame(DeltaSeconds);
 
-    // Play sound that requires constant ticking
-    TickSounds();
-
     // Tick vehicle controls
     TickVehicleInputs();
 }
@@ -508,16 +505,22 @@ void AEgoVehicle::ConstructMirrors()
     /// Rear mirror
     {
         FString RearSM_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRear");
-        ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
         RearMirrorSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorSM");
-        RearMirrorSM->SetStaticMesh(RearSM.Object);
+        if (!RearSM_Str.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
+            RearMirrorSM->SetStaticMesh(RearSM.Object);
+        }
         RearReflection = CreateEgoObject<UPlanarReflectionComponent>(RearMirrorParams.Name + "Refl");
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
         FString RearSMChassis_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRearHolder");
-        ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
         RearMirrorChassisSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorChassisSM");
-        RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
+        if (!RearSMChassis_Str.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
+            RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
+        }
         RearMirrorChassisSM->SetupAttachment(VehicleMesh);
         RearMirrorChassisSM->SetRelativeLocation(RearMirrorChassisTransform.GetLocation());
         RearMirrorChassisSM->SetRelativeRotation(RearMirrorChassisTransform.Rotator());
@@ -531,18 +534,24 @@ void AEgoVehicle::ConstructMirrors()
     /// Left mirror
     {
         FString MirrorLeft_Str = VehicleParams.Get<FString>("Mirrors", "MirrorLeft");
-        ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
         LeftMirrorSM = CreateEgoObject<UStaticMeshComponent>(LeftMirrorParams.Name + "MirrorSM");
-        LeftMirrorSM->SetStaticMesh(LeftSM.Object);
+        if (!MirrorLeft_Str.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
+            LeftMirrorSM->SetStaticMesh(LeftSM.Object);
+        }
         LeftReflection = CreateEgoObject<UPlanarReflectionComponent>(LeftMirrorParams.Name + "Refl");
         LeftMirrorParams.Initialize(LeftMirrorSM, LeftReflection, VehicleMesh);
     }
     /// Right mirror
     {
         FString MirrorRight_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRight");
-        ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
         RightMirrorSM = CreateEgoObject<UStaticMeshComponent>(RightMirrorParams.Name + "MirrorSM");
-        RightMirrorSM->SetStaticMesh(RightSM.Object);
+        if (!MirrorRight_Str.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
+            RightMirrorSM->SetStaticMesh(RightSM.Object);
+        }
         RightReflection = CreateEgoObject<UPlanarReflectionComponent>(RightMirrorParams.Name + "Refl");
         RightMirrorParams.Initialize(RightMirrorSM, RightReflection, VehicleMesh);
     }
@@ -561,36 +570,42 @@ void AEgoVehicle::ConstructEgoSounds()
     // Initialize ego-centric audio components
     {
         if (EngineRevSound != nullptr)
+        {
             EngineRevSound->DestroyComponent(); // from the parent class (default sound)
+            EngineRevSound = nullptr;
+        }
         FString EngineRev_Str = VehicleParams.Get<FString>("Sounds", "EngineRev");
         ConstructorHelpers::FObjectFinder<USoundCue> EngineCueObj(*EngineRev_Str);
         if (EngineCueObj.Succeeded())
         {
-            EngineRevSound = CreateEgoObject<UAudioComponent>("EngineRevSoundEgo");
-            EngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
-            EngineRevSound->bAutoActivate = true;                // start playing on begin
-            EngineRevSound->SetSound(EngineCueObj.Object);       // using this sound
+            EgoEngineRevSound = CreateEgoObject<UAudioComponent>("EgoEngineRevSound");
+            EgoEngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
+            EgoEngineRevSound->bAutoActivate = true;                // start playing on begin
+            EgoEngineRevSound->SetSound(EngineCueObj.Object);       // using this sound
             EngineLocnInVehicle = VehicleParams.Get<FVector>("Sounds", "EngineLocn");
-            EngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
-            EngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
-            EngineRevSound->bAutoDestroy = false; // No automatic destroy, persist along with vehicle
-            check(EngineRevSound != nullptr);
+            EgoEngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
+            EgoEngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
+            EgoEngineRevSound->bAutoDestroy = false; // No automatic destroy, persist along with vehicle
+            check(EgoEngineRevSound != nullptr);
         }
     }
 
     {
         if (CrashSound != nullptr)
+        {
             CrashSound->DestroyComponent(); // from the parent class (default sound)
+            CrashSound = nullptr;
+        }
         FString CrashSound_Str = VehicleParams.Get<FString>("Sounds", "Crash");
         ConstructorHelpers::FObjectFinder<USoundCue> CarCrashCue(*CrashSound_Str);
         if (CarCrashCue.Succeeded())
         {
-            CrashSound = CreateEgoObject<UAudioComponent>("CarCrashEgo");
-            CrashSound->SetupAttachment(GetRootComponent());
-            CrashSound->bAutoActivate = false;
-            CrashSound->SetSound(CarCrashCue.Object);
-            CrashSound->bAutoDestroy = false;
-            check(CrashSound != nullptr);
+            EgoCrashSound = CreateEgoObject<UAudioComponent>("EgoCarCrash");
+            EgoCrashSound->SetupAttachment(GetRootComponent());
+            EgoCrashSound->bAutoActivate = false;
+            EgoCrashSound->SetSound(CarCrashCue.Object);
+            EgoCrashSound->bAutoDestroy = false;
+            check(EgoCrashSound != nullptr);
         }
     }
 
@@ -619,6 +634,8 @@ void AEgoVehicle::ConstructEgoSounds()
             check(TurnSignalSound != nullptr);
         }
     }
+
+    ConstructEgoCollisionHandler();
 }
 
 void AEgoVehicle::PlayGearShiftSound(const float DelayBeforePlay) const
@@ -635,11 +652,64 @@ void AEgoVehicle::PlayTurnSignalSound(const float DelayBeforePlay) const
 
 void AEgoVehicle::SetVolume(const float VolumeIn)
 {
+    if (EgoEngineRevSound)
+        EgoEngineRevSound->SetVolumeMultiplier(VolumeIn);
+    if (EgoCrashSound)
+        EgoCrashSound->SetVolumeMultiplier(VolumeIn);
     if (GearShiftSound)
         GearShiftSound->SetVolumeMultiplier(VolumeIn);
     if (TurnSignalSound)
         TurnSignalSound->SetVolumeMultiplier(VolumeIn);
     Super::SetVolume(VolumeIn);
+}
+
+void AEgoVehicle::TickSounds(float DeltaSeconds)
+{
+    // Respect the global vehicle volume param
+    SetVolume(ACarlaWheeledVehicle::Volume);
+
+    if (EgoEngineRevSound)
+    {
+        if (!EgoEngineRevSound->IsPlaying())
+            EgoEngineRevSound->Play(); // turn on the engine sound if not already on
+        float RPM = FMath::Clamp(GetVehicleMovementComponent()->GetEngineRotationSpeed(), 0.f, 5650.0f);
+        EgoEngineRevSound->SetFloatParameter(FName("RPM"), RPM);
+    }
+
+    // add other sounds that need tick-level granularity here...
+}
+
+void AEgoVehicle::ConstructEgoCollisionHandler()
+{
+    // using Carla's GetVehicleBoundingBox function
+    UBoxComponent *Bounds = this->GetVehicleBoundingBox();
+    Bounds->SetGenerateOverlapEvents(true);
+    Bounds->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    Bounds->SetCollisionProfileName(TEXT("DReyeVRTrigger"));
+    Bounds->OnComponentBeginOverlap.AddDynamic(this, &AEgoVehicle::OnEgoOverlapBegin);
+}
+
+void AEgoVehicle::OnEgoOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor,
+                                    UPrimitiveComponent *OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                                    const FHitResult &SweepResult)
+{
+    if (OtherActor == nullptr || OtherActor == this)
+        return;
+
+    // can be more flexible, such as having collisions with static props or people too
+    if (EnableCollisionForActor(OtherActor))
+    {
+        // move the sound 1m in the direction of the collision
+        FVector SoundEmitLocation = 100.f * (this->GetActorLocation() - OtherActor->GetActorLocation()).GetSafeNormal();
+        SoundEmitLocation.Z = 75.f; // Make the sound emitted not at the ground (75cm off ground)
+        if (EgoCrashSound != nullptr)
+        {
+            EgoCrashSound->SetRelativeLocation(SoundEmitLocation);
+            EgoCrashSound->Play(0.f);
+            // have at least 0.5s of buffer between collision audio
+            CollisionCooldownTime = GetWorld()->GetTimeSeconds() + 0.5f;
+        }
+    }
 }
 
 /// ========================================== ///

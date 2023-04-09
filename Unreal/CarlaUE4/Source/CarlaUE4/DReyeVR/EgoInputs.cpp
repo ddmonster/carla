@@ -357,6 +357,18 @@ void AEgoVehicle::ConstructRigidBody()
     LOG("Successfully created EgoVehicle (%s) rigid body", *GetVehicleType());
 }
 
+float AEgoVehicle::GetMaximumSteerAngle() const
+{
+    UWheeledVehicleMovementComponent4W *Vehicle4W = Cast<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+    check(Vehicle4W != nullptr);
+    auto &Wheels = Vehicle4W->Wheels;
+    if (Wheels.Num() > 0 && Wheels[0] != nullptr)
+    {
+        return Wheels[0]->SteerAngle; // front wheel is wheel[0]
+    }
+    return 60.f;
+}
+
 bool AEgoVehicle::IsTwoWheeledVehicle_Implementation()
 {
     return bIs2Wheeled;

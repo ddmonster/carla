@@ -79,6 +79,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const override;
     virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale) override;
     virtual bool IsTwoWheeledVehicle_Implementation() override;
+    virtual float GetMaximumSteerAngle() const override;
 
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
@@ -214,7 +215,18 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class UAudioComponent *GearShiftSound; // nice for toggling reverse
     UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UAudioComponent *TurnSignalSound; // good for turn signals
-    void ConstructEgoSounds();              // needs to be called in the constructor
+    UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    class UAudioComponent *EgoEngineRevSound; // driver feedback on throttle
+    UPROPERTY(Category = "Audio", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    class UAudioComponent *EgoCrashSound; // crashing with another actor
+    void ConstructEgoSounds();            // needs to be called in the constructor
+    virtual void TickSounds(float DeltaSeconds) override;
+
+    // manually overriding these from ACarlaWheeledVehicle
+    void ConstructEgoCollisionHandler(); // needs to be called in the constructor
+    UFUNCTION()
+    void OnEgoOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor, UPrimitiveComponent *OtherComp,
+                           int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
 
   private: // gamemode/level
     void TickGame(float DeltaSeconds);
