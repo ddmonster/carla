@@ -171,7 +171,7 @@ struct ConfigFile
   private:
     bool ReadFile(bool bVerbose)
     {
-        check(FilePath != nullptr);
+        check(!FilePath.IsEmpty());
         if (bVerbose)
         {
             LOG("Reading config from %s", *FilePath);

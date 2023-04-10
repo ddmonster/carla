@@ -77,7 +77,7 @@ public:
 
   // update the DReyeVR ego sensor and custom types
   template <typename T> 
-  void ProcessReplayerDReyeVR(ADReyeVRSensor *EgoSensor, const T &DReyeVRDataInstance, const double Per);
+  void ProcessReplayerDReyeVR(ADReyeVRSensor *EgoSensor, const T &Data, const double Per);
 
   // set the camera position to follow an actor
   bool SetCameraPosition(uint32_t Id, FVector Offset, FQuat Rotation);

@@ -311,47 +311,44 @@ void CarlaReplayer::InitEgoSensor()
 template<>
 void CarlaReplayer::ProcessDReyeVR<DReyeVR::AggregateData>(double Per, double DeltaTime)
 {
-  using T = struct DReyeVRDataRecorder<DReyeVR::AggregateData>;
   uint16_t Total;
   // read number of DReyeVR entries
   ReadValue<uint16_t>(File, Total); // read number of events
   check(Total == 1); // should be only one Agg data
   for (uint16_t i = 0; i < Total; ++i)
   {
-    T Instance;
+    struct DReyeVRDataRecorder<DReyeVR::AggregateData> Instance;
     Instance.Read(File);
-    Helper.ProcessReplayerDReyeVR<T>(EgoSensor, Instance, Per);
+    Helper.ProcessReplayerDReyeVR<DReyeVR::AggregateData>(EgoSensor, Instance.Data, Per);
   }
 }
 
 template<>
 void CarlaReplayer::ProcessDReyeVR<DReyeVR::ConfigFileData>(double Per, double DeltaTime)
 {
-  using T = struct DReyeVRDataRecorder<DReyeVR::ConfigFileData>;
   uint16_t Total;
   // read number of DReyeVR entries
   ReadValue<uint16_t>(File, Total); // read number of events
   check(Total == 1); // should be only one ConfigFile data
   for (uint16_t i = 0; i < Total; ++i)
   {
-    T Instance;
+    struct DReyeVRDataRecorder<DReyeVR::ConfigFileData> Instance;
     Instance.Read(File);
-    Helper.ProcessReplayerDReyeVR<T>(EgoSensor, Instance, Per);
+    Helper.ProcessReplayerDReyeVR<DReyeVR::ConfigFileData>(EgoSensor, Instance.Data, Per);
   }
 }
 
 template<>
 void CarlaReplayer::ProcessDReyeVR<DReyeVR::CustomActorData>(double Per, double DeltaTime)
 {
-  using T = struct DReyeVRDataRecorder<DReyeVR::CustomActorData>;
   uint16_t Total;
   ReadValue<uint16_t>(File, Total); // read number of events
   CustomActorsVisited.clear();
   for (uint16_t i = 0; i < Total; ++i)
   {
-    T Instance;
+    struct DReyeVRDataRecorder<DReyeVR::CustomActorData> Instance;
     Instance.Read(File);
-    Helper.ProcessReplayerDReyeVR<T>(EgoSensor, Instance, Per);
+    Helper.ProcessReplayerDReyeVR<DReyeVR::CustomActorData>(EgoSensor, Instance.Data, Per);
     auto Name = Instance.GetUniqueName();
     CustomActorsVisited.insert(Name); // to track lifetime
   }

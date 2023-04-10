@@ -481,7 +481,7 @@ bool CarlaReplayerHelper::ProcessReplayerFinish(bool bApplyAutopilot, bool bIgno
 }
 
 template <typename T> 
-void CarlaReplayerHelper::ProcessReplayerDReyeVR(ADReyeVRSensor *EgoSensor, const T &DReyeVRDataInstance, const double Per)
+void CarlaReplayerHelper::ProcessReplayerDReyeVR(ADReyeVRSensor *EgoSensor, const T &Data, const double Per)
 {
   if (EgoSensor == nullptr) { // try getting and assigning the new EgoSensor
     EgoSensor = ADReyeVRSensor::GetDReyeVRSensor(Episode->GetWorld());
@@ -490,7 +490,7 @@ void CarlaReplayerHelper::ProcessReplayerDReyeVR(ADReyeVRSensor *EgoSensor, cons
     DReyeVR_LOG_ERROR("No DReyeVR sensor available!");
     return;
   }
-  EgoSensor->UpdateData(DReyeVRDataInstance.Data, Per);
+  EgoSensor->UpdateData(Data, Per);
 }
 
 void CarlaReplayerHelper::SetActorVelocity(FCarlaActor *CarlaActor, FVector Velocity)
