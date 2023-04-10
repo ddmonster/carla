@@ -153,15 +153,23 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
 
 void ADReyeVRGameMode::SetupSpectator()
 {
+    // always disable the Carla spectator from DReyeVR use
+    UCarlaEpisode *Episode = UCarlaStatics::GetCurrentEpisode(GetWorld());
+    APawn *CarlaSpectator = nullptr;
+    if (Episode != nullptr)
+    {
+        CarlaSpectator = Episode->GetSpectatorPawn();
+        if (CarlaSpectator != nullptr)
+            CarlaSpectator->SetActorHiddenInGame(true);
+    }
+
+    // whether or not to use Carla spectator
     if (bUseCarlaSpectator)
-    { // look for existing spectator in world
-        UCarlaEpisode *Episode = UCarlaStatics::GetCurrentEpisode(GetWorld());
-        if (Episode != nullptr)
-            SpectatorPtr = Episode->GetSpectatorPawn();
+    {
+        if (CarlaSpectator != nullptr)
+            SpectatorPtr = CarlaSpectator;
         else if (Player != nullptr)
-        {
             SpectatorPtr = Player->GetPawn();
-        }
     }
 
     // spawn if necessary

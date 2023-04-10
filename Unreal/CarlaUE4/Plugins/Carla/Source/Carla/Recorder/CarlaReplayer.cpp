@@ -34,7 +34,7 @@ void CarlaReplayer::Stop(bool bKeepActors)
     Helper.ProcessReplayerFinish(bKeepActors, IgnoreHero, IsHeroMap);
 
     // turn off DReyeVR replay
-    if (EgoSensor) 
+    if (EgoSensor)
       EgoSensor->StopReplaying();
   }
 

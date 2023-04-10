@@ -559,11 +559,7 @@ void AEgoSensor::TickFoveatedRender()
 /// ----------------:REPLAY:------------------ ///
 /// ========================================== ///
 
-void AEgoSensor::UpdateData(const DReyeVR::AggregateData &RecorderData, const double Per)
-{
-    // call the parent function
-    ADReyeVRSensor::UpdateData(RecorderData, Per);
-}
+// don't need to override the base ADReyeVRSensor::UpdateData<DReyeVR::AggregateData>();
 
 void AEgoSensor::UpdateData(const DReyeVR::ConfigFileData &RecordedParams, const double Per)
 {
