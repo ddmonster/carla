@@ -55,10 +55,8 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
 void AEgoVehicle::ReadConfigVariables()
 {
     // this matches the BP_XYZ (XYZ) part of the blueprint, or "Vehicle" if just an EgoVehicle
-    VehicleType = GetClass()->GetDisplayNameText().ToString();
-    VehicleType.RemoveSpacesInline();
-    VehicleType.ReplaceInline(*FString("Ego"), *FString(""), ESearchCase::CaseSensitive); // all start w/ EgoXYZ
-    VehicleType.ReplaceInline(*FString("BP"), *FString(""), ESearchCase::CaseSensitive);  // might start w/ BPXYZ
+    VehicleType = CleanNameForDReyeVR(GetClass()->GetName());
+    LOG("Initializing EgoVehicle: \"%s\"", *VehicleType);
     if (!VehicleType.Equals("Vehicle", ESearchCase::CaseSensitive))
     {
         auto NewParams = ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), VehicleType + ".ini"));

@@ -17,6 +17,22 @@
 // performing filter("vehicle.*") or filter("sensor.*")
 static const FString DReyeVRCategory("HarpLab");
 
+static FString CleanNameForDReyeVR(const FString &RawName)
+{
+    // should be equivalent to GetClass()->GetDisplayNameText().ToString()
+    // for our purposes (spawning different type EgoVehicles)
+    FString CleanName = RawName;
+    CleanName.RemoveSpacesInline(); // one word
+#define DELETE_INLINE(x) CleanName.ReplaceInline(*FString(x), *FString(""), ESearchCase::CaseSensitive);
+    DELETE_INLINE("BP_");   // might start w/ BP_XYZ
+    DELETE_INLINE("BP");    // might start w/ BPXYZ
+    DELETE_INLINE("_C");    // might end with _C
+    DELETE_INLINE("Ego");   // default object is EgoVehicle
+    DELETE_INLINE("SKEL_"); // skeleton class starts with SKEL_
+
+    return CleanName;
+}
+
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
     // searches through the registers actors (definitions) to find one with the matching class type

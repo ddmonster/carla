@@ -25,7 +25,7 @@
 class ADReyeVRGameMode;
 class ADReyeVRPawn;
 
-UCLASS(Abstract) // technically shouldn't be spawned alone, defaults to the TeslaM3 blueprint
+UCLASS()
 class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
 {
     GENERATED_BODY()
