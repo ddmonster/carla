@@ -98,17 +98,23 @@ void AEgoVehicle::ReleasePrevCameraView()
 
 void AEgoVehicle::NextCameraView()
 {
-    CurrentCameraTransformIdx = (CurrentCameraTransformIdx + 1) % (CameraTransforms.size());
-    LOG("Switching to next camera view: \"%s\"", *CameraTransforms[CurrentCameraTransformIdx].first);
+    if (CameraPoseKeys.Num() == 0)
+        return;
+    CurrentCameraTransformIdx = (CurrentCameraTransformIdx + 1) % (CameraPoseKeys.Num());
+    const FString &Key = CameraPoseKeys[CurrentCameraTransformIdx];
+    LOG("Switching manually to next camera view: \"%s\"", *Key);
     SetCameraRootPose(CurrentCameraTransformIdx);
 }
 
 void AEgoVehicle::PrevCameraView()
 {
+    if (CameraPoseKeys.Num() == 0)
+        return;
     if (CurrentCameraTransformIdx == 0)
-        CurrentCameraTransformIdx = CameraTransforms.size();
+        CurrentCameraTransformIdx = CameraPoseKeys.Num();
     CurrentCameraTransformIdx--;
-    LOG("Switching to prev camera view: \"%s\"", *CameraTransforms[CurrentCameraTransformIdx].first);
+    const FString &Key = CameraPoseKeys[CurrentCameraTransformIdx];
+    LOG("Switching manually to prev camera view: \"%s\"", *Key);
     SetCameraRootPose(CurrentCameraTransformIdx);
 }
 

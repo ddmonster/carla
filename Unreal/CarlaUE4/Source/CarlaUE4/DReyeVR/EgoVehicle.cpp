@@ -207,55 +207,68 @@ void AEgoVehicle::ConstructCameraRoot()
     VRCameraRoot->SetRelativeLocation(FVector::ZeroVector);
     VRCameraRoot->SetRelativeRotation(FRotator::ZeroRotator);
 
-    // taking this names directly from the [CameraPose] params in DReyeVRConfig.ini
-    std::vector<FString> CameraPoses = {
-        "DriversSeat",  // 1st
-        "ThirdPerson",  // 2nd
-        "BirdsEyeView", // 3rd
-        "Front",        // 4th
-    };
-    for (FString &Key : CameraPoses)
+    // add first-person driver's seat
+    CameraTransforms.Add("DriversSeat", VehicleParams.Get<FTransform>("CameraPose", "DriversSeat"));
+
+    // add third-person views
     {
-        FVector Location = VehicleParams.Get<FVector>("CameraPose", Key + "Loc");
-        FRotator Rotation = VehicleParams.Get<FRotator>("CameraPose", Key + "Rot");
-        // converting FString to std::string for hashing
-        FTransform Transform = FTransform(Rotation, Location, FVector::OneVector);
-        CameraTransforms.push_back(std::make_pair(Key, Transform));
+        std::vector<FString> CameraPoses = {
+            "ThirdPerson",  // 2nd
+            "BirdsEyeView", // 3rd
+            "Front",        // 4th
+        };
+        FVector BoundingBox = GeneralParams.Get<FVector>("CameraPose", "BoundingBox");
+        for (FString &Key : CameraPoses)
+        {
+            FTransform Transform = GeneralParams.Get<FTransform>("CameraPose", Key);
+            Transform.SetLocation(Transform.GetLocation() * BoundingBox); // scale by bounding box
+            CameraTransforms.Add(Key, Transform);
+        }
     }
 
+    CameraTransforms.GenerateKeyArray(CameraPoseKeys);
+    ensure(CameraPoseKeys.Num() > 0);
+
     // assign the starting camera root pose to the given starting pose
-    FString StartingPose = VehicleParams.Get<FString>("CameraPose", "StartingPose");
+    FString StartingPose = GeneralParams.Get<FString>("CameraPose", "StartingPose");
     SetCameraRootPose(StartingPose);
 }
 
 void AEgoVehicle::SetCameraRootPose(const FString &CameraPoseName)
 {
+    FTransform NewCameraTransform;
     // given a string (key), index into the map to obtain the FTransform
-    FTransform CameraPoseTransform;
-    bool bFoundMatchingPair = false;
-    for (std::pair<FString, FTransform> &CamPose : CameraTransforms)
+    if (CameraTransforms.Contains(CameraPoseName))
     {
-        if (CamPose.first == CameraPoseName)
-        {
-            CameraPoseTransform = CamPose.second;
-            bFoundMatchingPair = true;
-            break;
-        }
+        NewCameraTransform = CameraTransforms[CameraPoseName];
     }
-    ensure(bFoundMatchingPair == true); // yells at you if CameraPoseName was not found
-    SetCameraRootPose(CameraPoseTransform);
+    else
+    {
+        LOG_WARN("Unable to find camera pose named \"%s\". Defaulting to driver's seat!", *CameraPoseName);
+        NewCameraTransform = CameraTransforms["DriversSeat"];
+    }
+    SetCameraRootPose(NewCameraTransform);
 }
 
 size_t AEgoVehicle::GetNumCameraPoses() const
 {
-    return CameraTransforms.size();
+    return CameraTransforms.Num();
 }
 
 void AEgoVehicle::SetCameraRootPose(size_t CameraPoseIdx)
 {
+    if (CameraPoseKeys.Num() == 0)
+        return;
     // allow setting the camera root by indexing into CameraTransforms array
-    CameraPoseIdx = std::min(CameraPoseIdx, CameraTransforms.size() - 1);
-    SetCameraRootPose(CameraTransforms[CameraPoseIdx].second);
+    CameraPoseIdx = std::min(CameraPoseIdx, static_cast<size_t>(CameraPoseKeys.Num() - 1));
+    const auto &Key = CameraPoseKeys[CameraPoseIdx];
+    const FTransform *NewPose = CameraTransforms.Find(Key);
+    if (NewPose == nullptr)
+    {
+        LOG_ERROR("Unable to find camera pose \"%s\"", *Key);
+        return;
+    }
+    SetCameraRootPose(*NewPose);
 }
 
 void AEgoVehicle::SetCameraRootPose(const FTransform &CameraPoseTransform)
@@ -681,10 +694,13 @@ void AEgoVehicle::ConstructEgoCollisionHandler()
 {
     // using Carla's GetVehicleBoundingBox function
     UBoxComponent *Bounds = this->GetVehicleBoundingBox();
-    Bounds->SetGenerateOverlapEvents(true);
-    Bounds->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    Bounds->SetCollisionProfileName(TEXT("DReyeVRTrigger"));
-    Bounds->OnComponentBeginOverlap.AddDynamic(this, &AEgoVehicle::OnEgoOverlapBegin);
+    if (Bounds != nullptr)
+    {
+        Bounds->SetGenerateOverlapEvents(true);
+        Bounds->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        Bounds->SetCollisionProfileName(TEXT("DReyeVRTrigger"));
+        Bounds->OnComponentBeginOverlap.AddDynamic(this, &AEgoVehicle::OnEgoOverlapBegin);
+    }
 }
 
 void AEgoVehicle::OnEgoOverlapBegin(UPrimitiveComponent *OverlappedComp, AActor *OtherActor,

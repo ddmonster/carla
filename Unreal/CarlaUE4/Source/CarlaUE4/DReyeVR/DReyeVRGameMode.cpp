@@ -495,7 +495,7 @@ void ADReyeVRGameMode::DrawBBoxes()
             FVector BoxExtent;
             A->GetActorBounds(true, Origin, BoxExtent, false);
             // LOG("Origin: %s Extent %s"), *Origin.ToString(), *BoxExtent.ToString());
-            // divide by 100 to get from m to cm, multiply by 2 bc the cube is scaled in both X and Y
+            // divide by 100 to get from cm to m, multiply by 2 bc the cube is scaled in both X and Y
             BBox->SetActorScale3D(2 * BoxExtent / 100.f);
             BBox->SetActorLocation(Origin);
             // extent already covers the rotation aspect since the bbox is dynamic and axis aligned

@@ -107,10 +107,11 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     class USceneComponent *VRCameraRoot;
     UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     class UCameraComponent *FirstPersonCam;
-    void ConstructCameraRoot();                                   // needs to be called in the constructor
-    FTransform CameraPose, CameraPoseOffset;                      // camera pose (location & rotation) and manual offset
-    std::vector<std::pair<FString, FTransform>> CameraTransforms; // collection of named transforms from params
-    size_t CurrentCameraTransformIdx = 0;
+    void ConstructCameraRoot();                 // needs to be called in the constructor
+    FTransform CameraPose, CameraPoseOffset;    // camera pose (location & rotation) and manual offset
+    TMap<FString, FTransform> CameraTransforms; // collection of named transforms from params
+    TArray<FString> CameraPoseKeys;             // to iterate through them
+    size_t CurrentCameraTransformIdx = 0;       // to index in CameraPoseKeys which indexes into CameraTransforms
     bool bCameraFollowHMD = true; // disable this (in params) to replay without following the player's HMD (replay-only)
 
   private: // sensor
