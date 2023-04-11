@@ -61,10 +61,14 @@ void AEgoVehicle::ReadConfigVariables()
     {
         auto NewParams = ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), VehicleType + ".ini"));
         if (NewParams.bIsValid())
-        {
             VehicleParams = NewParams;
-        }
     }
+
+    // if the VehicleParams is invalid, use a default
+    if (!VehicleParams.bIsValid())
+        VehicleParams = ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles/TeslaM3.ini")), false);
+    ensure(VehicleParams.bIsValid());
+
     bIs2Wheeled = VehicleParams.Get<bool>("Metaparams", "Is2Wheeled");
 
     GeneralParams.Get("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);

@@ -9,19 +9,16 @@ const static FString CarlaUE4Path = FPaths::ConvertRelativePathToFull(FPaths::Pr
 
 struct ConfigFile
 {
-    // default empty constructor is the model3 vehicle
-    ConfigFile() : ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles/TeslaM3.ini")), false)
-    {
-        // simple sanity check to ensure exporting and importing the same config file works as intended
-        // (exporting self and creating a new import should be equal to self)
-        static bool bSanityCheck = this->IsEqual(ConfigFile::Import(this->Export()));
-        ensureMsgf(bSanityCheck, TEXT("Sanity check for ConfigFile import/export failed!"));
-    }
-
+    ConfigFile() = default; // empty constructor (no params yet)
     ConfigFile(const FString &Path, bool bVerbose = true) : FilePath(Path)
     {
         /// TODO: add feature to "hot-reload" new params during runtime
         bSuccessfulUpdate = ReadFile(bVerbose); // ensures all the variables are updated upon construction
+
+        // simple sanity check to ensure exporting and importing the same config file works as intended
+        // (exporting self and creating a new import should be equal to self)
+        static bool bSanityCheck = this->IsEqual(ConfigFile::Import(this->Export()));
+        ensureMsgf(bSanityCheck, TEXT("Sanity check for ConfigFile import/export failed!"));
     }
 
     template <typename T> bool Get(const FString &Section, const FString &Variable, T &Value) const
