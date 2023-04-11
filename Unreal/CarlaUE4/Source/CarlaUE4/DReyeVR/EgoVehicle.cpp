@@ -114,6 +114,8 @@ void AEgoVehicle::BeginPlay()
     // get the GameMode script
     SetGame(Cast<ADReyeVRGameMode>(UGameplayStatics::GetGameMode(World)));
 
+    BeginThirdPersonCameraInit();
+
     LOG("Initialized DReyeVR EgoVehicle");
 }
 
@@ -210,18 +212,28 @@ void AEgoVehicle::ConstructCameraRoot()
     // add first-person driver's seat
     CameraTransforms.Add("DriversSeat", VehicleParams.Get<FTransform>("CameraPose", "DriversSeat"));
 
+    SetCameraRootPose("DriversSeat");
+}
+
+void AEgoVehicle::BeginThirdPersonCameraInit()
+{
     // add third-person views
+
+    std::vector<FString> CameraPoses = {
+        "ThirdPerson",  // 2nd
+        "BirdsEyeView", // 3rd
+        "Front",        // 4th
+    };
+    UBoxComponent *Bounds = this->GetVehicleBoundingBox();
+    ensure(Bounds != nullptr);
+    if (Bounds != nullptr)
     {
-        std::vector<FString> CameraPoses = {
-            "ThirdPerson",  // 2nd
-            "BirdsEyeView", // 3rd
-            "Front",        // 4th
-        };
-        FVector BoundingBox = GeneralParams.Get<FVector>("CameraPose", "BoundingBox");
+        const FVector BoundingBoxSize = Bounds->GetScaledBoxExtent();
+        LOG("Calculated EgoVehicle bounding box: %s", *BoundingBoxSize.ToString());
         for (FString &Key : CameraPoses)
         {
             FTransform Transform = GeneralParams.Get<FTransform>("CameraPose", Key);
-            Transform.SetLocation(Transform.GetLocation() * BoundingBox); // scale by bounding box
+            Transform.SetLocation(Transform.GetLocation() * BoundingBoxSize); // scale by bounding box
             CameraTransforms.Add(Key, Transform);
         }
     }

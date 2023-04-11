@@ -73,6 +73,7 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void SetCameraRootPose(const FString &PoseName); // index into named FTransform
     void SetCameraRootPose(size_t PoseIdx);          // index into ordered FTransform
     const FTransform &GetCameraRootPose() const;
+    void BeginThirdPersonCameraInit();
     void NextCameraView();
     void PrevCameraView();
 
