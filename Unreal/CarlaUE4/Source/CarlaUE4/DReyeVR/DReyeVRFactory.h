@@ -30,6 +30,7 @@ class ADReyeVRFactory : public ACarlaActorFactory
     // We expect Config/EgoVehicle/XYZ.ini and Content/DReyeVR/EgoVehicles/XYZ/BP_XYZ.uasset
     const std::vector<std::string> VehicleTypes = {
         "TeslaM3",   // Tesla Model 3 (Default)
+        "Custom",    // all C++ made!
         "Mustang66", // Mustang66
         "Jeep",      // JeepWranglerRubicon
         "Vespa"      // Vespa (2WheeledVehicles)

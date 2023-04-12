@@ -276,85 +276,95 @@ void AEgoVehicle::ConstructRigidBody()
     // is no need for us to re-assign these parameters here.
     const FString BlueprintPath = VehicleParams.Get<FString>("Blueprint", "Path");
     if (!BlueprintPath.IsEmpty())
+    {
+        LOG("Successfully loaded EgoVehicle from \"%s\"", *BlueprintPath);
         return; // already working in the editor with a blueprint
+    }
 
     // https://forums.unrealengine.com/t/cannot-create-vehicle-updatedcomponent-has-not-initialized-its-rigid-body-actor/461662
     /// NOTE: this must be run in the constructors!
 
-    // load skeletal mesh (static mesh)
-    const FString SkeletalMeshPath = VehicleParams.Get<FString>("RigidBody", "SkeletalMesh");
-    ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(*SkeletalMeshPath);
-    USkeletalMesh *SkeletalMesh = CarMesh.Object;
-    if (SkeletalMesh == nullptr)
+    USkeletalMesh *SkeletalMesh = nullptr;
     {
-        LOG_ERROR("Unable to load skeletal mesh! (\"%s\")", *SkeletalMeshPath);
-        return;
+        // load skeletal mesh (static mesh)
+        const FString SkeletalMeshPath = UE4RefToClassPath(VehicleParams.Get<FString>("RigidBody", "SkeletalMesh"));
+        ConstructorHelpers::FObjectFinder<UClass> CarMesh(*SkeletalMeshPath);
+        SkeletalMesh = Cast<USkeletalMesh>(CarMesh.Object);
+        if (SkeletalMesh == nullptr)
+        {
+            LOG_ERROR("Unable to load skeletal mesh! (\"%s\")", *SkeletalMeshPath);
+        }
     }
 
-    // load skeleton (for animations)
-    const FString SkeletonPath = VehicleParams.Get<FString>("RigidBody", "Skeleton");
-    ConstructorHelpers::FObjectFinder<USkeleton> CarSkeleton(*SkeletonPath);
-    USkeleton *Skeleton = CarSkeleton.Object;
-    if (Skeleton == nullptr)
+    USkeleton *Skeleton = nullptr;
     {
-        LOG_ERROR("Unable to load skeleton! (\"%s\")", *SkeletonPath);
-        return;
+        // load skeleton (for animations)
+        const FString SkeletonPath = UE4RefToClassPath(VehicleParams.Get<FString>("RigidBody", "Skeleton"));
+        ConstructorHelpers::FObjectFinder<UClass> CarSkeleton(*SkeletonPath);
+        Skeleton = Cast<USkeleton>(CarSkeleton.Object);
+        if (Skeleton == nullptr)
+        {
+            LOG_ERROR("Unable to load skeleton! (\"%s\")", *SkeletonPath);
+        }
     }
 
-    // load animations bp
-    const FString AnimationPath = VehicleParams.Get<FString>("RigidBody", "AnimationBP");
     UClass *AnimInstanceClass = nullptr;
-    /// NOTE: for some reason the UAnimBlueprint is unable to be loaded in package mode (but it does in Editor)
-    // so in package mode we instead perform a class search
-#if WITH_EDITOR
-    ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarAnimation(*AnimationPath);
-    auto *AnimInstance = CarAnimation.Object;
-    if (AnimInstance == nullptr)
     {
-        LOG_ERROR("Unable to load animation blueprint! (\"%s\")", *AnimationPath);
-        return;
-    }
-    AnimInstanceClass = AnimInstance->GeneratedClass;
-#else
-    // format should be /Game/.../type.type_C (remove prefix, quotes, and add "_C" suffix)
-    const TCHAR *NoneStr = *FString(""); // replace with empty string ("")
-    FString AnimationPathObj = AnimationPath.Replace(*FString("AnimBlueprint"), NoneStr, ESearchCase::CaseSensitive);
-    AnimationPathObj = AnimationPathObj.Replace(*FString("'"), NoneStr, ESearchCase::CaseSensitive);
-    AnimationPathObj += "_C"; // to force class type
-    ConstructorHelpers::FClassFinder<UObject> FoundClass(*AnimationPathObj);
-    if (!FoundClass.Succeeded())
-    {
-        LOG_ERROR("Unable to load Animation!");
-        return;
-    }
-    AnimInstanceClass = FoundClass.Class;
-#endif
-
-    // load physics asset
-    const FString PhysicsAssetPath = VehicleParams.Get<FString>("RigidBody", "PhysicsAsset");
-    ConstructorHelpers::FObjectFinder<UPhysicsAsset> CarPhysics(*PhysicsAssetPath);
-    UPhysicsAsset *PhysicsAsset = CarPhysics.Object;
-    if (PhysicsAsset == nullptr)
-    {
-        LOG_ERROR("Unable to load PhysicsAsset! (\"%s\")", *PhysicsAssetPath);
-        return;
+        // load animations bp
+        const FString AnimationPath = UE4RefToClassPath(VehicleParams.Get<FString>("RigidBody", "AnimationBP"));
+        // format should be /Game/.../type.type_C (remove prefix, quotes, and add "_C" suffix)
+        FString AnimationPathObj = UE4RefToClassPath(AnimationPath);
+        ConstructorHelpers::FClassFinder<UObject> AnimClass(*AnimationPathObj);
+        if (AnimClass.Succeeded())
+        {
+            AnimInstanceClass = AnimClass.Class;
+        }
+        else
+        {
+            LOG_ERROR("Unable to load Animation!");
+        }
     }
 
-    // contrary to https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/USkeletalMesh/SetSkeleton/
-    SkeletalMesh->Skeleton = Skeleton;
-    SkeletalMesh->PhysicsAsset = PhysicsAsset;
+    UPhysicsAsset *PhysicsAsset = nullptr;
+    {
+        // load physics asset
+        const FString PhysicsAssetPath = UE4RefToClassPath(VehicleParams.Get<FString>("RigidBody", "PhysicsAsset"));
+        ConstructorHelpers::FObjectFinder<UClass> CarPhysics(*PhysicsAssetPath);
+        PhysicsAsset = Cast<UPhysicsAsset>(CarPhysics.Object);
+        if (PhysicsAsset == nullptr)
+        {
+            LOG_ERROR("Unable to load PhysicsAsset! (\"%s\")", *PhysicsAssetPath);
+        }
+    }
+
+    if (SkeletalMesh)
+    {
+        // contrary to https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Engine/USkeletalMesh/SetSkeleton/
+        SkeletalMesh->Skeleton = Skeleton ? Skeleton : SkeletalMesh->Skeleton;
+        SkeletalMesh->PhysicsAsset = PhysicsAsset ? PhysicsAsset : SkeletalMesh->PhysicsAsset;
+    }
 
     USkeletalMeshComponent *Mesh = GetMesh();
-    check(Mesh != nullptr);
-    Mesh->SetSkeletalMesh(SkeletalMesh, true);
-    Mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-    Mesh->SetAnimInstanceClass(AnimInstanceClass);
-    Mesh->SetPhysicsAsset(PhysicsAsset);
-    Mesh->RecreatePhysicsState();
-    this->GetVehicleMovementComponent()->RecreatePhysicsState();
+    ensure(Mesh != nullptr);
+    if (Mesh)
+    {
+        if (SkeletalMesh)
+            Mesh->SetSkeletalMesh(SkeletalMesh, true);
+        if (AnimInstanceClass)
+        {
+            Mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+            Mesh->SetAnimInstanceClass(AnimInstanceClass);
+        }
+        if (PhysicsAsset)
+        {
+            Mesh->SetPhysicsAsset(PhysicsAsset);
+            Mesh->RecreatePhysicsState();
+            this->GetVehicleMovementComponent()->RecreatePhysicsState();
 
-    // sanity checks
-    ensure(Mesh->GetPhysicsAsset() != nullptr);
+            // sanity checks
+            ensure(Mesh->GetPhysicsAsset() != nullptr);
+        }
+    }
 
     SetupWheels();
 

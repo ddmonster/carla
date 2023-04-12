@@ -17,6 +17,20 @@
 // performing filter("vehicle.*") or filter("sensor.*")
 static const FString DReyeVRCategory("HarpLab");
 
+static FString UE4RefToClassPath(const FString &UE4ReferencePath)
+{
+    // converts (reference) strings of the type "Type'/Game/PATH/asset.asset'" to "/Game/PATH/asset.asset_C"
+    // for use in ConstructorHelpers::FClassFinder<UObject>
+    const FString NoneStr = FString(""); // replace with empty string ("")
+    const FString SingleQuoteStr = FString("'");
+    // find the start position in the string (ignore the type (Blueprint, SkeletalMesh, Skeleton, AnimBP, etc.))
+    const int StartPos = UE4ReferencePath.Find(SingleQuoteStr, ESearchCase::CaseSensitive, ESearchDir::FromStart, 0);
+    FString Ret = UE4ReferencePath.RightChop(StartPos);
+    Ret.ReplaceInline(*SingleQuoteStr, *NoneStr, ESearchCase::CaseSensitive);
+    Ret += "_C"; // to force class type suffix
+    return Ret;
+}
+
 static FString CleanNameForDReyeVR(const FString &RawName)
 {
     // should be equivalent to GetClass()->GetDisplayNameText().ToString()
