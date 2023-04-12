@@ -28,6 +28,13 @@ struct ConfigFile
         return GetValue(SectionStdStr, VariableStdStr, Value);
     }
 
+    bool HasKey(const FString &Section, const FString &Variable) const
+    {
+        const std::string SectionStdStr(TCHAR_TO_UTF8(*Section));
+        const std::string VariableStdStr(TCHAR_TO_UTF8(*Variable));
+        return _HasKey(SectionStdStr, VariableStdStr);
+    }
+
     template <typename T> T Get(const FString &Section, const FString &Variable) const
     {
         T Value;
@@ -320,6 +327,19 @@ struct ConfigFile
         // enable this for debug purposes
         // LOG("Read [%s]\"%s\" -> %s", *FString(SectionName.c_str()), *FString(VariableName.c_str()), *Out.DataStr);
         return true; // found successfully!
+    }
+
+    bool _HasKey(const std::string &SectionName, const std::string &VariableName) const
+    {
+        auto SectionIt = Sections.find(SectionName);
+        if (SectionIt == Sections.end())
+            return false; // no section
+        const IniSection &Section = SectionIt->second;
+        auto EntryIt = Section.Entries.find(VariableName);
+        if (EntryIt == Section.Entries.end())
+            return false; // no entry in section
+        LOG("FOUND KEY: %s: %s", *FString(SectionName.c_str()), *FString(VariableName.c_str()));
+        return true;
     }
 
   private:

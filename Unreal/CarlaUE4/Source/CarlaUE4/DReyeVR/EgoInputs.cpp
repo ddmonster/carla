@@ -277,7 +277,7 @@ void AEgoVehicle::ConstructRigidBody()
     const FString BlueprintPath = VehicleParams.Get<FString>("Blueprint", "Path");
     if (!BlueprintPath.IsEmpty())
     {
-        LOG("Successfully loaded EgoVehicle from \"%s\"", *BlueprintPath);
+        LOG("Successfully loaded EgoVehicle BP from \"%s\"", *BlueprintPath);
         return; // already working in the editor with a blueprint
     }
 

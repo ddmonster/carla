@@ -531,22 +531,21 @@ void AEgoVehicle::ConstructMirrors()
     class USkeletalMeshComponent *VehicleMesh = GetMesh();
     /// Rear mirror
     {
-        FString RearSM_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRear");
         RearMirrorSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorSM");
-        if (!RearSM_Str.IsEmpty())
         {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
-            RearMirrorSM->SetStaticMesh(RearSM.Object);
+            UStaticMesh *LoadedObj = FindObject<UStaticMesh>("Mirrors", "MirrorRear");
+            if (LoadedObj)
+                RearMirrorSM->SetStaticMesh(LoadedObj);
         }
+
         RearReflection = CreateEgoObject<UPlanarReflectionComponent>(RearMirrorParams.Name + "Refl");
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
-        FString RearSMChassis_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRearHolder");
         RearMirrorChassisSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorChassisSM");
-        if (!RearSMChassis_Str.IsEmpty())
         {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
-            RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
+            UStaticMesh *LoadedObj = FindObject<UStaticMesh>("Mirrors", "MirrorRearHolder");
+            if (LoadedObj)
+                RearMirrorChassisSM->SetStaticMesh(LoadedObj);
         }
         RearMirrorChassisSM->SetupAttachment(VehicleMesh);
         RearMirrorChassisSM->SetRelativeLocation(RearMirrorChassisTransform.GetLocation());
@@ -562,11 +561,7 @@ void AEgoVehicle::ConstructMirrors()
     {
         FString MirrorLeft_Str = VehicleParams.Get<FString>("Mirrors", "MirrorLeft");
         LeftMirrorSM = CreateEgoObject<UStaticMeshComponent>(LeftMirrorParams.Name + "MirrorSM");
-        if (!MirrorLeft_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
-            LeftMirrorSM->SetStaticMesh(LeftSM.Object);
-        }
+        SetSMPath("Mirrors", "MirrorLeft", LeftMirrorSM);
         LeftReflection = CreateEgoObject<UPlanarReflectionComponent>(LeftMirrorParams.Name + "Refl");
         LeftMirrorParams.Initialize(LeftMirrorSM, LeftReflection, VehicleMesh);
     }
@@ -574,11 +569,7 @@ void AEgoVehicle::ConstructMirrors()
     {
         FString MirrorRight_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRight");
         RightMirrorSM = CreateEgoObject<UStaticMeshComponent>(RightMirrorParams.Name + "MirrorSM");
-        if (!MirrorRight_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
-            RightMirrorSM->SetStaticMesh(RightSM.Object);
-        }
+        SetSMPath("Mirrors", "MirrorRight", RightMirrorSM);
         RightReflection = CreateEgoObject<UPlanarReflectionComponent>(RightMirrorParams.Name + "Refl");
         RightMirrorParams.Initialize(RightMirrorSM, RightReflection, VehicleMesh);
     }

@@ -15,7 +15,8 @@ ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : 
         ConfigFile VehicleParams(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles"), Name + ".ini"));
         FString BP_Path;
         // make sure we can load the BP path and its nonempty (else construct a C++ EgoVehicle class)
-        if (VehicleParams.bIsValid() && VehicleParams.Get<FString>("Blueprint", "Path", BP_Path) && !BP_Path.IsEmpty())
+        if (VehicleParams.bIsValid() && VehicleParams.HasKey("Blueprint", "Path") &&
+            VehicleParams.Get<FString>("Blueprint", "Path", BP_Path) && !BP_Path.IsEmpty())
         {
             ConstructorHelpers::FObjectFinder<UClass> BlueprintObject(*UE4RefToClassPath(BP_Path));
             BP_Classes.Add(Name, BlueprintObject.Object);

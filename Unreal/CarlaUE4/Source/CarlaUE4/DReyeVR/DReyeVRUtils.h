@@ -47,6 +47,23 @@ static FString CleanNameForDReyeVR(const FString &RawName)
     return CleanName;
 }
 
+template <typename T> T *FindObject(const FString &Section, const FString &Variable)
+{
+    if (Out != nullptr && VehicleParams.HasKey(Section, Variable))
+    {
+        const FString SM_Str = VehicleParams.Get<FString>(Section, Variable);
+        if (!SM_Str.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<T> Out(*SM_Str);
+            if (Out.Succeeded())
+            {
+                return Out.Object;
+            }
+        }
+    }
+    return nullptr;
+}
+
 static FActorDefinition FindDefnInRegistry(const UCarlaEpisode *Episode, const UClass *ClassType)
 {
     // searches through the registers actors (definitions) to find one with the matching class type
