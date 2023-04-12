@@ -563,6 +563,24 @@ void AEgoVehicle::ConstructMirrors()
 /// ----------------:SOUNDS:------------------ ///
 /// ========================================== ///
 
+template <typename T> bool FindSound(const FString &Section, const FString &Variable, UAudioComponent *Out)
+{
+    if (Out != nullptr) // TODO: check that the key is present
+    {
+        const FString PathStr = GeneralParams.Get<FString>(Section, Variable);
+        if (!PathStr.IsEmpty())
+        {
+            ConstructorHelpers::FObjectFinder<T> FoundSound(*PathStr);
+            if (FoundSound.Succeeded())
+            {
+                Out->SetSound(FoundSound.Object);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void AEgoVehicle::ConstructEgoSounds()
 {
     // shouldn't override this method in ACarlaWHeeledVehicle because it will be
@@ -571,16 +589,15 @@ void AEgoVehicle::ConstructEgoSounds()
 
     // Initialize ego-centric audio components
     {
-        if (EngineRevSound != nullptr) // EgoVehicle sounds conflict with parent
+        if (EngineRevSound != nullptr)
         {
             EngineRevSound->DestroyComponent(); // from the parent class (default sound)
             EngineRevSound = nullptr;
         }
-
         EgoEngineRevSound = CreateEgoObject<UAudioComponent>("EgoEngineRevSound");
+        FindSound<USoundCue>("Sound", "DefaultEngineRev", EgoEngineRevSound);
         EgoEngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
         EgoEngineRevSound->bAutoActivate = true;                // start playing on begin
-
         EngineLocnInVehicle = VehicleParams.Get<FVector>("Sounds", "EngineLocn");
         EgoEngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
         EgoEngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
@@ -589,12 +606,13 @@ void AEgoVehicle::ConstructEgoSounds()
     }
 
     {
-        if (CrashSound != nullptr) // EgoVehicle sounds conflict with parent
+        if (CrashSound != nullptr)
         {
             CrashSound->DestroyComponent(); // from the parent class (default sound)
             CrashSound = nullptr;
         }
         EgoCrashSound = CreateEgoObject<UAudioComponent>("EgoCarCrash");
+        FindSound<USoundCue>("Sound", "DefaultCrashSound", EgoCrashSound);
         EgoCrashSound->SetupAttachment(GetRootComponent());
         EgoCrashSound->bAutoActivate = false;
         EgoCrashSound->bAutoDestroy = false;
@@ -603,6 +621,7 @@ void AEgoVehicle::ConstructEgoSounds()
 
     {
         GearShiftSound = CreateEgoObject<UAudioComponent>("GearShift");
+        FindSound<USoundWave>("Sound", "DefaultGearShiftSound", GearShiftSound);
         GearShiftSound->SetupAttachment(GetRootComponent());
         GearShiftSound->bAutoActivate = false;
         check(GearShiftSound != nullptr);
@@ -610,6 +629,7 @@ void AEgoVehicle::ConstructEgoSounds()
 
     {
         TurnSignalSound = CreateEgoObject<UAudioComponent>("TurnSignal");
+        FindSound<USoundWave>("Sound", "DefaultTurnSignalSound", TurnSignalSound);
         TurnSignalSound->SetupAttachment(GetRootComponent());
         TurnSignalSound->bAutoActivate = false;
         check(TurnSignalSound != nullptr);

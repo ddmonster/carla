@@ -23,7 +23,6 @@ ADReyeVRFactory::ADReyeVRFactory(const FObjectInitializer &ObjectInitializer) : 
         else
         {
             LOG_WARN("Unable to load custom EgoVehicle \"%s\"", *Name);
-            BP_Classes.Add(Name, AEgoVehicle::StaticClass());
         }
     }
 }

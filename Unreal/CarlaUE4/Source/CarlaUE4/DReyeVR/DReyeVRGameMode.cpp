@@ -54,9 +54,9 @@ ADReyeVRGameMode::ADReyeVRGameMode(FObjectInitializer const &FO) : Super(FO)
 
     // read config variables
     bDoSpawnEgoVehicle = GeneralParams.Get<bool>("Game", "AutomaticallySpawnEgo");
-    EgoVolumePercent = GeneralParams.Get<float>("Game", "EgoVolumePercent");
-    NonEgoVolumePercent = GeneralParams.Get<float>("Game", "NonEgoVolumePercent");
-    AmbientVolumePercent = GeneralParams.Get<float>("Game", "AmbientVolumePercent");
+    EgoVolumePercent = GeneralParams.Get<float>("Sound", "EgoVolumePercent");
+    NonEgoVolumePercent = GeneralParams.Get<float>("Sound", "NonEgoVolumePercent");
+    AmbientVolumePercent = GeneralParams.Get<float>("Sound", "AmbientVolumePercent");
     bDoSpawnEgoVehicleTransform = GeneralParams.Get<bool>("Game", "DoSpawnEgoVehicleTransform");
     SpawnEgoVehicleTransform = GeneralParams.Get<FTransform>("Game", "SpawnEgoVehicleTransform");
 
