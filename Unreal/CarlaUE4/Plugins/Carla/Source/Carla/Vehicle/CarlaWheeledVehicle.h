@@ -125,7 +125,7 @@ public:
 
   /// Get the maximum angle at which the front wheel can steer.
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
-  virtual float GetMaximumSteerAngle() const;
+  float GetMaximumSteerAngle() const;
 
   /// @}
   // ===========================================================================
@@ -147,7 +147,7 @@ public:
   }
 
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
-  virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const;
+  FVehiclePhysicsControl GetVehiclePhysicsControl() const;
 
   UFUNCTION(Category = "CARLA Wheeled Vehicle", BlueprintCallable)
   void RestoreVehiclePhysicsControl();
@@ -166,7 +166,7 @@ public:
 
   UFUNCTION(BlueprintNativeEvent)
   bool IsTwoWheeledVehicle();
-  virtual bool IsTwoWheeledVehicle_Implementation() {
+  bool IsTwoWheeledVehicle_Implementation() {
     return false;
   }
 
@@ -241,7 +241,7 @@ public:
 
   TArray<float> GetWheelsFrictionScale();
 
-  virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale);
+  void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale);
 
   void SetCarlaMovementComponent(UBaseCarlaMovementComponent* MoementComponent);
 

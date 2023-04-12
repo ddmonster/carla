@@ -31,9 +31,6 @@ AEgoVehicle::AEgoVehicle(const FObjectInitializer &ObjectInitializer) : Super(Ob
     // Set up the root position to be the this mesh
     SetRootComponent(GetMesh());
 
-    // Initialize the rigid body static mesh
-    ConstructRigidBody();
-
     // Initialize the camera components
     ConstructCameraRoot();
 
@@ -68,8 +65,6 @@ void AEgoVehicle::ReadConfigVariables()
     if (!VehicleParams.bIsValid())
         VehicleParams = ConfigFile(FPaths::Combine(CarlaUE4Path, TEXT("Config/EgoVehicles/TeslaM3.ini")), false);
     ensure(VehicleParams.bIsValid());
-
-    bIs2Wheeled = VehicleParams.Get<bool>("Metaparams", "Is2Wheeled");
 
     GeneralParams.Get("EgoVehicle", "EnableTurnSignalAction", bEnableTurnSignalAction);
     GeneralParams.Get("EgoVehicle", "TurnSignalDuration", TurnSignalDuration);
@@ -531,23 +526,15 @@ void AEgoVehicle::ConstructMirrors()
     class USkeletalMeshComponent *VehicleMesh = GetMesh();
     /// Rear mirror
     {
-        FString RearSM_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRear");
+        // the rear mirror is interesting bc we have 3 components: the mirror (specular), the mirror chassis
+        // (what holds the mirror, typically lambertian), and the planar reflection (invisible but "reflection")
+        // other mirrors currently only use the mirror and planar reflection, as we didn't cut out the chassis for them
         RearMirrorSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorSM");
-        if (!RearSM_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RearSM(*RearSM_Str);
-            RearMirrorSM->SetStaticMesh(RearSM.Object);
-        }
         RearReflection = CreateEgoObject<UPlanarReflectionComponent>(RearMirrorParams.Name + "Refl");
+        RearMirrorChassisSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorChassisSM");
+
         RearMirrorParams.Initialize(RearMirrorSM, RearReflection, VehicleMesh);
         // also add the chassis for this mirror
-        FString RearSMChassis_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRearHolder");
-        RearMirrorChassisSM = CreateEgoObject<UStaticMeshComponent>(RearMirrorParams.Name + "MirrorChassisSM");
-        if (!RearSMChassis_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RearChassisSM(*RearSMChassis_Str);
-            RearMirrorChassisSM->SetStaticMesh(RearChassisSM.Object);
-        }
         RearMirrorChassisSM->SetupAttachment(VehicleMesh);
         RearMirrorChassisSM->SetRelativeLocation(RearMirrorChassisTransform.GetLocation());
         RearMirrorChassisSM->SetRelativeRotation(RearMirrorChassisTransform.Rotator());
@@ -560,25 +547,13 @@ void AEgoVehicle::ConstructMirrors()
     }
     /// Left mirror
     {
-        FString MirrorLeft_Str = VehicleParams.Get<FString>("Mirrors", "MirrorLeft");
         LeftMirrorSM = CreateEgoObject<UStaticMeshComponent>(LeftMirrorParams.Name + "MirrorSM");
-        if (!MirrorLeft_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> LeftSM(*MirrorLeft_Str);
-            LeftMirrorSM->SetStaticMesh(LeftSM.Object);
-        }
         LeftReflection = CreateEgoObject<UPlanarReflectionComponent>(LeftMirrorParams.Name + "Refl");
         LeftMirrorParams.Initialize(LeftMirrorSM, LeftReflection, VehicleMesh);
     }
     /// Right mirror
     {
-        FString MirrorRight_Str = VehicleParams.Get<FString>("Mirrors", "MirrorRight");
         RightMirrorSM = CreateEgoObject<UStaticMeshComponent>(RightMirrorParams.Name + "MirrorSM");
-        if (!MirrorRight_Str.IsEmpty())
-        {
-            ConstructorHelpers::FObjectFinder<UStaticMesh> RightSM(*MirrorRight_Str);
-            RightMirrorSM->SetStaticMesh(RightSM.Object);
-        }
         RightReflection = CreateEgoObject<UPlanarReflectionComponent>(RightMirrorParams.Name + "Refl");
         RightMirrorParams.Initialize(RightMirrorSM, RightReflection, VehicleMesh);
     }
@@ -596,70 +571,48 @@ void AEgoVehicle::ConstructEgoSounds()
 
     // Initialize ego-centric audio components
     {
-        if (EngineRevSound != nullptr)
+        if (EngineRevSound != nullptr) // EgoVehicle sounds conflict with parent
         {
             EngineRevSound->DestroyComponent(); // from the parent class (default sound)
             EngineRevSound = nullptr;
         }
-        FString EngineRev_Str = VehicleParams.Get<FString>("Sounds", "EngineRev");
-        ConstructorHelpers::FObjectFinder<USoundCue> EngineCueObj(*EngineRev_Str);
-        if (EngineCueObj.Succeeded())
-        {
-            EgoEngineRevSound = CreateEgoObject<UAudioComponent>("EgoEngineRevSound");
-            EgoEngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
-            EgoEngineRevSound->bAutoActivate = true;                // start playing on begin
-            EgoEngineRevSound->SetSound(EngineCueObj.Object);       // using this sound
-            EngineLocnInVehicle = VehicleParams.Get<FVector>("Sounds", "EngineLocn");
-            EgoEngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
-            EgoEngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
-            EgoEngineRevSound->bAutoDestroy = false; // No automatic destroy, persist along with vehicle
-            check(EgoEngineRevSound != nullptr);
-        }
+
+        EgoEngineRevSound = CreateEgoObject<UAudioComponent>("EgoEngineRevSound");
+        EgoEngineRevSound->SetupAttachment(GetRootComponent()); // attach to self
+        EgoEngineRevSound->bAutoActivate = true;                // start playing on begin
+
+        EngineLocnInVehicle = VehicleParams.Get<FVector>("Sounds", "EngineLocn");
+        EgoEngineRevSound->SetRelativeLocation(EngineLocnInVehicle); // location of "engine" in vehicle (3D sound)
+        EgoEngineRevSound->SetFloatParameter(FName("RPM"), 0.f);     // initially idle
+        EgoEngineRevSound->bAutoDestroy = false;                     // No automatic destroy, persist along with vehicle
+        check(EgoEngineRevSound != nullptr);
     }
 
     {
-        if (CrashSound != nullptr)
+        if (CrashSound != nullptr) // EgoVehicle sounds conflict with parent
         {
             CrashSound->DestroyComponent(); // from the parent class (default sound)
             CrashSound = nullptr;
         }
-        FString CrashSound_Str = VehicleParams.Get<FString>("Sounds", "Crash");
-        ConstructorHelpers::FObjectFinder<USoundCue> CarCrashCue(*CrashSound_Str);
-        if (CarCrashCue.Succeeded())
-        {
-            EgoCrashSound = CreateEgoObject<UAudioComponent>("EgoCarCrash");
-            EgoCrashSound->SetupAttachment(GetRootComponent());
-            EgoCrashSound->bAutoActivate = false;
-            EgoCrashSound->SetSound(CarCrashCue.Object);
-            EgoCrashSound->bAutoDestroy = false;
-            check(EgoCrashSound != nullptr);
-        }
+        EgoCrashSound = CreateEgoObject<UAudioComponent>("EgoCarCrash");
+        EgoCrashSound->SetupAttachment(GetRootComponent());
+        EgoCrashSound->bAutoActivate = false;
+        EgoCrashSound->bAutoDestroy = false;
+        check(EgoCrashSound != nullptr);
     }
 
     {
-        FString GearShift_Str = VehicleParams.Get<FString>("Sounds", "GearShift");
-        ConstructorHelpers::FObjectFinder<USoundWave> GearSound(*GearShift_Str);
-        if (GearSound.Succeeded())
-        {
-            GearShiftSound = CreateEgoObject<UAudioComponent>("GearShift");
-            GearShiftSound->SetupAttachment(GetRootComponent());
-            GearShiftSound->bAutoActivate = false;
-            GearShiftSound->SetSound(GearSound.Object);
-            check(GearShiftSound != nullptr);
-        }
+        GearShiftSound = CreateEgoObject<UAudioComponent>("GearShift");
+        GearShiftSound->SetupAttachment(GetRootComponent());
+        GearShiftSound->bAutoActivate = false;
+        check(GearShiftSound != nullptr);
     }
 
     {
-        FString TurnSignal_Str = VehicleParams.Get<FString>("Sounds", "TurnSignal");
-        ConstructorHelpers::FObjectFinder<USoundWave> TurnSignalSoundWave(*TurnSignal_Str);
-        if (TurnSignalSoundWave.Succeeded())
-        {
-            TurnSignalSound = CreateEgoObject<UAudioComponent>("TurnSignal");
-            TurnSignalSound->SetupAttachment(GetRootComponent());
-            TurnSignalSound->bAutoActivate = false;
-            TurnSignalSound->SetSound(TurnSignalSoundWave.Object);
-            check(TurnSignalSound != nullptr);
-        }
+        TurnSignalSound = CreateEgoObject<UAudioComponent>("TurnSignal");
+        TurnSignalSound->SetupAttachment(GetRootComponent());
+        TurnSignalSound->bAutoActivate = false;
+        check(TurnSignalSound != nullptr);
     }
 
     ConstructEgoCollisionHandler();
@@ -867,13 +820,7 @@ void AEgoVehicle::UpdateDash()
 void AEgoVehicle::ConstructSteeringWheel()
 {
     const bool bEnableSteeringWheel = VehicleParams.Get<bool>("SteeringWheel", "Enabled");
-    FString SteeringWheel_Str = VehicleParams.Get<FString>("SteeringWheel", "StaticMesh");
     SteeringWheel = CreateEgoObject<UStaticMeshComponent>("SteeringWheel");
-    if (!SteeringWheel_Str.IsEmpty())
-    {
-        ConstructorHelpers::FObjectFinder<UStaticMesh> SteeringWheelSM(*SteeringWheel_Str);
-        SteeringWheel->SetStaticMesh(SteeringWheelSM.Object);
-    }
     SteeringWheel->SetupAttachment(GetRootComponent()); // The vehicle blueprint itself
     SteeringWheel->SetRelativeLocation(VehicleParams.Get<FVector>("SteeringWheel", "InitLocation"));
     SteeringWheel->SetRelativeRotation(VehicleParams.Get<FRotator>("SteeringWheel", "InitRotation"));

@@ -77,11 +77,6 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     void NextCameraView();
     void PrevCameraView();
 
-    virtual FVehiclePhysicsControl GetVehiclePhysicsControl() const override;
-    virtual void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale) override;
-    virtual bool IsTwoWheeledVehicle_Implementation() override;
-    virtual float GetMaximumSteerAngle() const override;
-
   protected:
     // Called when the game starts (spawned) or ends (destroyed)
     virtual void BeginPlay() override;
@@ -94,13 +89,8 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     // World variables
     class UWorld *World;
 
-  private: // static
-    bool bIs2Wheeled = false;
-    void ConstructRigidBody();
-    void SetupEngine();
-    void SetupWheels();
+  private:
     template <typename T> T *CreateEgoObject(const FString &Name, const FString &Suffix = "");
-
     FString VehicleType; // initially empty (set in GetVehicleType())
 
   private: // camera
