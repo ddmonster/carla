@@ -360,7 +360,7 @@ void AEgoVehicle::InitAIPlayer()
     ensure(PlayerController != nullptr);
     AI_Player = Cast<AWheeledVehicleAIController>(PlayerController);
     check(AI_Player != nullptr);
-    // AI_Player->SetActorTickEnabled(false);
+    SetAutopilot(false); // initially no autopilot enabled
 }
 
 void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
@@ -370,7 +370,7 @@ void AEgoVehicle::SetAutopilot(const bool AutopilotOn)
     bAutopilotEnabled = AutopilotOn;
     AI_Player->SetAutopilot(bAutopilotEnabled);
     AI_Player->SetStickyControl(bAutopilotEnabled);
-    AI_Player->SetActorTickEnabled(bAutopilotEnabled); // only tick when active
+    // AI_Player->SetActorTickEnabled(bAutopilotEnabled); // want the controller to always tick!
 }
 
 bool AEgoVehicle::GetAutopilotStatus() const

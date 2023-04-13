@@ -254,11 +254,18 @@ void AEgoVehicle::ReleaseTurnSignalL()
 
 void AEgoVehicle::TickVehicleInputs()
 {
-    SetSteeringInput(VehicleInputs.Steering);
-    SetBrakeInput(VehicleInputs.Brake);
-    SetThrottleInput(VehicleInputs.Throttle);
+    FVehicleControl LastAppliedControl = GetVehicleControl();
 
+    int bIncludeLast = static_cast<int>(GetAutopilotStatus());
+    FVehicleControl ManualInputs;
+    // only include LastAppliedControl when autopilot is running (bc it would have flushed earlier this tick)
+    ManualInputs.Steer = VehicleInputs.Steering + bIncludeLast * LastAppliedControl.Steer;
+    ManualInputs.Brake = VehicleInputs.Brake + bIncludeLast * LastAppliedControl.Brake;
+    ManualInputs.Throttle = VehicleInputs.Throttle + bIncludeLast * LastAppliedControl.Throttle;
+    ManualInputs.bReverse = bReverse;
+    this->ApplyVehicleControl(ManualInputs, EVehicleInputPriority::User);
     // send these inputs to the Carla (parent) vehicle
     FlushVehicleControl();
+
     VehicleInputs = DReyeVR::UserInputs(); // clear inputs for this frame
 }
