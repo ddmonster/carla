@@ -247,14 +247,13 @@ class CARLAUE4_API AEgoVehicle : public ACarlaWheeledVehicle
     float MaxSteerVelocity;
     float SteeringAnimScale;
     // wheel face buttons
-    bool bEnableWheelFaceButtons = false;
     void InitWheelButtons();
     void UpdateWheelButton(ADReyeVRCustomActor *Button, bool bEnabled);
     class ADReyeVRCustomActor *Button_ABXY_A, *Button_ABXY_B, *Button_ABXY_X, *Button_ABXY_Y;
     class ADReyeVRCustomActor *Button_DPad_Up, *Button_DPad_Down, *Button_DPad_Left, *Button_DPad_Right;
     bool bInitializedButtons = false;
     const FLinearColor ButtonNeutralCol = 0.2f * FLinearColor::White;
-    const FLinearColor ButtonPressedCol = 0.9f * FLinearColor::White;
+    const FLinearColor ButtonPressedCol = 1.5f * FLinearColor::White;
 
   private: // other
     void DebugLines() const;

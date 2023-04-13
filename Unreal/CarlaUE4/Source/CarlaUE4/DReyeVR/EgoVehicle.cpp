@@ -86,7 +86,6 @@ void AEgoVehicle::ReadConfigVariables()
     VehicleParams.Get("SteeringWheel", "SteeringScale", SteeringAnimScale);
     // other/cosmetic
     GeneralParams.Get("EgoVehicle", "DrawDebugEditor", bDrawDebugEditor);
-    GeneralParams.Get("EgoVehicle", "EnableWheelButtons", bEnableWheelFaceButtons);
     // inputs
     GeneralParams.Get("VehicleInputs", "ScaleSteeringDamping", ScaleSteeringInput);
     GeneralParams.Get("VehicleInputs", "ScaleThrottleInput", ScaleThrottleInput);
@@ -851,6 +850,7 @@ void AEgoVehicle::ConstructSteeringWheel()
 
 void AEgoVehicle::InitWheelButtons()
 {
+    bool bEnableWheelFaceButtons = GeneralParams.Get<bool>("WheelButtons", "EnableWheelButtons");
     if (SteeringWheel == nullptr || World == nullptr || bEnableWheelFaceButtons == false)
         return;
     // left buttons (dpad)
@@ -868,10 +868,13 @@ void AEgoVehicle::InitWheelButtons()
     const FRotator PointRight(0.f, 0.f, 90.f);
     const FRotator PointUp(0.f, 0.f, 0.f);
     const FRotator PointDown(0.f, 0.f, 180.f);
-    const FVector LeftCenter(-7.f, -10.f, 4.f); // where the center of the left 4 buttons is
-    const FVector RightCenter(-7.f, 10.f, 4.f); // where the center of the right 4 buttons is
 
-    const float ButtonDist = 2.f; // increase to separate the buttons more
+    const FVector LeftCenter = GeneralParams.Get<FVector>("WheelButtons", "ABXYLocation");
+    const FVector RightCenter = GeneralParams.Get<FVector>("WheelButtons", "DpadLocation");
+
+    // increase to separate the buttons more
+    const float ButtonDist = GeneralParams.Get<float>("WheelButtons", "QuadButtonSpread");
+
     Button_DPad_Up->SetActorLocation(LeftCenter + ButtonDist * FVector::UpVector);
     Button_DPad_Up->SetActorRotation(PointUp);
     Button_DPad_Right->SetActorLocation(LeftCenter + ButtonDist * FVector::RightVector);
