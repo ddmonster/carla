@@ -166,7 +166,7 @@ public:
 
   UFUNCTION(BlueprintNativeEvent)
   bool IsTwoWheeledVehicle();
-  bool IsTwoWheeledVehicle_Implementation() {
+  virtual bool IsTwoWheeledVehicle_Implementation() {
     return false;
   }
 

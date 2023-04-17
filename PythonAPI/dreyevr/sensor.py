@@ -1,70 +1,7 @@
 import numpy as np
-from typing import Any, Dict, List, Optional
-
-import sys
-import glob
-import os
-
-try:
-    sys.path.append(
-        glob.glob(
-            "../carla/dist/carla-*%d.%d-%s.egg"
-            % (
-                sys.version_info.major,
-                sys.version_info.minor,
-                "win-amd64" if os.name == "nt" else "linux-x86_64",
-            )
-        )[0]
-    )
-except IndexError:
-    pass
-
+from typing import Any, Dict, List
+from dreyevr.utils import find_ego_sensor, find_ego_vehicle
 import carla
-
-
-def find_ego_vehicle(world: carla.libcarla.World) -> Optional[carla.libcarla.Vehicle]:
-    DReyeVR_vehicles: str = "harplab.dreyevr_vehicle.*"
-    ego_vehicles_in_world = list(world.get_actors().filter(DReyeVR_vehicles))
-    if len(ego_vehicles_in_world) >= 1:
-        print(f"Found an EgoVehicle in the world ({ego_vehicles_in_world})")
-        return ego_vehicles_in_world[0]
-
-    DReyeVR_vehicle: Optional[carla.libcarla.Vehicle] = None
-    available_ego_vehicles = world.get_blueprint_library().filter(DReyeVR_vehicles)
-    if len(available_ego_vehicles) == 1:
-        bp = available_ego_vehicles[0]
-        print(f'Spawning only available EgoVehicle: "{bp.id}"')
-    else:
-        print(
-            f"Found {len(available_ego_vehicles)} available EgoVehicles. Which one to use?"
-        )
-        for i, ego in enumerate(available_ego_vehicles):
-            print(f"\t[{i}] - {ego.id}")
-        print()
-        i: int = int(
-            input(f"Pick EgoVehicle to spawn [0-{len(available_ego_vehicles) - 1}]: ")
-        )
-        assert 0 <= i < len(available_ego_vehicles)
-        bp = available_ego_vehicles[i]
-    i: int = 0
-    spawn_pts = world.get_map().get_spawn_points()
-    while DReyeVR_vehicle is None:
-        print(f'Spawning DReyeVR EgoVehicle: "{bp.id}" at {spawn_pts[i]}')
-        DReyeVR_vehicle = world.spawn_actor(bp, transform=spawn_pts[i])
-        i = (i + 1) % len(spawn_pts)
-    return DReyeVR_vehicle
-
-
-def find_ego_sensor(world: carla.libcarla.World) -> Optional[carla.libcarla.Sensor]:
-    sensor = None
-    ego_sensors = list(world.get_actors().filter("harplab.dreyevr_sensor.*"))
-    if len(ego_sensors) >= 1:
-        sensor = ego_sensors[0]  # TODO: support for multiple ego sensors?
-    elif find_ego_vehicle(world) is None:
-        raise Exception(
-            "No EgoVehicle (nor EgoSensor) found in the world! EgoSensor needs EgoVehicle as parent"
-        )
-    return sensor
 
 
 class DReyeVRSensor:
@@ -81,7 +18,7 @@ class DReyeVRSensor:
         if isinstance(obj, carla.libcarla.Transform):
             return [
                 np.array([obj.location.x, obj.location.y, obj.location.z]),
-                np.array([obj.rotation.pitch, obj.rotation.yaw, obj.rotation.roll]),
+                np.array([obj.rotation.pitcsh, obj.rotation.yaw, obj.rotation.roll]),
             ]
         return obj
 
