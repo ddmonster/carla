@@ -18,7 +18,7 @@ class DReyeVRSensor:
         if isinstance(obj, carla.libcarla.Transform):
             return [
                 np.array([obj.location.x, obj.location.y, obj.location.z]),
-                np.array([obj.rotation.pitcsh, obj.rotation.yaw, obj.rotation.roll]),
+                np.array([obj.rotation.pitch, obj.rotation.yaw, obj.rotation.roll]),
             ]
         return obj
 
@@ -33,7 +33,7 @@ class DReyeVRSensor:
         # TODO: check if dreyevr sensor already exsists, then use it
         # spawn a DReyeVR sensor and begin listening
         if find_ego_sensor(world) is None:
-            bp = [x for x in world.get_blueprint_library().filter("sensor.dreyevr*")]
+            bp = list(world.get_blueprint_library().filter("harplab.dreyevr_sensor.*"))
             try:
                 bp = bp[0]
             except IndexError:
