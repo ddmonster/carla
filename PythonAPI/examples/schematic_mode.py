@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
-from dreyevr.sensor import DReyeVRSensor, find_ego_vehicle
-import examples.no_rendering_mode
-from examples.no_rendering_mode import (
+from DReyeVR_utils import DReyeVRSensor, find_ego_vehicle
+import no_rendering_mode
+from no_rendering_mode import (
     COLOR_SCARLET_RED_1,
     World,
     main,
@@ -67,10 +67,10 @@ class DReyeVRWorld(World):
 
 def schematic_run(args):
     # used when isolated and run in a script such as run_experiment.py
-    examples.no_rendering_mode.World = DReyeVRWorld  # hack to make the no_rendering_mode game_loop use the new DReyeVRWorld
+    no_rendering_mode.World = DReyeVRWorld  # hack to make the no_rendering_mode game_loop use the new DReyeVRWorld
     game_loop(args)
 
 
 if __name__ == "__main__":
-    examples.no_rendering_mode.World = DReyeVRWorld  # hack to make the no_rendering_mode game_loop use the new DReyeVRWorld
+    no_rendering_mode.World = DReyeVRWorld  # hack to make the no_rendering_mode game_loop use the new DReyeVRWorld
     main()

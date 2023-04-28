@@ -3,7 +3,7 @@ import numpy as np
 import time
 import sys
 import os
-from dreyevr.sensor import DReyeVRSensor
+from DReyeVR_utils import DReyeVRSensor
 
 try:
     import rospy

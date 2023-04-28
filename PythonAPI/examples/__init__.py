@@ -20,7 +20,7 @@ sys.path.extend(
     [
         os.path.join(CARLA_ROOT, "PythonAPI", "carla", "agents"),
         os.path.join(CARLA_ROOT, "PythonAPI", "carla"),
-        os.path.join(CARLA_ROOT, "PythonAPI", "dreyevr"),
+        os.path.join(CARLA_ROOT, "PythonAPI", "examples"),
         os.path.join(CARLA_ROOT, "PythonAPI"),
     ]
 )

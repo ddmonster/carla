@@ -1,7 +1,7 @@
 import time
 import argparse
 from numpy import random
-from dreyevr.utils import find_ego_vehicle
+from DReyeVR_utils import find_ego_vehicle
 
 import carla
 
