@@ -123,12 +123,10 @@ void AEgoVehicle::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (EndPlayReason == EEndPlayReason::Destroyed)
     {
         LOG("DReyeVR EgoVehicle is being destroyed! You'll need to spawn another one!");
-    }
-
-    if (GetGame())
-    {
-        GetGame()->SetEgoVehicle(nullptr);
-        GetGame()->PossessSpectator();
+        if (GetGame())
+        {
+            GetGame()->PossessSpectator();
+        }
     }
 
     if (this->Pawn)
@@ -968,7 +966,7 @@ void AEgoVehicle::SetGame(ADReyeVRGameMode *Game)
 {
     DReyeVRGame = Game;
     check(DReyeVRGame != nullptr);
-    DReyeVRGame->SetEgoVehicle(this);
+    check(DReyeVRGame->GetEgoVehicle() == this);
 
     DReyeVRGame->GetPawn()->BeginEgoVehicle(this, World);
     LOG("Successfully assigned GameMode & controller pawn");
