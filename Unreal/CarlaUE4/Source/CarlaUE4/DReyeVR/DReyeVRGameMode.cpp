@@ -236,6 +236,27 @@ void ADReyeVRGameMode::SetupSpectator()
     }
 }
 
+APawn *ADReyeVRGameMode::GetSpectator()
+{
+    return SafePtrGet<APawn>("Spectator", SpectatorPtr, [&](void) { SetupSpectator(); });
+}
+
+AEgoVehicle *ADReyeVRGameMode::GetEgoVehicle()
+{
+    return SafePtrGet<AEgoVehicle>("EgoVehicle", EgoVehiclePtr, [&](void) { SetupEgoVehicle(); });
+}
+
+APlayerController *ADReyeVRGameMode::GetPlayer()
+{
+    return SafePtrGet<APlayerController>("Player", Player,
+                                         [&](void) { Player = GetWorld()->GetFirstPlayerController(); });
+}
+
+ADReyeVRPawn *ADReyeVRGameMode::GetPawn()
+{
+    return SafePtrGet<ADReyeVRPawn>("Pawn", DReyeVR_Pawn, [&](void) { SetupDReyeVRPawn(); });
+}
+
 void ADReyeVRGameMode::BeginDestroy()
 {
     Super::BeginDestroy();
