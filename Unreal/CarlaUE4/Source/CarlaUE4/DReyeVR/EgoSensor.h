@@ -79,11 +79,12 @@ class CARLAUE4_API AEgoSensor : public ADReyeVRSensor
     void ComputeEgoVars();
     TWeakObjectPtr<class AEgoVehicle> Vehicle; // the DReyeVR EgoVehicle
     struct DReyeVR::EgoVariables EgoVars;      // data from vehicle that is getting tracked
+    DReyeVR::ConfigFileData *RecordingCF = nullptr;
 
   private: // frame capture
     size_t ScreenshotCount = 0;
-    void ConstructFrameCapture();   // needs to be called in the constructor
-    void InitFrameCapture();        // needs to be called in BeginPlay
+    void ConstructFrameCapture(); // needs to be called in the constructor
+    void InitFrameCapture();      // needs to be called in BeginPlay
     class UTextureRenderTarget2D *CaptureRenderTarget = nullptr;
     class USceneCaptureComponent2D *FrameCap = nullptr;
     FString FrameCapLocation; // relative to game dir

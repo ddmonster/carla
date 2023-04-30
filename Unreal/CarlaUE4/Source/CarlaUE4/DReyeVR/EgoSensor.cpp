@@ -89,6 +89,11 @@ void AEgoSensor::BeginDestroy()
 {
     Super::BeginDestroy();
 
+    if (RecordingCF != nullptr)
+    {
+        delete RecordingCF;
+    }
+
     DestroyEyeTracker();
 
     LOG("EgoSensor has been destroyed");
@@ -376,11 +381,17 @@ void AEgoSensor::SetEgoVehicle(class AEgoVehicle *NewEgoVehicle)
     check(Vehicle.IsValid());
 
     // Also check that the ConfigFileData variable can be written to with Vehicle params
-    check(ConfigFile);
+    check(ConfigFile); // this is a static variable created in the parent (ADReyeVRSensor)
 
     // track both the VehicleParams and GeneralParams
     const auto ConfigFileStr = Vehicle.Get()->GetVehicleParams().Export() + GeneralParams.Export();
     ConfigFile->Set(ConfigFileStr); // track this config file once
+
+    // saved from some previous request to compare, but failed bc no EgoVehicle
+    if (RecordingCF != nullptr)
+    {
+        UpdateData(*RecordingCF, 0.f);
+    }
 }
 
 void AEgoSensor::ComputeEgoVars()
@@ -569,7 +580,9 @@ void AEgoSensor::UpdateData(const DReyeVR::ConfigFileData &RecordedParams, const
 {
     if (!Vehicle.IsValid())
     {
-        LOG_WARN("Unable to compare ConfigFile bc EgoVehicle is invalid!");
+        // LOG_WARN("Unable to compare ConfigFile bc EgoVehicle is invalid!");
+        RecordingCF = new DReyeVR::ConfigFileData();
+        (*RecordingCF) = RecordedParams; // save these params for later (ex. SetEgoVehicle)
         return;
     }
     // compare the incoming (recording) ConfigFile with our current (live) one
@@ -582,7 +595,16 @@ void AEgoSensor::UpdateData(const DReyeVR::ConfigFileData &RecordedParams, const
     LiveConfig.Insert(GeneralParams);
 
     bool bPrintWarnings = true;
-    LiveConfig.IsSubset(Recorded, bPrintWarnings); // don't care if Recorded has entries that we dont
+    if (LiveConfig.IsSubset(Recorded, bPrintWarnings)) // don't care if Recorded has entries that we dont
+    {
+        LOG("Config file comparison successful!");
+    }
+    else
+    {
+        LOG_WARN("Config file comparison failed! This means the recording was performed with a different configuration "
+                 "file than what is currently active. You might want to check that this does not affect the validity "
+                 "of your replay.");
+    }
 }
 
 void AEgoSensor::UpdateData(const DReyeVR::CustomActorData &RecorderData, const double Per)

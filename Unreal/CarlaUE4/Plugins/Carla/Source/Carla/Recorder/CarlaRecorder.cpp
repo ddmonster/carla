@@ -280,6 +280,13 @@ void ACarlaRecorder::AddActorBoundingBox(FCarlaActor *CarlaActor)
 
 void ACarlaRecorder::AddDReyeVRData()
 {
+  static bool bAddedConfigFile;
+  if (!bAddedConfigFile) {
+    // add DReyeVR config files (only once at the beginning of recording)
+    DReyeVRConfigFileData.Add(ADReyeVRSensor::ConfigFile);
+    bAddedConfigFile = true;
+  }
+
   // Add the latest instance of the DReyeVR snapshot to our data
   DReyeVRAggData.Add(DReyeVRDataRecorder<DReyeVR::AggregateData>(ADReyeVRSensor::Data));
 
@@ -390,9 +397,6 @@ std::string ACarlaRecorder::Start(std::string Name, FString MapName, bool Additi
 
   // add current weather for start of recording
   AddStartingWeather();
-
-  // add DReyeVR config files (only at the beginning of recording)
-  DReyeVRConfigFileData.Add(ADReyeVRSensor::ConfigFile);
 
   return std::string(Filename);
 }
