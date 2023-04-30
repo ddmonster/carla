@@ -96,7 +96,7 @@ void AEgoSensor::BeginDestroy()
 
 void AEgoSensor::ManualTick(float DeltaSeconds)
 {
-    if (!bIsReplaying) // only update the sensor with local values if not replaying
+    if (!ADReyeVRSensor::bIsReplaying) // only update the sensor with local values if not replaying
     {
         const float Timestamp = int64_t(1000.f * UGameplayStatics::GetRealTimeSeconds(World));
         /// TODO: query the eye tracker hardware asynchronously (not limited to UE4 tick)

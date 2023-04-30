@@ -169,6 +169,12 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
 
 void ADReyeVRGameMode::SetupSpectator()
 {
+    if (SpectatorPtr.IsValid())
+    {
+        LOG("Not spawning new Spectator");
+        return;
+    }
+
     // always disable the Carla spectator from DReyeVR use
     UCarlaEpisode *Episode = UCarlaStatics::GetCurrentEpisode(GetWorld());
     APawn *CarlaSpectator = nullptr;
@@ -188,20 +194,23 @@ void ADReyeVRGameMode::SetupSpectator()
             SpectatorPtr = Player.Get()->GetPawn();
     }
 
-    // spawn if necessary
-    if (SpectatorPtr.IsValid())
-    {
-        LOG("Found available spectator in world");
-    }
-    else
+    // spawn the Spectator pawn
     {
         LOG("Spawning DReyeVR Spectator Pawn in the world");
         FVector SpawnLocn;
         FRotator SpawnRotn;
-        if (GetEgoVehicle() != nullptr)
+        if (EgoVehiclePtr.IsValid())
         {
             SpawnLocn = EgoVehiclePtr.Get()->GetCameraPosn();
             SpawnRotn = EgoVehiclePtr.Get()->GetCameraRot();
+        }
+        else
+        {
+            // spawn above the vehicle recommended spawn pt
+            FTransform RecommendedPt = GetSpawnPoint();
+            SpawnLocn = RecommendedPt.GetLocation();
+            SpawnLocn.Z += 10.f * 100.f; // up in the air 10m ish
+            SpawnRotn = RecommendedPt.Rotator();
         }
         // create new spectator pawn
         FActorSpawnParameters SpawnParams;
@@ -218,6 +227,12 @@ void ADReyeVRGameMode::SetupSpectator()
         SpectatorPtr.Get()->GetRootComponent()->DestroyPhysicsState(); // no physics (just no-clip)
         SpectatorPtr.Get()->SetActorEnableCollision(false);            // no collisions
         LOG("Successfully initiated spectator actor");
+    }
+
+    // automatically possess the spectator ptr if no ego vehicle present!
+    if (!EgoVehiclePtr.IsValid())
+    {
+        PossessSpectator();
     }
 }
 
