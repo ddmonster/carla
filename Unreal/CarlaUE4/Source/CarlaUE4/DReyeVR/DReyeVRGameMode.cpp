@@ -99,6 +99,11 @@ void ADReyeVRGameMode::BeginPlay()
 
 void ADReyeVRGameMode::SetupDReyeVRPawn()
 {
+    if (DReyeVR_Pawn.IsValid())
+    {
+        LOG("Not spawning new DReyeVR pawn");
+        return;
+    }
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -135,11 +140,6 @@ bool ADReyeVRGameMode::SetupEgoVehicle()
     if (EgoVehiclePtr.IsValid())
     {
         LOG("Not spawning new EgoVehicle");
-        if (EgoVehiclePtr.IsExplicitlyNull())
-        {
-            LOG("EgoVehicle unavailable, possessing spectator by default")
-            PossessSpectator(); // NOTE: need to call SetupSpectator before this!
-        }
         return true;
     }
 
@@ -279,9 +279,8 @@ void ADReyeVRGameMode::SetupPlayerInputComponent()
 void ADReyeVRGameMode::PossessEgoVehicle()
 {
     if (GetEgoVehicle() == nullptr || GetPawn() == nullptr || GetPlayer() == nullptr)
-    {
         return;
-    }
+
     check(EgoVehiclePtr.IsValid());
     check(DReyeVR_Pawn.IsValid());
     check(Player.IsValid());
@@ -302,9 +301,8 @@ void ADReyeVRGameMode::PossessEgoVehicle()
 void ADReyeVRGameMode::PossessSpectator()
 {
     if (GetSpectator() == nullptr || GetPlayer() == nullptr)
-    {
         return;
-    }
+
     check(SpectatorPtr.IsValid());
     check(Player.IsValid());
 
@@ -330,9 +328,8 @@ void ADReyeVRGameMode::PossessSpectator()
 void ADReyeVRGameMode::HandoffDriverToAI()
 {
     if (GetEgoVehicle() == nullptr)
-    {
         return;
-    }
+
     check(EgoVehiclePtr.IsValid());
 
     { // check if autopilot already enabled

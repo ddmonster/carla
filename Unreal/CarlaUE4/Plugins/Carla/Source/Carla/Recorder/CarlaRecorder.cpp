@@ -91,12 +91,15 @@ void ACarlaRecorder::Ticking(float DeltaSeconds)
     PlatformTime.UpdateTime();
     const FActorRegistry &Registry = Episode->GetActorRegistry();
 
+    // Skip the spectator actor
+    FCarlaActor* CarlaSpectator = Episode->FindCarlaActor(Episode->GetSpectatorPawn());
+
     // through all actors in registry
     for (auto It = Registry.begin(); It != Registry.end(); ++It)
     {
       FCarlaActor* View = It.Value().Get();
 
-      if (View->GetActorId() == 0)
+      if (CarlaSpectator && (View->GetActor() == CarlaSpectator->GetActor()))
         continue; // don't record the spectator
 
       switch (View->GetActorType())
