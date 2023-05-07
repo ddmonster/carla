@@ -2,7 +2,7 @@ from typing import Optional, Any, Dict, List
 import carla
 import numpy as np
 import time
-import examples  # calls __init__.py to add all the necessary things to path
+import examples  # calls ./__init__.py to add all the necessary things to path
 
 
 def find_ego_vehicle(world: carla.libcarla.World) -> Optional[carla.libcarla.Vehicle]:
