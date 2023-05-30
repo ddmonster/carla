@@ -52,7 +52,7 @@ void ADReyeVRPawn::ReadConfigVariables()
     GeneralParams.Get("Hardware", "DeviceIdx", WheelDeviceIdx);
     GeneralParams.Get("Hardware", "LogUpdates", bLogLogitechWheel);
     GeneralParams.Get("Hardware", "ForceFeedbackMagnitude", SaturationPercentage);
-    GeneralParams.Get("Hardware", "LogiFollowAutopilot", bLogiFollowAutopilot);
+    GeneralParams.Get("Hardware", "DeltaInputThreshold", LogiThresh);
 }
 
 void ADReyeVRPawn::ConstructCamera()
@@ -508,8 +508,6 @@ void ADReyeVRPawn::LogitechWheelUpdate()
     // -1 = not pressed. 0 = Top. 0.25 = Right. 0.5 = Bottom. 0.75 = Left.
     const float Dpad = fabs(((WheelState->rgdwPOV[0] - 32767.0f) / (65535.0f)));
 
-    const float LogiThresh = 0.01f; // threshold for analog input "equality"
-
     // weird behaviour: "Pedals will output a value of 0.5 until the wheel/pedals receive any kind of input"
     // as per https://github.com/HARPLab/LogitechWheelPlugin
     if (bPedalsDefaulting)
@@ -532,13 +530,17 @@ void ADReyeVRPawn::LogitechWheelUpdate()
              FMath::IsNearlyEqual(BrakePedal, BrakePedalLast, LogiThresh)))
         {
             // let the autopilot drive if the user is not putting significant inputs
+            // ie. if their inputs are close enough to what was previously input
+            /// TODO: this system might break down if the autopilot is putt in sufficiently
+            ///       strong inputs, since the autopilot controls might might inadvertedly
+            ///       be considered as human-input controls which amplifies the input and
+            ///       causes a positive cycle loop (which would be better avoided)
         }
         else
         {
-            if (!(bLogiFollowAutopilot && EgoVehicle->GetAutopilotStatus()))
-            {
-                EgoVehicle->AddSteering(WheelRotation);
-            }
+            // driver has issued sufficient input to warrant manual takeover
+            EgoVehicle->SetAutopilot(false);
+            EgoVehicle->AddSteering(WheelRotation);
             EgoVehicle->AddThrottle(AccelerationPedal);
             EgoVehicle->AddBrake(BrakePedal);
         }
@@ -602,17 +604,14 @@ void ADReyeVRPawn::ApplyForceFeedback() const
     check(EgoVehicle);
 
     // only execute this in Windows, the Logitech plugin is incompatible with Linux
-    const float Speed = EgoVehicle->GetVelocity().Size(); // get magnitude of self (AActor's) velocity
+    // const float Speed = EgoVehicle->GetVelocity().Size(); // get magnitude of self (AActor's) velocity
     /// TODO: move outside this function (in tick()) to avoid redundancy
     if (bIsLogiConnected && LogiHasForceFeedback(WheelDeviceIdx))
     {
-        int OffsetPercentage = 0; // "Specifies the center of the spring force effect"
-        if (!(bLogiFollowAutopilot && EgoVehicle->GetAutopilotStatus()))
-        {
-            // actuate the logi wheel to match the autopilot steering
-            float RawWheel = EgoVehicle->GetWheelSteerAngle(EVehicleWheelLocation::Front_Wheel);
-            OffsetPercentage = static_cast<int>(RawWheel * 0.5f);
-        }
+        // actuate the logi wheel to match the autopilot steering
+        float RawWheel = EgoVehicle->GetWheelSteerAngle(EVehicleWheelLocation::Front_Wheel);
+        // "Specifies the center of the spring force effect"
+        const int OffsetPercentage = static_cast<int>(RawWheel * 0.5f);
         const int CoeffPercentage = 100; // "Slope of the effect strength increase relative to deflection from Offset"
         LogiPlaySpringForce(WheelDeviceIdx, OffsetPercentage, SaturationPercentage, CoeffPercentage);
     }
