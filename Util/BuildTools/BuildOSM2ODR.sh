@@ -94,7 +94,7 @@ if ${BUILD_OSM2ODR} ; then
 
   cmake ${OSM2ODR_SOURCE_FOLDER} \
       -G "Eclipse CDT4 - Ninja" \
-      -DCMAKE_CXX_FLAGS="-stdlib=libstdc++" \
+      -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
       -DCMAKE_INSTALL_PREFIX=${LIBCARLA_INSTALL_CLIENT_FOLDER} \
       -DPROJ_INCLUDE_DIR=${CARLA_BUILD_FOLDER}/proj-install/include \
       -DPROJ_LIBRARY=${CARLA_BUILD_FOLDER}/proj-install/lib/libproj.a \

@@ -8,11 +8,11 @@ Install
 Plugins
 !Unreal/CarlaUE4/Plugins
 cmake-build-debug
-
+Build*
 /ExportedMaps
 /Import/*
 !/Import/README.md
-
+.Ds_Store
 *.VC.db
 *.VC.opendb
 *.a
