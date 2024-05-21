@@ -341,8 +341,10 @@ public class Carla : ModuleRules
 
 
       //OsmToODR
-      PublicAdditionalLibraries.Add("/usr/lib/x86_64-linux-gnu/libc.so");
-      PublicAdditionalLibraries.Add(Path.Combine(LibCarlaInstallPath, "lib", "libsqlite3.so"));
+      // PublicAdditionalLibraries.Add("/usr/lib/x86_64-linux-gnu/libc.so");
+      PublicAdditionalLibraries.Add("/usr/local/opt/sqlite/lib/libsqlite3.a");
+      
+      // PublicAdditionalLibraries.Add(Path.Combine(LibCarlaInstallPath, "lib", "libsqlite3.so"));
       PublicAdditionalLibraries.Add(Path.Combine(LibCarlaInstallPath, "lib", "libxerces-c.a"));
       PublicAdditionalLibraries.Add(Path.Combine(LibCarlaInstallPath, "lib", "libproj.a"));
       PublicAdditionalLibraries.Add(Path.Combine(LibCarlaInstallPath, "lib", "libosm2odr.a"));

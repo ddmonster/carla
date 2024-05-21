@@ -7,8 +7,9 @@ set -e
 CURDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 source $(dirname "$0")/Vars.mk
 unset CURDIR
-
-
+export UE4_ROOT=/Users/ddmonster/UnrealEngine_4.26
+# export UE4_ROOT=/Users/ddmonster/Documents/project/graduateprj/EpicGames/UE_4.26
+export CARLA_ROOT=/Users/ddmonster/Documents/project/graduateprj/carla
 if [[ "$(uname)" == "Darwin" ]] ; then
   export MAC_OS=true # automatically set to false on non-Mac builds
 else
@@ -17,13 +18,12 @@ fi
 
 if ${MAC_OS}; then
   ARCH="x86_64" # for building the UE4 package
-  # ARCH="arm64"
   # ARCH="arm64" # for building the PythonAPI
   # for OSX apple silicon build (building x86 & using rosetta2)
   # NOTE: UE4 wants use of macos 10.14, but 12.1 works fine
-  export ARCH_TARGET="-target ${ARCH}-apple-macos14.4"
+  export ARCH_TARGET="-target ${ARCH}-apple-macos14.5"
   export OS_FLAGS=" -nostdinc++" # for macos
-  export OS_STDLIB="-stdlib=l ibc++"
+  export OS_STDLIB="-stdlib=libc++"
   # for cmake -arch flag: https://cmake.org/cmake/help/latest/prop_tgt/OSX_ARCHITECTURES.html#prop_tgt:OSX_ARCHITECTURES
   export CMAKE_OSX_ARCHITECTURES=${ARCH}
   export TARGET_PLATFORM="Mac"

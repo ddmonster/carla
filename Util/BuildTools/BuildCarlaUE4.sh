@@ -194,7 +194,7 @@ if ${BUILD_CARLAUE4} ; then
 
   log "Build CarlaUE4 project."
   if ${MAC_OS}; then
-    xcodebuild -scheme CarlaUE4 -target CarlaUE4Editor -UseModernBuildSystem=YES GENERATE_INFOPLIST_FILE=YES
+    xcodebuild -showBuildSettings -scheme CarlaUE4 -target CarlaUE4Editor -UseModernBuildSystem=YES GENERATE_INFOPLIST_FILE=YES GCC_ENABLE_CPP_RTTI=YES
   else
     make CarlaUE4Editor
   fi

@@ -18,7 +18,7 @@ include_directories(${libcarla_source_thirdparty_path})
 if (CARLA_VERSION)
   configure_file(${libcarla_source_path}/carla/Version.h.in ${libcarla_source_path}/carla/Version.h)
 endif()
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti")
 if (CMAKE_BUILD_TYPE STREQUAL "Client")
   add_subdirectory("client")
 elseif (CMAKE_BUILD_TYPE STREQUAL "Server")
